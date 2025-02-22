@@ -1,5 +1,10 @@
-# Archivos de depuración y compilación
+# Directorios generados automáticamente
 Debug/
+Listings/
+Objects/
+.vscode/
+
+# Archivos de compilación y depuración
 *.o
 *.d
 *.axf
@@ -13,14 +18,27 @@ Debug/
 *.dep
 *.htm
 *.sct
+*.inp
+*.scvd
+*.dbgconf
+*.inc
+*.cgx
+*.cgi
 
-# Archivos de Keil generados automáticamente
+# Archivos específicos de Keil
 *.uvoptx
+*.uvprojx
 *.uvopt
 *.uvgui.*
+*.uvguix.*
 
-# Archivos de Visual Studio y Git
-.vscode/
+# Archivos de compilador ARM
+*.dep
+
+# Archivos de salida de ensamblador
+*.s
+
+# Archivos de Visual Studio y otros entornos
 *.user
 *.suo
 *.ncb
@@ -35,13 +53,6 @@ Debug/
 *.sdf
 .DS_Store
 
-# Archivos del compilador ARM
-*.dep
-*.uvgui.*
-
-# Archivos de salida de ensamblador
-*.s
-
-# Archivos temporales de Keil
-Listings/
-Objects/
+# Excepción: Permitir archivos .uvprojx y .uvoptx en PRJ/
+!*/PRJ/*.uvprojx
+!*/PRJ/*.uvoptx
