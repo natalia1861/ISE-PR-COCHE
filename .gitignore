@@ -1,52 +1,47 @@
-# Prerequisites
-*.d
-
-# Object files
+# Archivos de depuración y compilación
+Debug/
 *.o
-*.ko
-*.obj
+*.d
+*.axf
 *.elf
-
-# Linker output
-*.ilk
-*.map
-*.exp
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
-
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
-
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
 *.hex
+*.bin
+*.map
+*.lst
+*.crf
+*.bak
+*.dep
+*.htm
+*.sct
 
-# Debug files
-*.dSYM/
-*.su
-*.idb
+# Archivos de Keil generados automáticamente
+*.uvoptx
+*.uvopt
+*.uvgui.*
+
+# Archivos de Visual Studio y Git
+.vscode/
+*.user
+*.suo
+*.ncb
+*.aps
+*.log
+*.ilk
 *.pdb
+*.opendb
+*.tlog
+*.obj
+*.idb
+*.sdf
+.DS_Store
 
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
+# Archivos del compilador ARM
+*.dep
+*.uvgui.*
+
+# Archivos de salida de ensamblador
+*.s
+
+# Archivos temporales de Keil
+Listings/
+Objects/
