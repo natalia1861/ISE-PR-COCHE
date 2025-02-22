@@ -41,6 +41,7 @@
 #include "main.h"
 #include "prueba_sensor.h"
 #include "I2C_prueba_temp.h"
+#include "temp.h"
 
 #ifdef RTE_CMSIS_RTOS2_RTX5
 /**
@@ -113,8 +114,11 @@ int main(void)
 
   /* Create application main thread */
   //osThreadNew(app_main, NULL, &app_main_attr);
-//    tid_Thread_sensor = osThreadNew(thread__temp, NULL, NULL);
-    Init_sensor();
+    //Init_temp_sensor();
+    //initModTemp();
+    //tid_Thread_sensor = osThreadNew(thread__temp, NULL, NULL);
+
+    //Init_sensor();
   /* Start thread execution */
   osKernelStart();
 #endif

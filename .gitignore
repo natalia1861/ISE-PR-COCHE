@@ -56,3 +56,4 @@ Objects/
 # Excepción: Permitir archivos .uvprojx y .uvoptx en PRJ/
 !*/PRJ/*.uvprojx
 !*/PRJ/*.uvoptx
+mandoCoche/Web/Web.c

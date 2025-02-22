@@ -74,8 +74,8 @@ static int read16(uint8_t reg){
 void leer_temp (void) {
 	MSGQUEUE_TEMP_t temperatura;
 	temperatura.temp = temp();
-	osMessageQueuePut (mid_MsgQueueTemp, &temperatura, NULL, 5000);
-	osThreadFlagsSet (tid_Thread_sensor, TEMP_FLAG);
+	//osMessageQueuePut (mid_MsgQueueTemp, &temperatura, NULL, 5000);
+	//osThreadFlagsSet (tid_Thread_sensor, TEMP_FLAG);
 }
 
 //COLA
