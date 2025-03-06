@@ -114,7 +114,7 @@ int main(void)
 
   /* Create application main thread */
   //osThreadNew(app_main, NULL, &app_main_attr);
-    //Init_temp_sensor();
+    Init_temp_sensor();
     //initModTemp();
     //tid_Thread_sensor = osThreadNew(thread__temp, NULL, NULL);
 

@@ -15,10 +15,11 @@
  
 #include "AS5600.h"
 
-uint32_t AS5600_Start (I2C_LINE I2C_line) {
+AS5600_Errors AS5600_Start (I2C_LINE I2C_line) {
     uint32_t status;
-    AS5600_Configuration_t conf;
-    conf = getDefaultConfiguration();
+    AS5600_Configuration_t conf = getDefaultConfiguration();
+    
+    I2C_Init_All();
     if ((status = AS5600_Init(I2C_line)) != AS5600_OK) {
         return status;
     }
@@ -32,7 +33,7 @@ uint32_t AS5600_Start (I2C_LINE I2C_line) {
     }
     return AS5600_OK;
 }
-uint32_t AS5600_Init (I2C_LINE I2C_line) {
+AS5600_Errors AS5600_Init (I2C_LINE I2C_line) {
     if (I2C_Init(I2C_line) != I2C_DRIVER_OK) {
         return AS5600_I2C_Error;
     }
@@ -44,17 +45,18 @@ uint32_t AS5600_Init (I2C_LINE I2C_line) {
     return AS5600_OK;
 }
 
-uint32_t AS5600_Configure (I2C_LINE I2C_line, AS5600_Configuration_t configuracion) {
+AS5600_Errors AS5600_Configure (I2C_LINE I2C_line, AS5600_Configuration_t configuracion) {
     uint8_t conf_buffer [2];
     
     // Configuración del registro (13 bits)
-    conf_buffer[0] = (uint8_t)((configuracion.power_mode << 0) & PM_MASK) |
-                     (uint8_t)((configuracion.hysteresis_mode << 2) & HYST_MASK) |
-                     (uint8_t)((configuracion.output_mode << 4) & OUTS_MASK) |
-                     (uint8_t)((configuracion.pwm_mode << 6) & PWMF_MASK);
+    conf_buffer[0] = (uint8_t)((configuracion.power_mode        << 0) & PM_MASK )   |
+                     (uint8_t)((configuracion.hysteresis_mode   << 2) & HYST_MASK)  |
+                     (uint8_t)((configuracion.output_mode       << 4) & OUTS_MASK)  |
+                     (uint8_t)((configuracion.pwm_mode          << 6) & PWMF_MASK);
 
-    conf_buffer[1] = (uint8_t)((configuracion.slow_filter_mode << 8) & SF_MASK) |
-                     (uint8_t)((configuracion.fast_filter_mode << 10) & FTH_MASK);
+    conf_buffer[1] = (uint8_t)((configuracion.slow_filter_mode  << 8) & SF_MASK)    |
+                     (uint8_t)((configuracion.fast_filter_mode  << 10)& FTH_MASK)   |
+                     (uint8_t)((configuracion.watchdog_mode     << 11)& WD_MASK);
 
     // Escribir en las direcciones 0x07 y 0x08
     if (I2C_WriteRegister(I2C_line, AS5600_ADDRESS, CONF_REG, conf_buffer[0]) != ARM_DRIVER_OK) {
@@ -69,7 +71,7 @@ uint32_t AS5600_Configure (I2C_LINE I2C_line, AS5600_Configuration_t configuraci
     return AS5600_OK;
 }
 
-uint32_t AS5600_ReadAngle(I2C_LINE I2C_line, float* angle_degrees) {
+AS5600_Errors AS5600_ReadAngle(I2C_LINE I2C_line, float* angle_degrees) {
     uint8_t angle_data[2]; // Array para almacenar los 2 bytes de los registros de ángulo
     uint16_t angle = 0;
 
@@ -96,24 +98,35 @@ AS5600_Configuration_t getDefaultConfiguration (void) {
     conf.hysteresis_mode = HYS_OFF;         // Histeresis desactivada (OFF)
     conf.output_mode = OUTS_ANALOG_FULL;    // Salida analógica (rango completo)
     conf.pwm_mode = PWM_115_Hz;             // Frecuencia PWM a 115 Hz
-    conf.slow_filter_mode = SF_x16;         // Filtro lento x16
+    conf.slow_filter_mode = SF_x16;         // Filtro lento x16 
     conf.fast_filter_mode = FFTH_6_LSB;     // Umbral de filtro rápido 6 LSBs
     conf.watchdog_mode = WD_OFF;            // Watchdog desactivado (OFF)
 
     return conf;
 }
 
-uint32_t isMagnetPresent (I2C_LINE I2C_line) {
+AS5600_Errors isMagnetPresent (I2C_LINE I2C_line) {
     uint8_t status_reg;
         // Leer el registro de estado
-    if (I2C_ReadRegisters(I2C_line, AS5600_ADDRESS, STATUS_REG, &status_reg, 1) != AS5600_OK) {
+    if (I2C_ReadRegisters(I2C_line, AS5600_ADDRESS, STATUS_REG, &status_reg, 1) != AS5600_OK)
+    {
         return AS5600_Read_Error; // Error en la lectura, retorna falso
     }
     
     // Verificar el bit MD para ver si el imán está detectado
-    if (status_reg & MD_MASK) {
-        return AS5600_OK;  // El imán está presente
-    } else {
-        return AS5600_Magnet_Not_Present; // El imán no está presente
+    switch (status_reg)
+    {
+        case MD_MASK: // El imán está presente
+            return AS5600_OK;
+            break;
+        case MH_MASK:
+            return AS5600_Magnet_Too_Strong;
+            break;
+        case ML_MASK:
+            return AS5600_Magnet_Not_Present; // El imán no está presente
+            break;
+        default:
+            return AS5600_Read_Error;
+            break;
     }
 }

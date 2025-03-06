@@ -22,7 +22,10 @@
 
 #define AS5600_I2C_Line 				    I2C_LINE_1
 
-#define AS5600_ADDRESS					0x36
+#define AS5600_ADDRESS					    0x36
+#define AS5600_WRITE                        0x00
+#define AS5600_READ                         0x01
+#define AS5600_I2C_ADDR(RW_OP)              (AS5600_ADDRESS << 1) | RW_OP //writes the address and the read/ write operation
 
 #define AS5600_RAW_ANGLE_REG                0x0C
 #define AS5600_ANGLE_REG    				0x0E
@@ -36,8 +39,8 @@
 #define RAW_ANGLE_REG                       0x0C
 #define ANGLE_REG                           0x0E
 #define STATUS_REG                          0x0B    //STATUS_REG: Indicates the current state of sensor. MH magnet too strong, ML magnet too low, MD magnet was detected
-#define AGC_REG                             0x1A    //AGC_REG: indicates the gane of the automatic gain control to compensate variations of magnetic field strenght due to changes of temperature, airgap, etc
-#define MAGNITUDE_REG                       0x1B
+#define AGC_REG                             0x1A    //AGC_REG: indicates the gane of the automatic gain control to compensate variations of magnetic field strenght due to changes of temperature, airgap, etc (0-128 in 3.3V)
+#define MAGNITUDE_REG                       0x1B    //MAGNITUDE_REG: indicates the magnitude value of the internal CORDIC.
 #define BURN_REG                            0xFF
 
 //range can be set by programming a (ZPOS and MPOS) or the MANG
@@ -64,31 +67,30 @@
 #define FTH_MASK 0x1C00   // 000 = slow filter only, 001 = 6 LSBs, 010 = 7 LSBs, etc.
 #define WD_MASK 0x2000   // 0 = OFF, 1 = ON
 
-
 //CONF REGISTER POSIBILITIES
 
 //low power mode: 
 typedef enum {
-    PM_NOM = 0,     //  6.5 mA
-    PM_LPM1,        //  3.4 mA
-    PM_LPM2,        //  1.8 mA
-    PM_LPM3         //  1.5 mA
+    PM_NOM  = 0,     //  6.5 mA
+    PM_LPM1 = 1,     //  3.4 mA
+    PM_LPM2 = 2,     //  1.8 mA
+    PM_LPM3 = 3      //  1.5 mA
 } POWER_Mode;
 
 //Hysteheresis: supresses toggling the OUT pin when the magnet is close to zero or 360 degrees.
 typedef enum {
-    HYS_OFF = 0,
-    HYS_LSB1,
-    HYS_LSB2,
-    HYS_LSB3    
+    HYS_OFF  = 0,
+    HYS_LSB1 = 1,
+    HYS_LSB2 = 2,
+    HYS_LSB3 = 3   
 } Hysteresis_Mode;
 
 //Output stage: choose between analog radiometric output (default) and digital PWM output. If PWM is selected, DAC is powered down.
 //In both cases, an external unit can read the angle from ANGLE REGISTER through I2C.
 typedef enum {
-    OUTS_ANALOG_FULL = 0,      //DEFAULT
-    OUTS_ANALOG_REDUCED,
-    OUTS_DIGITAL_PWM
+    OUTS_ANALOG_FULL    = 0,      //DEFAULT
+    OUTS_ANALOG_REDUCED = 1,
+    OUTS_DIGITAL_PWM    = 2
 } Output_State_Mode;
 
 typedef enum {
@@ -108,13 +110,14 @@ typedef enum {
 
 //fast filter. It only works if the input variation is greater than the fast filter threshold.
 typedef enum {
-    FFTH_slow = 0,           //slow filter only
-    FFTH_6_LSB,
-    FFTH_7_LSB,
-    FFTH_9_LSB,
-    FFTH_18_LSB,
-    FFTH_21_LSB,
-    FFTH_10_LSB
+    FFTH_slow   = 0,           //slow filter only
+    FFTH_6_LSB  = 1,
+    FFTH_7_LSB  = 2,
+    FFTH_9_LSB  = 3,
+    FFTH_18_LSB = 4,
+    FFTH_21_LSB = 5,
+    FFTH_24_LSB = 6,
+    FFTH_10_LSB = 7
 } Fast_Filter_Threshold_Mode;
 
 //Watchdog: allows saving power by switching into LMP3 if the angle stays within the watchdog threshold of 4LSB for at least one minute
@@ -134,20 +137,21 @@ typedef struct {
 } AS5600_Configuration_t;
 
 typedef enum {
-    AS5600_OK,
-    AS5600_I2C_Error,
-    AS5600_Test_Error,
-    AS5600_Conf_Error,
-    AS5600_Read_Error,
-    AS5600_Magnet_Not_Present
+    AS5600_OK = 0,              // 0
+    AS5600_I2C_Error,           // 1
+    AS5600_Test_Error,          // 2
+    AS5600_Conf_Error,          // 3
+    AS5600_Read_Error,          // 4
+    AS5600_Magnet_Too_Strong,   // 5
+    AS5600_Magnet_Not_Present   // 6
 } AS5600_Errors;
 
 
-uint32_t AS5600_Start (I2C_LINE I2C_line);
-uint32_t AS5600_Init (I2C_LINE I2C_line);
-uint32_t AS5600_Configure (I2C_LINE I2C_line, AS5600_Configuration_t configuracion);
-uint32_t AS5600_ReadAngle(I2C_LINE I2C_line, float* angle_degrees);
+AS5600_Errors AS5600_Start (I2C_LINE I2C_line);
+AS5600_Errors AS5600_Init (I2C_LINE I2C_line);
+AS5600_Errors AS5600_Configure (I2C_LINE I2C_line, AS5600_Configuration_t configuracion);
+AS5600_Errors AS5600_ReadAngle(I2C_LINE I2C_line, float* angle_degrees);
 AS5600_Configuration_t getDefaultConfiguration (void);
-uint32_t isMagnetPresent (I2C_LINE I2C_line);
+AS5600_Errors isMagnetPresent (I2C_LINE I2C_line);
 
 #endif

@@ -280,6 +280,7 @@ int32_t I2C_ReadRegister (I2C_LINE I2C_line, uint32_t SLAVE_ADDRESS, uint8_t reg
 	//Adquiere el semaforo de transferencias
 	if (osSemaphoreAcquire(Drivers_I2C[I2C_line].transfer_I2C_semaphore, osWaitForever) != osOK)
     {
+        osSemaphoreRelease(Drivers_I2C[I2C_LINE_1].transfer_I2C_semaphore);
         osMutexRelease(Drivers_I2C[I2C_line].mutex_I2C);
         return ARM_DRIVER_ERROR;
     }
@@ -287,6 +288,7 @@ int32_t I2C_ReadRegister (I2C_LINE I2C_line, uint32_t SLAVE_ADDRESS, uint8_t reg
     // Master command
     if (Drivers_I2C[I2C_line].driver->MasterTransmit(SLAVE_ADDRESS, &reg, 1, false) != ARM_DRIVER_OK) 
     {
+        osSemaphoreRelease(Drivers_I2C[I2C_LINE_1].transfer_I2C_semaphore);
         osMutexRelease(Drivers_I2C[I2C_line].mutex_I2C);
         return ARM_DRIVER_ERROR;  // Error en la transmisión
     }
@@ -301,6 +303,7 @@ int32_t I2C_ReadRegister (I2C_LINE I2C_line, uint32_t SLAVE_ADDRESS, uint8_t reg
     //Slave response
     if (Drivers_I2C[I2C_line].driver->MasterReceive(SLAVE_ADDRESS, data, 1, false) != ARM_DRIVER_OK)
     {
+        osSemaphoreRelease(Drivers_I2C[I2C_LINE_1].transfer_I2C_semaphore);
         osMutexRelease(Drivers_I2C[I2C_line].mutex_I2C);
         return ARM_DRIVER_ERROR;
     }
@@ -331,6 +334,7 @@ int32_t I2C_ReadRegisters (I2C_LINE I2C_line, uint32_t SLAVE_ADDRESS, uint8_t re
   // Master command
     if (Drivers_I2C[I2C_line].driver->MasterTransmit(SLAVE_ADDRESS, &reg, 1, false) != osOK)
     {
+        osSemaphoreRelease(Drivers_I2C[I2C_LINE_1].transfer_I2C_semaphore);
         osMutexRelease(Drivers_I2C[I2C_line].mutex_I2C);
         return ARM_DRIVER_ERROR;  // Error en la transmisión
     }
@@ -345,6 +349,7 @@ int32_t I2C_ReadRegisters (I2C_LINE I2C_line, uint32_t SLAVE_ADDRESS, uint8_t re
 	//Slave response
 	if (Drivers_I2C[I2C_line].driver->MasterReceive(SLAVE_ADDRESS, data, size, false) != ARM_DRIVER_OK)
     {
+        osSemaphoreRelease(Drivers_I2C[I2C_LINE_1].transfer_I2C_semaphore);
         osMutexRelease(Drivers_I2C[I2C_line].mutex_I2C);
         return ARM_DRIVER_ERROR;  // Error en la recepción
     }
@@ -372,17 +377,11 @@ int32_t I2C_WriteRegister (I2C_LINE I2C_line, uint32_t SLAVE_ADDRESS, uint8_t re
 	//Master command
     if (Drivers_I2C[I2C_line].driver->MasterTransmit(SLAVE_ADDRESS, aux, 2, false) != ARM_DRIVER_OK) 
     {
+        osSemaphoreRelease(Drivers_I2C[I2C_LINE_1].transfer_I2C_semaphore);
         osMutexRelease(Drivers_I2C[I2C_line].mutex_I2C);
         return ARM_DRIVER_ERROR;  // Error en la transmisión
     }
-  
-    // Espera a que la transferencia se complete
-    if (osSemaphoreAcquire(Drivers_I2C[I2C_line].transfer_I2C_semaphore, osWaitForever) != osOK)
-    {
-        osMutexRelease(Drivers_I2C[I2C_line].mutex_I2C);
-        return ARM_DRIVER_ERROR;  // Error en la transmisión
-    }
-
+    
     osMutexRelease(Drivers_I2C[I2C_line].mutex_I2C);  // Liberar el mutex después de usar el I2C
 
     estado = Drivers_I2C[I2C_line].driver->GetStatus();
