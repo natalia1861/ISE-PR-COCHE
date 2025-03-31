@@ -21,6 +21,7 @@
 //definition of I2C depending if its active or not
 
  ARM_I2C_STATUS estado;
+ uint32_t state;
  
 I2C_DriverConfig_t Drivers_I2C [I2C_LINE_MAX] = {
     [I2C_LINE_1] = {
@@ -332,7 +333,7 @@ int32_t I2C_ReadRegisters (I2C_LINE I2C_line, uint32_t SLAVE_ADDRESS, uint8_t re
     }
 	
   // Master command
-    if (Drivers_I2C[I2C_line].driver->MasterTransmit(SLAVE_ADDRESS, &reg, 1, false) != osOK)
+    if ((state = Drivers_I2C[I2C_line].driver->MasterTransmit(SLAVE_ADDRESS, &reg, 1, false)) != osOK)
     {
         osSemaphoreRelease(Drivers_I2C[I2C_LINE_1].transfer_I2C_semaphore);
         osMutexRelease(Drivers_I2C[I2C_line].mutex_I2C);

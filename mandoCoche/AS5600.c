@@ -16,22 +16,27 @@
 #include "AS5600.h"
 
 AS5600_Errors AS5600_Start (I2C_LINE I2C_line) {
-    uint32_t status;
+    AS5600_Errors status;
     AS5600_Configuration_t conf = getDefaultConfiguration();
     
-    I2C_Init_All();
-    if ((status = AS5600_Init(I2C_line)) != AS5600_OK) {
-        return status;
+    if (I2C_Init_All() != osOK)
+    {
+        return AS5600_I2C_Error;
+    }
+    if (AS5600_Init(I2C_line) != AS5600_OK)
+    {
+        return AS5600_I2C_Error;
     }
     
-    if ((status = AS5600_Configure(I2C_line, conf)) != AS5600_OK) {
-        return status;
+    if (AS5600_Configure(I2C_line, conf)!= AS5600_OK)
+    {
+        return AS5600_Conf_Error;
     }
     
-    if ((status = isMagnetPresent(I2C_line)) != AS5600_OK) {
-        return status;
+    if (isMagnetPresent(I2C_line) != AS5600_OK)
+    {
+        return AS5600_Test_Error;
     }
-    return AS5600_OK;
 }
 AS5600_Errors AS5600_Init (I2C_LINE I2C_line) {
     if (I2C_Init(I2C_line) != I2C_DRIVER_OK) {
@@ -106,27 +111,23 @@ AS5600_Configuration_t getDefaultConfiguration (void) {
 }
 
 AS5600_Errors isMagnetPresent (I2C_LINE I2C_line) {
-    uint8_t status_reg;
+    uint8_t status_reg[2];
         // Leer el registro de estado
-    if (I2C_ReadRegisters(I2C_line, AS5600_ADDRESS, STATUS_REG, &status_reg, 1) != AS5600_OK)
+    if (I2C_ReadRegisters(I2C_line, AS5600_ADDRESS, CONF_REG, &status_reg[0], 2) != AS5600_OK)
     {
         return AS5600_Read_Error; // Error en la lectura, retorna falso
     }
     
     // Verificar el bit MD para ver si el imán está detectado
-    switch (status_reg)
+    switch ((AS5600_status_magnet_t) status_reg)
     {
         case MD_MASK: // El imán está presente
             return AS5600_OK;
-            break;
         case MH_MASK:
             return AS5600_Magnet_Too_Strong;
-            break;
         case ML_MASK:
             return AS5600_Magnet_Not_Present; // El imán no está presente
-            break;
         default:
             return AS5600_Read_Error;
-            break;
     }
 }

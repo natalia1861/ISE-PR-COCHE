@@ -9,7 +9,9 @@ static void timer__testMagnet_callback (void *no_argument) {
 }
 
 void thread__sennsor (void *argument) {
-    AS5600_status = AS5600_Start(AS5600_I2C_Line);
+    //do{
+    //AS5600_status = AS5600_Start(AS5600_I2C_Line);
+    //} while (AS5600_status != AS5600_OK);
     id_timer__testMagnet = osTimerNew (timer__testMagnet_callback, osTimerPeriodic, NULL, NULL);
     osTimerStart(id_timer__testMagnet, 100);
     for(;;) { 

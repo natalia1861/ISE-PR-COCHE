@@ -46,9 +46,12 @@
 //range can be set by programming a (ZPOS and MPOS) or the MANG
 
 //MASK FOR STATUS REG
-#define MH_MASK  0x08   // Bit 3 (Magnet too High)
-#define ML_MASK  0x10   // Bit 4 (Magnet too Low)
-#define MD_MASK  0x20   // Bit 5 (Magnet Detected)
+typedef enum
+{
+     MH_MASK  = 0x08,   // Bit 3 (Magnet too High)
+     ML_MASK  = 0x10,   // Bit 4 (Magnet too Low)
+     MD_MASK  = 0x20,   // Bit 5 (Magnet Detected)
+} AS5600_status_magnet_t;
 
 
 //typedef enum {
