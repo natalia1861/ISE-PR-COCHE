@@ -48,9 +48,10 @@
 //MASK FOR STATUS REG
 typedef enum
 {
-     MH_MASK  = 0x08,   // Bit 3 (Magnet too High)
-     ML_MASK  = 0x10,   // Bit 4 (Magnet too Low)
-     MD_MASK  = 0x20,   // Bit 5 (Magnet Detected)
+     SM_Magnet_not_present = 0x00,   // 
+     SM_Magnet_high = 0x08,   // Bit 3 (Magnet too High)
+     SM_Magnet_low  = 0x10,   // Bit 4 (Magnet too Low)
+     SM_Magnet_Detected  = 0x20,   // Bit 5 (Magnet Detected)
 } AS5600_status_magnet_t;
 
 
@@ -62,13 +63,13 @@ typedef enum
 //} AS5600_Status;
 
 //CONFG MASKS
-#define PM_MASK 0x03   // 00 = NOM, 01 = LPM1, 10 = LPM2, 11 = LPM3
-#define HYST_MASK 0x0C   // 00 = OFF, 01 = 1 LSB, 10 = 2 LSBs, 11 = 3 LSBs
-#define OUTS_MASK 0x30   // 00 = analog (full range), 01 = analog (reduced range), 10 = digital PWM
-#define PWMF_MASK 0xC0   // 00 = 115 Hz, 01 = 230 Hz, 10 = 460 Hz, 11 = 920 Hz
-#define SF_MASK 0x300   // 00 = 16x, 01 = 8x, 10 = 4x, 11 = 2x
-#define FTH_MASK 0x1C00   // 000 = slow filter only, 001 = 6 LSBs, 010 = 7 LSBs, etc.
-#define WD_MASK 0x2000   // 0 = OFF, 1 = ON
+#define PM_MASK     0x03    // 00 = NOM, 01 = LPM1, 10 = LPM2, 11 = LPM3
+#define HYST_MASK   0x0C    // 00 = OFF, 01 = 1 LSB, 10 = 2 LSBs, 11 = 3 LSBs
+#define OUTS_MASK   0x30    // 00 = analog (full range), 01 = analog (reduced range), 10 = digital PWM
+#define PWMF_MASK   0xC0    // 00 = 115 Hz, 01 = 230 Hz, 10 = 460 Hz, 11 = 920 Hz
+#define SF_MASK     0x300   // 00 = 16x, 01 = 8x, 10 = 4x, 11 = 2x
+#define FTH_MASK    0x1C00  // 000 = slow filter only, 001 = 6 LSBs, 010 = 7 LSBs, etc.
+#define WD_MASK     0x2000  // 0 = OFF, 1 = ON
 
 //CONF REGISTER POSIBILITIES
 
@@ -146,7 +147,8 @@ typedef enum {
     AS5600_Conf_Error,          // 3
     AS5600_Read_Error,          // 4
     AS5600_Magnet_Too_Strong,   // 5
-    AS5600_Magnet_Not_Present   // 6
+    AS5600_Magnet_Not_Present,  // 6
+    AS5600_Magnet_Too_Weak      //7
 } AS5600_Errors;
 
 

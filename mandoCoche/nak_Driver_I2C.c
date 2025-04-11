@@ -17,7 +17,6 @@
 #include "RTE_Device.h"
 #include "stm32f4xx.h"       // Cabecera de CMSIS para acceso al NVIC y otros periféricos
 
-
 //definition of I2C depending if its active or not
 
  ARM_I2C_STATUS estado;
@@ -139,12 +138,14 @@ int32_t I2C_TestSensor (I2C_LINE I2C_line, uint32_t slave_address) {
     // Adquiere el mutex antes de acceder al bus I2C
 	if (osMutexAcquire(Drivers_I2C[I2C_line].mutex_I2C, osWaitForever) != osOK)
     {
+        osMutexRelease(Drivers_I2C[I2C_line].mutex_I2C);
         return ARM_DRIVER_ERROR;
     }
     
 	//Se adquiere el semaforo de transferencias
 	if (osSemaphoreAcquire(Drivers_I2C[I2C_line].transfer_I2C_semaphore, osWaitForever) != osOK)
     {
+        osSemaphoreRelease(Drivers_I2C[I2C_LINE_1].transfer_I2C_semaphore);
         osMutexRelease(Drivers_I2C[I2C_line].mutex_I2C);
         return ARM_DRIVER_ERROR;  // Error en la transmisión
     }
@@ -152,6 +153,7 @@ int32_t I2C_TestSensor (I2C_LINE I2C_line, uint32_t slave_address) {
      // Master command
     if (Drivers_I2C[I2C_line].driver->MasterTransmit(slave_address, NULL, 0, false) != ARM_DRIVER_OK)
     {
+        osSemaphoreRelease(Drivers_I2C[I2C_LINE_1].transfer_I2C_semaphore);
         osMutexRelease(Drivers_I2C[I2C_line].mutex_I2C);
         return ARM_DRIVER_ERROR;  // Error en la transmisión
     }
@@ -159,6 +161,7 @@ int32_t I2C_TestSensor (I2C_LINE I2C_line, uint32_t slave_address) {
 	//Se espera a que la transferencia se complete
     if (osSemaphoreAcquire(Drivers_I2C[I2C_line].transfer_I2C_semaphore, osWaitForever) != osOK)
     {
+        osSemaphoreRelease(Drivers_I2C[I2C_LINE_1].transfer_I2C_semaphore);
         osMutexRelease(Drivers_I2C[I2C_line].mutex_I2C);
         return ARM_DRIVER_ERROR;  // Error en la transmisión
     }
@@ -166,6 +169,7 @@ int32_t I2C_TestSensor (I2C_LINE I2C_line, uint32_t slave_address) {
     //Slave response
 	if (Drivers_I2C[I2C_line].driver->MasterReceive(slave_address, NULL, 0, false) != ARM_DRIVER_OK)
     {
+        osSemaphoreRelease(Drivers_I2C[I2C_LINE_1].transfer_I2C_semaphore);
         osMutexRelease(Drivers_I2C[I2C_line].mutex_I2C);
         return ARM_DRIVER_ERROR;  // Error en la recepción
     }
@@ -275,6 +279,7 @@ int32_t I2C_ReadRegister (I2C_LINE I2C_line, uint32_t SLAVE_ADDRESS, uint8_t reg
     // Adquirir el mutex antes de acceder al I2C
     if (osMutexAcquire(Drivers_I2C[I2C_line].mutex_I2C, osWaitForever) != osOK)
     {
+        osMutexRelease(Drivers_I2C[I2C_line].mutex_I2C); 
         return ARM_DRIVER_ERROR;
     }
     
@@ -297,6 +302,7 @@ int32_t I2C_ReadRegister (I2C_LINE I2C_line, uint32_t SLAVE_ADDRESS, uint8_t reg
     //Se espera a que la transferencia se complete
     if (osSemaphoreAcquire(Drivers_I2C[I2C_line].transfer_I2C_semaphore, osWaitForever) != osOK)
     {
+        osSemaphoreRelease(Drivers_I2C[I2C_LINE_1].transfer_I2C_semaphore);
         osMutexRelease(Drivers_I2C[I2C_line].mutex_I2C);
         return ARM_DRIVER_ERROR;
     }
@@ -323,11 +329,13 @@ int32_t I2C_ReadRegisters (I2C_LINE I2C_line, uint32_t SLAVE_ADDRESS, uint8_t re
     // Adquirir el mutex antes de acceder al I2C
 	if (osMutexAcquire(Drivers_I2C[I2C_line].mutex_I2C, osWaitForever) != osOK)
     {
+        osMutexRelease(Drivers_I2C[I2C_line].mutex_I2C); 
         return ARM_DRIVER_ERROR;  // Error en la transmisión
     }
 	//adquiere el semaforo de transferencias
     if (osSemaphoreAcquire(Drivers_I2C[I2C_line].transfer_I2C_semaphore, osWaitForever) != osOK)
     {
+        osSemaphoreRelease(Drivers_I2C[I2C_LINE_1].transfer_I2C_semaphore);
         osMutexRelease(Drivers_I2C[I2C_line].mutex_I2C);
         return ARM_DRIVER_ERROR;  // Error en la transmisión
     }
@@ -343,6 +351,7 @@ int32_t I2C_ReadRegisters (I2C_LINE I2C_line, uint32_t SLAVE_ADDRESS, uint8_t re
     //Se espera a que la transferencia se complete
     if (osSemaphoreAcquire(Drivers_I2C[I2C_line].transfer_I2C_semaphore, osWaitForever) != osOK)
     {
+        osSemaphoreRelease(Drivers_I2C[I2C_LINE_1].transfer_I2C_semaphore);
         osMutexRelease(Drivers_I2C[I2C_line].mutex_I2C);
         return ARM_DRIVER_ERROR;  // Error en la transmisión
     }
@@ -367,11 +376,13 @@ int32_t I2C_WriteRegister (I2C_LINE I2C_line, uint32_t SLAVE_ADDRESS, uint8_t re
 	// Adquirir el mutex antes de acceder al I2C
 	if (osMutexAcquire(Drivers_I2C[I2C_line].mutex_I2C, osWaitForever) != osOK)
     {
+        osMutexRelease(Drivers_I2C[I2C_line].mutex_I2C); 
         return ARM_DRIVER_ERROR;
     }
 	//adquiere el semaforo de transferencias
     if (osSemaphoreAcquire(Drivers_I2C[I2C_line].transfer_I2C_semaphore, osWaitForever) != osOK)
     {
+        osSemaphoreRelease(Drivers_I2C[I2C_LINE_1].transfer_I2C_semaphore);
         osMutexRelease(Drivers_I2C[I2C_line].mutex_I2C);
         return ARM_DRIVER_ERROR;  // Error en la transmisión
     }
@@ -387,4 +398,17 @@ int32_t I2C_WriteRegister (I2C_LINE I2C_line, uint32_t SLAVE_ADDRESS, uint8_t re
 
     estado = Drivers_I2C[I2C_line].driver->GetStatus();
     return ARM_DRIVER_OK;
+}
+
+void I2C_Scan(I2C_LINE I2C_line) {
+    printf("Escaneando bus I2C en la línea %d...\n", I2C_line);
+
+    for (uint8_t address = 0x08; address <= 0x77; address++) {
+        if (I2C_TestSensor(I2C_line, address) == ARM_DRIVER_OK) {  
+            printf("Dispositivo encontrado en la dirección: 0x%02X\n", address);
+        }
+    osDelay(10);
+    }
+    
+    printf("Escaneo completado.\n");
 }

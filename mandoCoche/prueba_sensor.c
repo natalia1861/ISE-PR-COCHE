@@ -4,19 +4,21 @@ osThreadId_t id_thread__sensor = NULL;
 osTimerId_t id_timer__testMagnet = NULL;
 AS5600_Errors AS5600_status;
 
-static void timer__testMagnet_callback (void *no_argument) {
+static void timer__testMagnet_callback (void *no_argument) 
+{
     osThreadFlagsSet(id_thread__sensor, FLAG_MP);
 }
 
-void thread__sennsor (void *argument) {
-    //do{
-    //AS5600_status = AS5600_Start(AS5600_I2C_Line);
-    //} while (AS5600_status != AS5600_OK);
+void thread__sennsor (void *argument) 
+{
+    AS5600_status = AS5600_Start(AS5600_I2C_Line);
+    I2C_Scan(AS5600_I2C_Line);
     id_timer__testMagnet = osTimerNew (timer__testMagnet_callback, osTimerPeriodic, NULL, NULL);
     osTimerStart(id_timer__testMagnet, 100);
-    for(;;) { 
-    osThreadFlagsWait(FLAG_MP, osFlagsWaitAny, osWaitForever);
-    AS5600_status = isMagnetPresent(AS5600_I2C_Line);
+    for(;;) 
+    { 
+        osThreadFlagsWait(FLAG_MP, osFlagsWaitAny, osWaitForever);
+        AS5600_status = isMagnetPresent(AS5600_I2C_Line);
     }
 }
 
