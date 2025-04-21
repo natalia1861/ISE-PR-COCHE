@@ -22,8 +22,6 @@ Objects/
 *.scvd
 *.dbgconf
 *.inc
-*.cgx
-*.cgi
 
 # Archivos específicos de Keil
 *.uvoptx
