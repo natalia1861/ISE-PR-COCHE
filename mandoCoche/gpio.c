@@ -19,6 +19,6 @@ void EXTI15_10_IRQHandler(void) {
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
   if(GPIO_Pin==GPIO_PIN_13){
-    RTC_set_Time(1,1,0,0,0,0);
+    //RTC_set_Time(1,1,0,0,0,0);
   }
 }

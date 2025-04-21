@@ -118,7 +118,7 @@ int main(void)
     //initModTemp();
     //tid_Thread_sensor = osThreadNew(thread__temp, NULL, NULL);
 
-    //Init_sensor();
+    Init_sensor();
   /* Start thread execution */
   osKernelStart();
 #endif
