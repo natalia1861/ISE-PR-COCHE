@@ -14,14 +14,20 @@
  * @stdperiph STM32F4xx/STM32F7xx HAL drivers required
  */
 /* Include core modules */
-#include "stm32fxxx_hal.h"
+#include "stm32f4xx_hal.h"
 /* Include my libraries here */
 #include "defines.h"
-#include "tm_stm32_disco.h"
-#include "tm_stm32_delay.h"
+//#include "tm_stm32_disco.h"
+//#include "tm_stm32_delay.h"
 #include "tm_stm32_nrf24l01.h"
-#include "tm_stm32_usart.h"
+//#include "tm_stm32_usart.h"
 #include "tm_stm32_exti.h"
+#include <stdio.h>
+#include <stdbool.h>
+
+//control de leds
+extern bool LED_Rrun;	//referenciado a HTTP_Server.c
+extern bool LED_Grun;	//referenciado a HTTP_Server.c
 
 /* Receiver address */
 uint8_t TxAddress[] = {
@@ -40,6 +46,10 @@ uint8_t MyAddress[] = {
 	0x7E
 };
 
+
+//Hilos y timers
+osThreadId_t id_thread__RF_TX = NULL;
+
 /* Data received and data for send */
 uint8_t dataIn[32];
 
@@ -51,21 +61,22 @@ uint8_t dataIn[32];
 TM_NRF24L01_Transmit_Status_t transmissionStatus;
 TM_NRF24L01_IRQ_t NRF_IRQ;
 
-int main(void) {
+void thread__test_transmissor_RF_RX(void) 
+{
 	/* Init system clock for maximum system speed */
-	TM_RCC_InitSystem();
+	//TM_RCC_InitSystem();
 	
 	/* Init HAL layer */
-	HAL_Init();
+	//HAL_Init();
 	
 	/* Init leds */
-	TM_DISCO_LedInit();
+	//TM_DISCO_LedInit();
 	
 	/* Init button */
-	TM_DISCO_ButtonInit();
+	//TM_DISCO_ButtonInit();
 	
 	/* Initialize USART, TX: PB6, RX: PB7 */
-	TM_USART_Init(USART1, TM_USART_PinsPack_2, 115200);
+	//TM_USART_Init(USART1, TM_USART_PinsPack_2, 115200);
 	
 	/* Initialize NRF24L01+ on channel 15 and 32bytes of payload */
 	/* By default 2Mbps data rate and 0dBm output power */
@@ -98,11 +109,14 @@ void TM_EXTI_Handler(uint16_t GPIO_Pin) {
 		
 		/* If data is ready on NRF24L01+ */
 		if (NRF_IRQ.F.DataReady) {
+            printf("Data Ready IRQ");
+
 			/* Get data from NRF24L01+ */
 			TM_NRF24L01_GetData(dataIn);
 			
 			/* Start send */
-			TM_DISCO_LedOn(LED_GREEN);
+			//TM_DISCO_LedOn(LED_GREEN);
+            LED_Grun = true;
 			
 			/* Send it back, NRF goes automatically to TX mode */
 			TM_NRF24L01_Transmit(dataIn);
@@ -113,8 +127,9 @@ void TM_EXTI_Handler(uint16_t GPIO_Pin) {
 				transmissionStatus = TM_NRF24L01_GetTransmissionStatus();
 			} while (transmissionStatus == TM_NRF24L01_Transmit_Status_Sending);
 			
+            LED_Grun = false;
 			/* Send done */
-			TM_DISCO_LedOff(LED_GREEN);
+			//TM_DISCO_LedOff(LED_GREEN);
 			
 			/* Go back to RX mode */
 			TM_NRF24L01_PowerUpRx();		
@@ -123,4 +138,8 @@ void TM_EXTI_Handler(uint16_t GPIO_Pin) {
 		/* Clear interrupts */
 		TM_NRF24L01_Clear_Interrupts();
 	}
+}
+
+void Init_RF_RX(void) {
+    id_thread__RF_RX = osThreadNew (thread__test_transmissor_RF_RX, NULL, NULL);
 }

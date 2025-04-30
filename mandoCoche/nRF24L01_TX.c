@@ -1,63 +1,3 @@
-////SPI init
-//extern ARM_DRIVER_SPI Driver_SPI4;
-//static ARM_DRIVER_SPI* SPIdrv = &Driver_SPI4;
-
-
-////Init SPI for W25Q16 memory
-//static void W25Q16_Init_SPI(void){
-//    __HAL_RCC_GPIOE_CLK_ENABLE();
-//    
-//    static GPIO_InitTypeDef GPIO_InitStruct_RFID;
-//    /*CS*/    //SPI_CS -- SPI_B_NSS       PE11
-//    __HAL_RCC_GPIOA_CLK_ENABLE();
-//    GPIO_InitStruct_RFID.Mode = GPIO_MODE_OUTPUT_PP;
-//    GPIO_InitStruct_RFID.Pull = GPIO_PULLUP;
-//    GPIO_InitStruct_RFID.Speed = GPIO_SPEED_FREQ_HIGH;
-//    GPIO_InitStruct_RFID.Pin = GPIO_PIN_11;
-//    HAL_GPIO_Init(GPIOE, &GPIO_InitStruct_RFID);
-//    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_SET);
-//    
-//    /*Reset*/   //SPI_MISO -- SPI_B_MISO  PA15
-//    __HAL_RCC_GPIOA_CLK_ENABLE();
-//    GPIO_InitStruct_RFID.Mode = GPIO_MODE_OUTPUT_PP;
-//    GPIO_InitStruct_RFID.Pull = GPIO_PULLUP;
-//    GPIO_InitStruct_RFID.Speed = GPIO_SPEED_FREQ_HIGH;
-//    GPIO_InitStruct_RFID.Pin = GPIO_PIN_15;
-//    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct_RFID);
-//    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_SET);
-//    
-//    /*SPI*/   
-//    SPIdrv->Initialize(SPI_callback);
-//    SPIdrv-> PowerControl(ARM_POWER_FULL);
-//    SPIdrv-> Control(ARM_SPI_MODE_MASTER | ARM_SPI_CPOL1_CPHA1 | ARM_SPI_MSB_LSB | ARM_SPI_DATA_BITS (8), 1000000);
-//    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_RESET);
-//    osDelay(1);
-//    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_SET);
-//    osDelay(1000);
-//  }
-//  
-//  static void SPI_callback(uint32_t event){
-//      switch (event) {
-//      case ARM_SPI_EVENT_TRANSFER_COMPLETE:
-//          osThreadFlagsSet(TID_FLASH, TRANSFER_COMPLETE);
-//          break;
-//      case ARM_SPI_EVENT_DATA_LOST:
-//          printf ("error");
-//          /*  Occurs in slave mode when data is requested/sent by master
-//              but send/receive/transfer operation has not been started
-//              and indicates that data is lost. Occurs also in master mode
-//              when driver cannot transfer data fast enough. */
-//          __breakpoint(0);  /* Error: Call debugger or replace with custom error handling */
-//          break;
-//      case ARM_SPI_EVENT_MODE_FAULT:
-//         printf ("error");
-//          /*  Occurs in master mode when Slave Select is deactivated and
-//              indicates Master Mode Fault. */
-//          __breakpoint(0);  /* Error: Call debugger or replace with custom error handling */
-//          break;
-//      }
-//  }
-
 /**
  * Keil project example for NRF24L01+ using interrupts
  *
@@ -106,6 +46,9 @@ uint8_t TxAddress[] = {
 	0x7E
 };
 
+//Hilos y timers
+osThreadId_t id_thread__RF_TX = NULL;
+
 /* Data received and data for send */
 uint8_t dataOut[32], dataIn[32];
 
@@ -121,7 +64,7 @@ TM_NRF24L01_IRQ_t NRF_IRQ;
 /* Buffer for strings */
 char str[40];
 
-void thread__test_transmissor_RF(void) 
+void thread__test_transmissor_RF_TX(void) 
 {
 	uint8_t printed = 0;
 	uint32_t started_time = 0;
@@ -211,8 +154,9 @@ void TM_EXTI_Handler(uint16_t GPIO_Pin)
 		/* Read interrupts */
 		TM_NRF24L01_Read_Interrupts(&NRF_IRQ);
 		
-		/* Check if transmitted OK */
-		if (NRF_IRQ.F.DataSent) {
+		/* Check if transmitted OK (received ack)*/
+		if (NRF_IRQ.F.DataSent) { 		
+			printf("Data Sent IRQ");		
 			/* Save transmission status */
 			transmissionStatus = TM_NRF24L01_Transmit_Status_Ok;
 			
@@ -225,6 +169,8 @@ void TM_EXTI_Handler(uint16_t GPIO_Pin)
 		
 		/* Check if max retransmission reached and last transmission failed */
 		if (NRF_IRQ.F.MaxRT) {
+			printf("Max RT IRQ");
+
 			/* Save transmission status */
 			transmissionStatus = TM_NRF24L01_Transmit_Status_Lost;
 			
@@ -236,9 +182,15 @@ void TM_EXTI_Handler(uint16_t GPIO_Pin)
 		}
 		
 		/* If data is ready on NRF24L01+ */
-		if (NRF_IRQ.F.DataReady) { //creo que se refiere a SPI
+		if (NRF_IRQ.F.DataReady) { //una vez se fue a RX, si recibe datos
+			printf("Data Ready IRQ");
+
 			/* Get data from NRF24L01+ */
 			TM_NRF24L01_GetData(dataIn);		
 		}
 	}
+}
+
+void Init_RF_TX(void) {
+    id_thread__RF_TX = osThreadNew (thread__test_transmissor_RF_TX, NULL, NULL);
 }
