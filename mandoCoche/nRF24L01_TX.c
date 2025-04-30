@@ -64,7 +64,7 @@ TM_NRF24L01_IRQ_t NRF_IRQ;
 /* Buffer for strings */
 char str[40];
 
-void thread__test_transmissor_RF_TX(void) 
+void thread__test_transmissor_RF_TX(void *argument) 
 {
 	uint8_t printed = 0;
 	uint32_t started_time = 0;
