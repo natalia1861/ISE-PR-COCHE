@@ -22,6 +22,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "nRF24L01_RX.h"
 
 #ifdef _RTE_
 #include "RTE_Components.h"             // Component selection
@@ -112,7 +113,7 @@ int main(void)
 
   /* Create thread functions that start executing, 
   Example: osThreadNew(app_main, NULL, NULL); */
-
+  Init_RF_RX();
   /* Start thread execution */
   osKernelStart();
 #endif

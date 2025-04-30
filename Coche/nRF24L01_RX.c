@@ -13,8 +13,13 @@
  * @packs     STM32F4xx/STM32F7xx Keil packs are requred with HAL driver support
  * @stdperiph STM32F4xx/STM32F7xx HAL drivers required
  */
+
+#include "nRF24L01_RX.h"
 /* Include core modules */
 #include "stm32f4xx_hal.h"
+#include "cmsis_os2.h"                  // ::CMSIS:RTOS2
+#include <stdio.h>
+#include <stdbool.h>
 /* Include my libraries here */
 #include "defines.h"
 //#include "tm_stm32_disco.h"
@@ -22,12 +27,9 @@
 #include "tm_stm32_nrf24l01.h"
 //#include "tm_stm32_usart.h"
 #include "tm_stm32_exti.h"
-#include <stdio.h>
-#include <stdbool.h>
 
-//control de leds
-extern bool LED_Rrun;	//referenciado a HTTP_Server.c
-extern bool LED_Grun;	//referenciado a HTTP_Server.c
+#include "nak_led.h"
+
 
 /* Receiver address */
 uint8_t TxAddress[] = {
@@ -48,7 +50,7 @@ uint8_t MyAddress[] = {
 
 
 //Hilos y timers
-osThreadId_t id_thread__RF_TX = NULL;
+osThreadId_t id_thread__RF_RX = NULL;
 
 /* Data received and data for send */
 uint8_t dataIn[32];
@@ -61,7 +63,7 @@ uint8_t dataIn[32];
 TM_NRF24L01_Transmit_Status_t transmissionStatus;
 TM_NRF24L01_IRQ_t NRF_IRQ;
 
-void thread__test_transmissor_RF_RX(void) 
+void thread__test_transmissor_RF_RX(void *argument) 
 {
 	/* Init system clock for maximum system speed */
 	//TM_RCC_InitSystem();
@@ -116,7 +118,7 @@ void TM_EXTI_Handler(uint16_t GPIO_Pin) {
 			
 			/* Start send */
 			//TM_DISCO_LedOn(LED_GREEN);
-            LED_Grun = true;
+            LED_GREEN_ON();
 			
 			/* Send it back, NRF goes automatically to TX mode */
 			TM_NRF24L01_Transmit(dataIn);
@@ -127,7 +129,7 @@ void TM_EXTI_Handler(uint16_t GPIO_Pin) {
 				transmissionStatus = TM_NRF24L01_GetTransmissionStatus();
 			} while (transmissionStatus == TM_NRF24L01_Transmit_Status_Sending);
 			
-            LED_Grun = false;
+            LED_GREEN_OFF();
 			/* Send done */
 			//TM_DISCO_LedOff(LED_GREEN);
 			
@@ -141,5 +143,6 @@ void TM_EXTI_Handler(uint16_t GPIO_Pin) {
 }
 
 void Init_RF_RX(void) {
+    LED_Initialize();
     id_thread__RF_RX = osThreadNew (thread__test_transmissor_RF_RX, NULL, NULL);
 }
