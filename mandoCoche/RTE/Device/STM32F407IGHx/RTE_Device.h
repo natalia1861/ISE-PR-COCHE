@@ -1015,7 +1015,7 @@
 
 // <e> I2C1 (Inter-integrated Circuit Interface 1) [Driver_I2C1]
 // <i> Configuration settings for Driver_I2C1 in component ::CMSIS Driver:I2C
-#define RTE_I2C1                        1
+#define RTE_I2C1                        0
 
 //   <o> I2C1_SCL Pin <0=>PB6 <1=>PB8
 #define RTE_I2C1_SCL_PORT_ID            1
@@ -1222,7 +1222,7 @@
 
 // <e> SPI1 (Serial Peripheral Interface 1) [Driver_SPI1]
 // <i> Configuration settings for Driver_SPI1 in component ::CMSIS Driver:SPI
-#define RTE_SPI1                        1
+#define RTE_SPI1                        0
 
 //   <o> SPI1_MISO Pin <0=>Not Used <1=>PA6 <2=>PB4
 #define RTE_SPI1_MISO_PORT_ID           0
@@ -1459,7 +1459,7 @@
 #define RTE_SPI3                        0
 
 //   <o> SPI3_MISO Pin <0=>Not Used <1=>PB4 <2=>PC11
-#define RTE_SPI3_MISO_PORT_ID           0
+#define RTE_SPI3_MISO_PORT_ID           2
 #if    (RTE_SPI3_MISO_PORT_ID == 0)
 #define RTE_SPI3_MISO                   0
 #elif  (RTE_SPI3_MISO_PORT_ID == 1)
@@ -1475,7 +1475,7 @@
 #endif
 
 //   <o> SPI3_MOSI Pin <0=>Not Used <1=>PB5 <2=>PC12 <3=>PD6
-#define RTE_SPI3_MOSI_PORT_ID           0
+#define RTE_SPI3_MOSI_PORT_ID           2
 #if    (RTE_SPI3_MOSI_PORT_ID == 0)
 #define RTE_SPI3_MOSI                   0
 #elif  (RTE_SPI3_MOSI_PORT_ID == 1)
@@ -1495,7 +1495,7 @@
 #endif
 
 //   <o> SPI3_SCK Pin <0=>PB3 <1=>PB12 <2=>PC10
-#define RTE_SPI3_SCL_PORT_ID            0
+#define RTE_SPI3_SCL_PORT_ID            2
 #if    (RTE_SPI3_SCL_PORT_ID == 0)
 #define RTE_SPI3_SCL_PORT               GPIOB
 #define RTE_SPI3_SCL_BIT                3

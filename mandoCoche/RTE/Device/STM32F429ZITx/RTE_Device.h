@@ -1456,10 +1456,10 @@
 
 // <e> SPI3 (Serial Peripheral Interface 3) [Driver_SPI3]
 // <i> Configuration settings for Driver_SPI3 in component ::CMSIS Driver:SPI
-#define RTE_SPI3                        0
+#define RTE_SPI3                        1
 
 //   <o> SPI3_MISO Pin <0=>Not Used <1=>PB4 <2=>PC11
-#define RTE_SPI3_MISO_PORT_ID           0
+#define RTE_SPI3_MISO_PORT_ID           2
 #if    (RTE_SPI3_MISO_PORT_ID == 0)
 #define RTE_SPI3_MISO                   0
 #elif  (RTE_SPI3_MISO_PORT_ID == 1)
@@ -1475,7 +1475,7 @@
 #endif
 
 //   <o> SPI3_MOSI Pin <0=>Not Used <1=>PB5 <2=>PC12 <3=>PD6
-#define RTE_SPI3_MOSI_PORT_ID           0
+#define RTE_SPI3_MOSI_PORT_ID           2
 #if    (RTE_SPI3_MOSI_PORT_ID == 0)
 #define RTE_SPI3_MOSI                   0
 #elif  (RTE_SPI3_MOSI_PORT_ID == 1)
@@ -1495,7 +1495,7 @@
 #endif
 
 //   <o> SPI3_SCK Pin <0=>PB3 <1=>PB12 <2=>PC10
-#define RTE_SPI3_SCL_PORT_ID            0
+#define RTE_SPI3_SCL_PORT_ID            2
 #if    (RTE_SPI3_SCL_PORT_ID == 0)
 #define RTE_SPI3_SCL_PORT               GPIOB
 #define RTE_SPI3_SCL_BIT                3
