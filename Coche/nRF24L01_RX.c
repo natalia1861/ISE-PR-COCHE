@@ -56,8 +56,8 @@ osThreadId_t id_thread__RF_RX = NULL;
 uint8_t dataIn[32];
 
 /* Interrupt pin settings */
-#define IRQ_PORT    GPIOA
-#define IRQ_PIN     GPIO_PIN_10
+#define IRQ_PORT    GPIOG
+#define IRQ_PIN     GPIO_PIN_3
 
 /* NRF transmission status */
 TM_NRF24L01_Transmit_Status_t transmissionStatus;
