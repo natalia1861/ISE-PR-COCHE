@@ -339,7 +339,7 @@
               <MiscControls></MiscControls>
               <Define>HSE_VALUE=8000000</Define>
               <Undefine></Undefine>
-              <IncludePath></IncludePath>
+              <IncludePath>..\Common</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -602,6 +602,36 @@
               <FileName>prueba_sensor.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\prueba_sensor.c</FilePath>
+            </File>
+            <File>
+              <FileName>tm_stm32_exti.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Common\tm_stm32_exti.c</FilePath>
+            </File>
+            <File>
+              <FileName>tm_stm32_gpio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Common\tm_stm32_gpio.c</FilePath>
+            </File>
+            <File>
+              <FileName>tm_stm32_nrf24l01.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Common\tm_stm32_nrf24l01.c</FilePath>
+            </File>
+            <File>
+              <FileName>tm_stm32_spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Common\tm_stm32_spi.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>NRF</GroupName>
+          <Files>
+            <File>
+              <FileName>nRF24L01_TX.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\nRF24L01_TX.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1219,6 +1249,36 @@
               <FileType>1</FileType>
               <FilePath>.\prueba_sensor.c</FilePath>
             </File>
+            <File>
+              <FileName>tm_stm32_exti.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Common\tm_stm32_exti.c</FilePath>
+            </File>
+            <File>
+              <FileName>tm_stm32_gpio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Common\tm_stm32_gpio.c</FilePath>
+            </File>
+            <File>
+              <FileName>tm_stm32_nrf24l01.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Common\tm_stm32_nrf24l01.c</FilePath>
+            </File>
+            <File>
+              <FileName>tm_stm32_spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Common\tm_stm32_spi.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>NRF</GroupName>
+          <Files>
+            <File>
+              <FileName>nRF24L01_TX.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\nRF24L01_TX.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1389,6 +1449,12 @@
               <RVCTZI>5</RVCTZI>
             </mem>
           </targetInfo>
+        </targetInfos>
+      </component>
+      <component Cbundle="ARM Compiler" Cclass="Compiler" Cgroup="I/O" Csub="STDOUT" Cvariant="ITM" Cvendor="Keil" Cversion="1.2.0" condition="ARMCC Cortex-M with ITM">
+        <package name="ARM_Compiler" schemaVersion="1.6.3" url="http://www.keil.com/pack/" vendor="Keil" version="1.6.3"/>
+        <targetInfos>
+          <targetInfo name="Debug"/>
         </targetInfos>
       </component>
       <component Cbundle="MDK-Pro" Cclass="Network" Cgroup="CORE" Cvariant="IPv4/IPv6 Debug" Cvendor="Keil" Cversion="7.14.0" condition="CMSIS Core with RTOS and Event Recorder">
