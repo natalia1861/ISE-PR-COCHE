@@ -1,9 +1,9 @@
-#include "stm32f4xx_hal.h"
 #include "nak_led.h"
+#include "Board_LED.h"
 
-#define LED_GREEN           0x01
-#define LED_BLUE            0x02
-#define LED_RED             0x04
+#define LED_GREEN           0x00
+#define LED_BLUE            0x01
+#define LED_RED             0x02
 
 void LED_GREEN_ON (void)
 {
@@ -33,4 +33,9 @@ void LED_RED_ON (void)
 void LED_RED_OFF(void)
 {
     LED_Off(LED_RED);
+}
+
+void INITIALIZE_LEDS (void)
+{
+    LED_Initialize();
 }

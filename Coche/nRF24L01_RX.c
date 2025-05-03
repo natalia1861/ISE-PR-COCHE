@@ -16,7 +16,6 @@
 
 #include "nRF24L01_RX.h"
 /* Include core modules */
-#include "stm32f4xx_hal.h"
 #include "cmsis_os2.h"                  // ::CMSIS:RTOS2
 #include <stdio.h>
 #include <stdbool.h>
@@ -27,7 +26,7 @@
 #include "tm_stm32_nrf24l01.h"
 //#include "tm_stm32_usart.h"
 #include "tm_stm32_exti.h"
-
+#include "gpio.h"
 #include "nak_led.h"
 
 
@@ -63,24 +62,14 @@ uint8_t dataIn[32];
 TM_NRF24L01_Transmit_Status_t transmissionStatus;
 TM_NRF24L01_IRQ_t NRF_IRQ;
 
+//DEBUG variables
+HAL_EXTI_Result_t status_IRQ = HAL_EXTI_Result_Not_Defined;
+
 void thread__test_transmissor_RF_RX(void *argument) 
 {
+    uint8_t status;
     printf("Initializing...");
-	/* Init system clock for maximum system speed */
-	//TM_RCC_InitSystem();
-	
-	/* Init HAL layer */
-	//HAL_Init();
-	
-	/* Init leds */
-	//TM_DISCO_LedInit();
-	
-	/* Init button */
-	//TM_DISCO_ButtonInit();
-	
-	/* Initialize USART, TX: PB6, RX: PB7 */
-	//TM_USART_Init(USART1, TM_USART_PinsPack_2, 115200);
-	
+
 	/* Initialize NRF24L01+ on channel 15 and 32bytes of payload */
 	/* By default 2Mbps data rate and 0dBm output power */
 	/* NRF24L01 goes to RX mode by default */
@@ -96,29 +85,43 @@ void thread__test_transmissor_RF_RX(void *argument)
 	TM_NRF24L01_SetTxAddress(TxAddress);
 	
 	/* Enable interrupts for NRF24L01+ IRQ pin */
-	TM_EXTI_Attach(IRQ_PORT, IRQ_PIN, TM_EXTI_Trigger_Falling);
+    init_nRF_IRQ();
+    
+    //Debug status
+    status = TM_NRF24L01_GetStatus();
+    printf("nRF initialized\n\n");
+    printf("STATUS register: 0x%02X\n\n", status);
 
-	while (1) {
-
+	while (1) 
+    {
+        //Únicamente espera interrupciones. El hilo se eliminará
+        //Se emplea para parpadear led azul para ver que este funcionando la placa
+        //revisar_NAK quitar y crear tarea independiente
+        LED_GREEN_ON();
+        osDelay(200);
+        LED_GREEN_OFF();
+        osDelay(200);
 	}
 }
 
 /* Interrupt handler */
-void TM_EXTI_Handler(uint16_t GPIO_Pin) {
+void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin) {
 	/* Check for proper interrupt pin */
-	if (GPIO_Pin == IRQ_PIN) {
+	if (GPIO_Pin == IRQ_PIN) 
+    {
+        printf("Note: Interrupcion PG3\n");
+        
 		/* Read interrupts */
 		TM_NRF24L01_Read_Interrupts(&NRF_IRQ);
 		
 		/* If data is ready on NRF24L01+ */
 		if (NRF_IRQ.F.DataReady) {
-            printf("Data Ready IRQ");
+			printf("IRQ: Data Ready IRQ\n");
 
 			/* Get data from NRF24L01+ */
 			TM_NRF24L01_GetData(dataIn);
 			
 			/* Start send */
-			//TM_DISCO_LedOn(LED_GREEN);
             LED_GREEN_ON();
 			
 			/* Send it back, NRF goes automatically to TX mode */
@@ -130,9 +133,8 @@ void TM_EXTI_Handler(uint16_t GPIO_Pin) {
 				transmissionStatus = TM_NRF24L01_GetTransmissionStatus();
 			} while (transmissionStatus == TM_NRF24L01_Transmit_Status_Sending);
 			
+            /* Send done */
             LED_GREEN_OFF();
-			/* Send done */
-			//TM_DISCO_LedOff(LED_GREEN);
 			
 			/* Go back to RX mode */
 			TM_NRF24L01_PowerUpRx();		
@@ -144,6 +146,6 @@ void TM_EXTI_Handler(uint16_t GPIO_Pin) {
 }
 
 void Init_RF_RX(void) {
-    LED_Initialize();
+    INITIALIZE_LEDS();
     id_thread__RF_RX = osThreadNew (thread__test_transmissor_RF_RX, NULL, NULL);
 }

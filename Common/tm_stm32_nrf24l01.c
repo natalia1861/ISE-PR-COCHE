@@ -425,30 +425,27 @@ void TM_NRF24L01_Transmit(uint8_t *data) {
 
 	/* Chip enable put to low, disable it */
 	NRF24L01_CE_LOW;
-    printf("1\n");
 	
 	/* Go to power up tx mode */
 	TM_NRF24L01_PowerUpTx();
-	printf("2\n");
+    
 	/* Clear TX FIFO from NRF24L01+ */
 	NRF24L01_FLUSH_TX;
-	printf("3\n");
+    
 	/* Send payload to nRF24L01+ */
 	NRF24L01_CSN_LOW;
-    printf("4\n");
+    
 	/* Send write payload command */
 	TM_SPI_Send(NRF24L01_SPI, NRF24L01_W_TX_PAYLOAD_MASK);
-    printf("5\n");
+    
 	/* Fill payload with data*/
 	TM_SPI_WriteMulti(NRF24L01_SPI, data, count);
-    printf("6\n");
+    
 	/* Disable SPI */
 	NRF24L01_CSN_HIGH;
-    printf("7\n");
 	
 	/* Send data! */
 	NRF24L01_CE_HIGH;
-    printf("8\n");
 }
 
 /* Used in RX mode.

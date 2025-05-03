@@ -1,9 +1,9 @@
 #include "gpio.h"
-#include "nRF24L01_TX.h"
+#include "nRF24L01_RX.h"
 
+	/**** Pulsador ****/
 static GPIO_InitTypeDef  GPIO_InitStruct;
 
-/***************PULSADOR****************/
 void init_pulsador(void){
 	__HAL_RCC_GPIOC_CLK_ENABLE();
 	HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
@@ -15,7 +15,6 @@ void init_pulsador(void){
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 }
 
-/***********nRF IRQ****************/
 void init_nRF_IRQ (void)
 {
     __HAL_RCC_GPIOG_CLK_ENABLE();
@@ -40,11 +39,11 @@ void EXTI3_IRQHandler(void) {
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
   if(GPIO_Pin==GPIO_PIN_13)
   {
-     /*Mandamos comando para despertar al microcontrolador del modo bajo consumo*/
+     /*Despertamos el microcontrolador del modo bajo consumo*/
     //RTC_set_Time(1,1,0,0,0,0);
   }
   if (GPIO_Pin == GPIO_PIN_3) 
   {
-    HAL_GPIO_EXTI_Callback_NRF(GPIO_Pin);
+    HAL_GPIO_EXTI_Callback_NRF(GPIO_Pin);  // o copia aqu� todo lo que ya tienes
   }
 }
