@@ -18,6 +18,7 @@
 #include "lcd.h"
 #include "RTC.h"
 #include "gpio.h"
+#include "nRF24L01_TX.h"
 
 #define FLAG_SERVER 0x01
 #define FLAG_RTC 0x02
@@ -128,10 +129,10 @@ static __NO_RETURN void Display (void *arg) {
 			 LCD_write(2, buf);
 			break;
 			case FLAG_RTC:
-			 sprintf (buf, "%-20s", rtc_date_time[0]);
-			 LCD_write(1, buf);
-			 sprintf (buf, "%-20s", rtc_date_time[1]);
-			 LCD_write(2, buf);
+//			 sprintf (buf, "%-20s", rtc_date_time[0]);
+//			 LCD_write(1, buf);
+//			 sprintf (buf, "%-20s", rtc_date_time[1]);
+//			 LCD_write(2, buf);
 			break;
 			
 		}
@@ -192,12 +193,13 @@ __NO_RETURN void app_main (void *arg) {
   
   init_RTC();
   //RTC_getTime_Date();
-  init_pulsador();
+  //init_pulsador();
   netInitialize ();
 
   TID_Led     = osThreadNew (BlinkLed, NULL, NULL);
   TID_Display = osThreadNew (Display,  NULL, NULL);
-	TID_RTC 		= osThreadNew (Rtc_func, NULL, NULL);
+  TID_RTC 		= osThreadNew (Rtc_func, NULL, NULL);
+  Init_RF_TX();
 
   osThreadExit();
 }

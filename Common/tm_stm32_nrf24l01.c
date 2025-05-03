@@ -24,10 +24,11 @@
  * |----------------------------------------------------------------------
  */
 #include "tm_stm32_nrf24l01.h"
+#include <stdio.h>
 
 /* NRF24L01+ registers*/
 #define NRF24L01_REG_CONFIG			0x00	//Configuration Register
-#define NRF24L01_REG_EN_AA			0x01	//Enable ‘Auto Acknowledgment’ Function
+#define NRF24L01_REG_EN_AA			0x01	//Enable ï¿½Auto Acknowledgmentï¿½ Function
 #define NRF24L01_REG_EN_RXADDR		0x02	//Enabled RX Addresses
 #define NRF24L01_REG_SETUP_AW		0x03	//Setup of Address Widths (common for all data pipes)
 #define NRF24L01_REG_SETUP_RETR		0x04	//Setup of Automatic Retransmission
@@ -418,29 +419,36 @@ void TM_NRF24L01_PowerDown(void) {
 /* Write TX-payload: 1 ? 32 bytes. A write operation
  * always starts at byte 0 used in TX payload.*/
 
+ //revisar_NAK quitar los printf
 void TM_NRF24L01_Transmit(uint8_t *data) {
 	uint8_t count = TM_NRF24L01_Struct.PayloadSize;
 
 	/* Chip enable put to low, disable it */
 	NRF24L01_CE_LOW;
+    printf("1\n");
 	
 	/* Go to power up tx mode */
 	TM_NRF24L01_PowerUpTx();
-	
+	printf("2\n");
 	/* Clear TX FIFO from NRF24L01+ */
 	NRF24L01_FLUSH_TX;
-	
+	printf("3\n");
 	/* Send payload to nRF24L01+ */
 	NRF24L01_CSN_LOW;
+    printf("4\n");
 	/* Send write payload command */
 	TM_SPI_Send(NRF24L01_SPI, NRF24L01_W_TX_PAYLOAD_MASK);
+    printf("5\n");
 	/* Fill payload with data*/
 	TM_SPI_WriteMulti(NRF24L01_SPI, data, count);
+    printf("6\n");
 	/* Disable SPI */
 	NRF24L01_CSN_HIGH;
+    printf("7\n");
 	
 	/* Send data! */
 	NRF24L01_CE_HIGH;
+    printf("8\n");
 }
 
 /* Used in RX mode.

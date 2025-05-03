@@ -65,6 +65,7 @@ TM_NRF24L01_IRQ_t NRF_IRQ;
 
 void thread__test_transmissor_RF_RX(void *argument) 
 {
+    printf("Initializing...");
 	/* Init system clock for maximum system speed */
 	//TM_RCC_InitSystem();
 	

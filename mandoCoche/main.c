@@ -114,11 +114,11 @@ int main(void)
   osKernelInitialize ();
 
   /* Create application main thread */
-  //osThreadNew(app_main, NULL, &app_main_attr);
+  osThreadNew(app_main, NULL, &app_main_attr);
     //Init_temp_sensor();
     //initModTemp();
     //tid_Thread_sensor = osThreadNew(thread__temp, NULL, NULL);
-    Init_RF_TX();
+   //Init_RF_TX();
     //Init_sensor();
   /* Start thread execution */
   osKernelStart();
