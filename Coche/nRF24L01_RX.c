@@ -53,6 +53,7 @@ osThreadId_t id_thread__RF_RX = NULL;
 
 /* Data received and data for send */
 uint8_t dataIn[32];
+uint8_t dataOut[5] = {0};
 
 /* Interrupt pin settings */
 #define IRQ_PORT    GPIOG
@@ -114,7 +115,9 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin) {
 		/* Read interrupts */
 		TM_NRF24L01_Read_Interrupts(&NRF_IRQ);
 		
-		/* If data is ready on NRF24L01+ */
+        /* If data is ready on NRF24L01+*/
+            //Si en modo RX: se activará si recibe datos normales. 
+            //Si en modo TX: se activará si recibe ACK Payload .
 		if (NRF_IRQ.F.DataReady) {
 			printf("IRQ: Data Ready IRQ\n");
 
@@ -124,14 +127,17 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin) {
 			/* Start send */
             LED_GREEN_ON();
 			
-			/* Send it back, NRF goes automatically to TX mode */
-			TM_NRF24L01_Transmit(dataIn);
-			
-			/* Wait for data to be sent */
-			do {
-				/* Wait till sending */
-				transmissionStatus = TM_NRF24L01_GetTransmissionStatus();
-			} while (transmissionStatus == TM_NRF24L01_Transmit_Status_Sending);
+            dataOut[0]++;
+            TM_NRF24L01_WriteAckPayload(dataOut, sizeof(dataOut));
+            
+//			/* Send it back, NRF goes automatically to TX mode */
+//			TM_NRF24L01_Transmit(dataIn);
+//			
+//			/* Wait for data to be sent */
+//			do {
+//				/* Wait till sending */
+//				transmissionStatus = TM_NRF24L01_GetTransmissionStatus();
+//			} while (transmissionStatus == TM_NRF24L01_Transmit_Status_Sending);
 			
             /* Send done */
             LED_GREEN_OFF();

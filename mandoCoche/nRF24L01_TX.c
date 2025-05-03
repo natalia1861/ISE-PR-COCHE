@@ -186,7 +186,7 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin)
 		/* Check if transmitted OK (received ack)*/
 		if (NRF_IRQ.F.DataSent) 
         { 		
-			printf("IRQ: Data Sent IRQ\n");		
+			printf("IRQ: ACK Received\n");		
 			/* Save transmission status */
 			transmissionStatus = TM_NRF24L01_Transmit_Status_Ok;
 			
@@ -212,13 +212,17 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin)
 			TM_NRF24L01_PowerUpRx();
 		}
 		
-		/* If data is ready on NRF24L01+ */
+		/* If data is ready on NRF24L01+*/
+            //Si en modo RX: se activará si recibe datos normales. 
+            //Si en modo TX: se activará si recibe ACK Payload .
 		if (NRF_IRQ.F.DataReady) 
         { //una vez se fue a RX, si recibe datos
 			printf("IRQ: Data Ready IRQ\n");
 
-			/* Get data from NRF24L01+ */
-			TM_NRF24L01_GetData(dataIn);		
+			/* Get data from RX FIFO NRF24L01+ */
+			TM_NRF24L01_GetData(dataIn);
+
+            printf ("Data received: %d\n", dataIn[0]);
 		}
 	}
 }

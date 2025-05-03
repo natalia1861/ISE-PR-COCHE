@@ -298,6 +298,10 @@ void TM_NRF24L01_Transmit(uint8_t *data);
  *            - 0: No data available for receive in bufferReturns
  *            - > 0: Data is ready to be collected
  */
+ 
+void TM_NRF24L01_WriteAckPayload(uint8_t* data, uint8_t length); //revisar_NAK añadir comentarios
+
+     
 uint8_t TM_NRF24L01_DataReady(void);
 
 /**
