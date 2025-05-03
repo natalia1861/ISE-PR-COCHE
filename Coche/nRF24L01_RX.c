@@ -97,9 +97,9 @@ void thread__test_transmissor_RF_RX(void *argument)
         //Únicamente espera interrupciones. El hilo se eliminará
         //Se emplea para parpadear led azul para ver que este funcionando la placa
         //revisar_NAK quitar y crear tarea independiente
-        LED_GREEN_ON();
+        LED_BLUE_ON();
         osDelay(200);
-        LED_GREEN_OFF();
+        LED_BLUE_OFF();
         osDelay(200);
 	}
 }
