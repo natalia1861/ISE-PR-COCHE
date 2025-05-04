@@ -165,7 +165,7 @@
 
 /*Feature register bits - NRF24L01_REG_FEATURE */
 #define NRF24L01_FT_EN_DPL		2	//Enables Dynamic Payload Length
-#define NRF24L01_FT_ACK_PAY		1	//Enables Payload with ACK
+#define NRF24L01_FT_EN_ACK_PAY	1	//Enables Payload with ACK
 #define NRF24L01_FT_EN_DYN_ACK	0	//Enables the W_TX_PAYLOAD_NOACK command
 
 //OTHER INFORMATION
@@ -269,13 +269,13 @@ uint8_t TM_NRF24L01_Init(uint8_t channel, uint8_t payload_size) {
 	/* Channel select */
 	TM_NRF24L01_SetChannel(channel);
 	
-	/* Set pipeline to max possible 32 bytes */
-	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P0, TM_NRF24L01_Struct.PayloadSize); // Auto-ACK pipe
-	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P1, TM_NRF24L01_Struct.PayloadSize); // Data payload pipe
-	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P2, TM_NRF24L01_Struct.PayloadSize);
-	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P3, TM_NRF24L01_Struct.PayloadSize);
-	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P4, TM_NRF24L01_Struct.PayloadSize);
-	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P5, TM_NRF24L01_Struct.PayloadSize);
+//	/* Set pipeline to max possible 32 bytes */
+//	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P0, TM_NRF24L01_Struct.PayloadSize); // Auto-ACK pipe
+//	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P1, TM_NRF24L01_Struct.PayloadSize); // Data payload pipe
+//	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P2, TM_NRF24L01_Struct.PayloadSize);
+//	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P3, TM_NRF24L01_Struct.PayloadSize);
+//	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P4, TM_NRF24L01_Struct.PayloadSize);
+//	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P5, TM_NRF24L01_Struct.PayloadSize);
 	
 	/* Set RF settings (2mbps, output power) */
 	TM_NRF24L01_SetRF(TM_NRF24L01_Struct.DataRate, TM_NRF24L01_Struct.OutPwr);
@@ -312,7 +312,6 @@ uint8_t TM_NRF24L01_Init(uint8_t channel, uint8_t payload_size) {
 	/* Dynamic length configurations: No dynamic length */
 	TM_NRF24L01_WriteRegister(NRF24L01_REG_DYNPD, (0 << NRF24L01_DPL_P0) | (0 << NRF24L01_DPL_P1) | (0 << NRF24L01_DPL_P2) | (0 << NRF24L01_DPL_P3) | (0 << NRF24L01_DPL_P4) | (0 << NRF24L01_DPL_P5));
 	#endif
-
 	 
 	/* Clear FIFOs */
 	NRF24L01_FLUSH_TX;
@@ -477,6 +476,8 @@ void TM_NRF24L01_WriteAckPayload(uint8_t* data, uint8_t length) {
  * FIFO after it is read. Used in RX mode.*/
 
 //Funcion que lee los datos recibidos. Se llama en modo RX. Vacia la cola RX tras leerlos.
+//Tanto para leer el payload normal como el del ACK.
+
 void TM_NRF24L01_GetData(uint8_t* data) {
 	/* Pull down chip select */
 	NRF24L01_CSN_LOW;
@@ -502,11 +503,20 @@ uint8_t TM_NRF24L01_DataReady(void) {
 }
 
 //Funcion que mira si la RX FIFO esta vacia o no
-//0: empty
-//1: not empty
+//0: not empty
+//1: empty
+
 uint8_t TM_NRF24L01_RxFifoEmpty(void) {
 	uint8_t reg = TM_NRF24L01_ReadRegister(NRF24L01_REG_FIFO_STATUS);
 	return NRF24L01_CHECK_BIT(reg, NRF24L01_RX_EMPTY);
+}
+
+//Funcion que mira si la RX FIFO esta vacia o no
+//0: not empty
+//1: empty
+uint8_t TM_NRF24L01_TxFifoEmpty(void) {
+	uint8_t reg = TM_NRF24L01_ReadRegister(NRF24L01_REG_FIFO_STATUS);
+	return NRF24L01_CHECK_BIT(reg, NRF24L01_TX_EMPTY);
 }
 
 //Funcion que devuelve el registro status del sensor.

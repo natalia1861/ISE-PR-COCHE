@@ -123,7 +123,8 @@ void thread__test_transmissor_RF_TX(void *argument)
 		/* Reset printed flag */
 		printed = 0;
         
-        printf("Status Before = %d\n", transmissionStatus);
+        status = TM_NRF24L01_GetStatus();
+        printf("Status Before = 0x%02X\n", status);
         
         // Fuerza el handler manualmente (solo para probar)
         //TM_EXTI_Handler(GPIO_PIN_3);
@@ -136,7 +137,8 @@ void thread__test_transmissor_RF_TX(void *argument)
         {
 			/* Print time in ms */
             printf("Check tranmision after : %d seconds\n", (HAL_GetTick() - started_time));
-			printf("Status after IRQ = %d\n", transmissionStatus);
+            status = TM_NRF24L01_GetStatus();
+			printf("Status after IRQ = 0x%02X\n", status);
 
 			/* Transmission was OK */
 			if (transmissionStatus == TM_NRF24L01_Transmit_Status_Ok) {
