@@ -184,7 +184,7 @@
 /* Configuration */
 #define NRF24L01_CONFIG			((1 << NRF24L01_EN_CRC) | (0 << NRF24L01_CRCO))
 
-/* Instruction Mnemonics - COMMANDS*/
+/***********************Instruction Mnemonics - COMMANDS***********************************************************/
 #define NRF24L01_REGISTER_MASK				0x1F
 
 //Last 5 bits will indicate reg. address
@@ -453,20 +453,22 @@ void TM_NRF24L01_Transmit(uint8_t *data) {
  * Maximum three ACK packet payloads can be pending. Payloads with same PPP are handled using first in - first out principle. 
  * Write payload: 1? 32 bytes. A write operation always starts at byte 0.*/
 
-//Funcion que VACIA la cola de TX FIFO (en PRX) y añade un PAYLOAD.
-void TM_NRF24L01_WriteAckPayload(uint8_t* data, uint8_t length) {
-	uint8_t pipe = 0;
-
+//Funcion que VACIA la cola de TX FIFO (en PRX) y aniade un PAYLOAD.
+void TM_NRF24L01_WriteAckPayload(uint8_t pipe, uint8_t* data, uint8_t length) {
 	/* Clear TX FIFO from NRF24L01+ */
 	NRF24L01_FLUSH_TX;
+    
+	printf("After flush TX FIFO: 0x%02X\n", TM_NRF24L01_TxFifoEmpty());
 	
 	/* Send payload to nRF24L01+ */
 	NRF24L01_CSN_LOW;
 	
 	/* Send write payload command */
 	TM_SPI_Send(NRF24L01_SPI, NRF24L01_W_ACK_PAYLOAD_MASK | (pipe & 0x05));
+
 	/* Fill payload with data*/
 	TM_SPI_WriteMulti(NRF24L01_SPI, data, length);
+
 	/* Disable SPI */
 	NRF24L01_CSN_HIGH;
 }
@@ -638,7 +640,7 @@ void TM_NRF24L01_SetRF(TM_NRF24L01_DataRate_t DataRate, TM_NRF24L01_OutputPower_
 	TM_NRF24L01_WriteRegister(NRF24L01_REG_RF_SETUP, tmp);
 }
 
-//Funcion que devuelve el estado del registro status del sensor
+//Funcion que devuelve el estado del registro status del sensor (principalmente orientado a IRQs)
 uint8_t TM_NRF24L01_Read_Interrupts(TM_NRF24L01_IRQ_t* IRQ) {
 	IRQ->Status = TM_NRF24L01_GetStatus();
 	return IRQ->Status;

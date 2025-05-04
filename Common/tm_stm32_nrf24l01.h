@@ -299,8 +299,9 @@ void TM_NRF24L01_Transmit(uint8_t *data);
  *            - > 0: Data is ready to be collected
  */
  
-void TM_NRF24L01_WriteAckPayload(uint8_t* data, uint8_t length); //revisar_NAK añadir comentarios
-
+void TM_NRF24L01_WriteAckPayload(uint8_t pipe, uint8_t* data, uint8_t length); //revisar
+uint8_t TM_NRF24L01_TxFifoEmpty(void); //revisar tambien
+uint8_t TM_NRF24L01_ReadRegister(uint8_t reg); //quitar
      
 uint8_t TM_NRF24L01_DataReady(void);
 

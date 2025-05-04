@@ -68,7 +68,6 @@ HAL_EXTI_Result_t status_IRQ = HAL_EXTI_Result_Not_Defined;
 
 void thread__test_transmissor_RF_RX(void *argument) 
 {
-    uint8_t status;
     printf("Initializing...");
 
 	/* Initialize NRF24L01+ on channel 15 and 32bytes of payload */
@@ -89,9 +88,12 @@ void thread__test_transmissor_RF_RX(void *argument)
     init_nRF_IRQ();
     
     //Debug status
-    status = TM_NRF24L01_GetStatus();
     printf("nRF initialized\n\n");
-    printf("STATUS register: 0x%02X\n\n", status);
+    printf("STATUS register: 0x%02X\n\n", TM_NRF24L01_GetStatus());
+    
+    printf("FEATURE register: 0x%02X\n\n", TM_NRF24L01_ReadRegister(0x1D));
+    
+    printf("DYNPD register: 0x%02X\n\n", TM_NRF24L01_ReadRegister(0x1C));
 
 	while (1) 
     {
@@ -110,7 +112,7 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin) {
 	/* Check for proper interrupt pin */
 	if (GPIO_Pin == IRQ_PIN) 
     {
-        printf("Note: Interrupcion PG3\n");
+        printf("\nNote: Interrupcion PG3 at: %d\n", HAL_GetTick());
         
 		/* Read interrupts */
 		TM_NRF24L01_Read_Interrupts(&NRF_IRQ);
@@ -127,8 +129,8 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin) {
 			/* Start send */
             LED_GREEN_ON();
 			
-            dataOut[0]++;
-            TM_NRF24L01_WriteAckPayload(dataOut, sizeof(dataOut));
+            dataOut[0] = dataOut[0]+1;
+            TM_NRF24L01_WriteAckPayload(NRF_IRQ.F.RX_P_NO, dataOut, sizeof(dataOut));
             
 //			/* Send it back, NRF goes automatically to TX mode */
 //			TM_NRF24L01_Transmit(dataIn);
@@ -142,8 +144,12 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin) {
             /* Send done */
             LED_GREEN_OFF();
 			
+			//Miramos si la cola esta llena o vacia
+			printf("TX FIFO: 0x%02X\n", TM_NRF24L01_TxFifoEmpty());
+
 			/* Go back to RX mode */
-			TM_NRF24L01_PowerUpRx();		
+			//TM_NRF24L01_PowerUpRx();	
+			printf("After Transmission status: 0x%02X\n", TM_NRF24L01_GetStatus());
 		}
 		
 		/* Clear interrupts */
