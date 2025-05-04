@@ -479,6 +479,7 @@ void TM_NRF24L01_WriteAckPayload(uint8_t pipe, uint8_t* data, uint8_t length) {
 
 //Funcion que lee los datos recibidos. Se llama en modo RX. Vacia la cola RX tras leerlos.
 //Tanto para leer el payload normal como el del ACK.
+//Se tienen que mandar datos "basura" para que el sensor responda con los datos reales
 
 void TM_NRF24L01_GetData(uint8_t* data) {
 	/* Pull down chip select */
