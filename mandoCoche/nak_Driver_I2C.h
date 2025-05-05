@@ -67,4 +67,5 @@ int32_t I2C_ReadRegister (I2C_LINE I2C_line, uint32_t SLAVE_ADDRESS, uint8_t reg
 int32_t I2C_ReadRegisters (I2C_LINE I2C_line, uint32_t SLAVE_ADDRESS, uint8_t reg, uint8_t* data, uint8_t size);
 int32_t I2C_WriteRegister (I2C_LINE I2C_line, uint32_t SLAVE_ADDRESS, uint8_t reg, uint8_t data);
 int32_t I2C_TestSensor (I2C_LINE I2C_line, uint32_t slave_address);
+void I2C_Scan(I2C_LINE I2C_line);
 #endif

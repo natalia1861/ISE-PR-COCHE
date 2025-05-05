@@ -2,7 +2,7 @@
   ******************************************************************************
   * @file    Templates/Src/main.c 
   * @author  MCD Application Team
-  * @brief   Main program body
+  * @brief   STM32F4xx HAL API Template project 
   *
   * @note    modified by ARM
   *          The modifications allow to use this file as User Code Template
@@ -10,42 +10,26 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2017 STMicroelectronics</center></h2>
+  * Copyright (c) 2017 STMicroelectronics.
+  * All rights reserved.
   *
-  * Redistribution and use in source and binary forms, with or without modification,
-  * are permitted provided that the following conditions are met:
-  *   1. Redistributions of source code must retain the above copyright notice,
-  *      this list of conditions and the following disclaimer.
-  *   2. Redistributions in binary form must reproduce the above copyright notice,
-  *      this list of conditions and the following disclaimer in the documentation
-  *      and/or other materials provided with the distribution.
-  *   3. Neither the name of STMicroelectronics nor the names of its contributors
-  *      may be used to endorse or promote products derived from this software
-  *      without specific prior written permission.
-  *
-  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-  * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "lcd.h"
-#include "adc.h"
+#include "nRF24L01_RX.h"
+
+#ifdef _RTE_
+#include "RTE_Components.h"             // Component selection
+#endif
+#ifdef RTE_CMSIS_RTOS2                  // when RTE component CMSIS RTOS2 is used
 #include "cmsis_os2.h"                  // ::CMSIS:RTOS2
-#include "rtc.h"
-#include "Thread.h"
-#include "i2c.h"
-#include "sensorDistancia.h"
+#endif
 
 #ifdef RTE_CMSIS_RTOS2_RTX5
 /**
@@ -68,6 +52,15 @@ uint32_t HAL_GetTick (void) {
   return ++ticks;
 }
 
+/**
+  * Override default HAL_InitTick function
+  */
+HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority) {
+  
+  UNUSED(TickPriority);
+
+  return HAL_OK;
+}
 #endif
 
 /** @addtogroup STM32F4xx_HAL_Examples
@@ -87,20 +80,12 @@ static void SystemClock_Config(void);
 static void Error_Handler(void);
 
 /* Private functions ---------------------------------------------------------*/
+
 /**
   * @brief  Main program
   * @param  None
   * @retval None
   */
-	
-void LED_Init(void);
-void RGB_mbed(void);
-void LED_Init(void);
-void config_pulsador(void);
-extern VL53L0X sensor1;
-extern I2C_HandleTypeDef hi2c2;
-void InitVL53(void); 
-
 int main(void)
 {
 
@@ -121,28 +106,14 @@ int main(void)
 
   /* Add your application code here
      */
-   LED_Init();
-	 RGB_mbed();
-   LED_Init();
-	 config_pulsador();
-	 MX_I2C2_Init();
-	 HAL_I2C_MspInit(&hi2c2);
-	 InitVL53();
-	
-	 
-	HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);	
+
 #ifdef RTE_CMSIS_RTOS2
   /* Initialize CMSIS-RTOS2 */
   osKernelInitialize ();
 
-  /* Create application main thread */
-  //osThreadNew(app_main, NULL, &app_main_attr);
-    //Init_temp_sensor();
-    //initModTemp();
-    //tid_Thread_sensor = osThreadNew(thread__temp, NULL, NULL);
-
-    //Init_sensor();
-    //Init_Thread();
+  /* Create thread functions that start executing, 
+  Example: osThreadNew(app_main, NULL, NULL); */
+  Init_RF_RX();
   /* Start thread execution */
   osKernelStart();
 #endif
@@ -155,7 +126,7 @@ int main(void)
 
 /**
   * @brief  System Clock Configuration
-  *         The system Clock is configured as follow :
+  *         The system Clock is configured as follow : 
   *            System Clock source            = PLL (HSE)
   *            SYSCLK(Hz)                     = 168000000
   *            HCLK(Hz)                       = 168000000
@@ -191,8 +162,8 @@ static void SystemClock_Config(void)
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLM = 4U;
-  RCC_OscInitStruct.PLL.PLLN = 168U;
+  RCC_OscInitStruct.PLL.PLLM = 8U;
+  RCC_OscInitStruct.PLL.PLLN = 336;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 7U;
   if(HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
@@ -201,13 +172,13 @@ static void SystemClock_Config(void)
     Error_Handler();
   }
 
-  /* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2
+  /* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2 
      clocks dividers */
   RCC_ClkInitStruct.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;  
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;  
   if(HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK)
   {
     /* Initialization Error */
@@ -256,66 +227,7 @@ void assert_failed(uint8_t* file, uint32_t line)
 }
 
 #endif
-void LED_Init(void) { //configuracion de los leds pin0=verde pin14=rojo
-GPIO_InitTypeDef GPIO_InitStruct;
-  __HAL_RCC_GPIOB_CLK_ENABLE();
 
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  
-  GPIO_InitStruct.Pin =GPIO_PIN_0 | GPIO_PIN_7 | GPIO_PIN_14;
-  HAL_GPIO_Init(GPIOB,&GPIO_InitStruct);
-}
-
-void config_pulsador(){
-	//CONFIGURACION PULSADOR USER
-
- GPIO_InitTypeDef GPIO_InitStruct;
-	__HAL_RCC_GPIOC_CLK_ENABLE();
-  
-  //Configure GPIO pin :PC13 - USER BUTTON
-    GPIO_InitStruct.Pin = GPIO_PIN_13;
-    GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING; //Flancos de subida
-    GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-   
-   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
- 
-}
-
-//config RGB
-void RGB_mbed(void){
-	
-	 GPIO_InitTypeDef GPIO_InitStruct;
- __HAL_RCC_GPIOD_CLK_ENABLE();	
- 
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  
-  GPIO_InitStruct.Pin = GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13; //BGR
-  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-	
-	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_11, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(GPIOD,GPIO_PIN_12, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(GPIOD,GPIO_PIN_13, GPIO_PIN_SET);
-
-}
-
-void InitVL53(void){
-  setAddress(&sensor1,0x29);//Default
-  osDelay(200);//Wait sensor startup
-  if(!init(&sensor1,true)) //Returns 0 if fail, 1 if success.
-    {
-//	snprintf(msg,sizeof(msg),"Failed to initialize\r\n");
-//	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), 0xFFFF);
-    }
-  setVcselPulsePeriod (& sensor1, VcselPeriodPreRange, 16);
-  setTimeout(&sensor1,500); //Max time before timeout.
-  setAddress(&sensor1,0x04); //New addr
-	osDelay(5200);
-}
 /**
   * @}
   */ 
@@ -323,5 +235,3 @@ void InitVL53(void){
 /**
   * @}
   */ 
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

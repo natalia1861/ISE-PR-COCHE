@@ -45,7 +45,7 @@
 
 // <e> USART1 (Universal synchronous asynchronous receiver transmitter) [Driver_USART1]
 // <i> Configuration settings for Driver_USART1 in component ::CMSIS Driver:USART
-#define RTE_USART1                      0
+#define RTE_USART1                      1
 
 //   <o> USART1_TX Pin <0=>Not Used <1=>PA9 <2=>PA15 <3=>PB6
 #define RTE_USART1_TX_ID                0
@@ -279,10 +279,10 @@
 
 // <e> USART3 (Universal synchronous asynchronous receiver transmitter) [Driver_USART3]
 // <i> Configuration settings for Driver_USART3 in component ::CMSIS Driver:USART
-#define RTE_USART3                      1
+#define RTE_USART3                      0
 
 //   <o> USART3_TX Pin <0=>Not Used <1=>PB10 <2=>PC10 <3=>PD8
-#define RTE_USART3_TX_ID                3
+#define RTE_USART3_TX_ID                0
 #if    (RTE_USART3_TX_ID == 0)
 #define RTE_USART3_TX                   0
 #elif  (RTE_USART3_TX_ID == 1)
@@ -302,7 +302,7 @@
 #endif
 
 //   <o> USART3_RX Pin <0=>Not Used <1=>PB11 <2=>PC11 <3=>PD9 <4=>PC5
-#define RTE_USART3_RX_ID                3
+#define RTE_USART3_RX_ID                0
 #if    (RTE_USART3_RX_ID == 0)
 #define RTE_USART3_RX                   0
 #elif  (RTE_USART3_RX_ID == 1)
@@ -1018,7 +1018,7 @@
 #define RTE_I2C1                        1
 
 //   <o> I2C1_SCL Pin <0=>PB6 <1=>PB8
-#define RTE_I2C1_SCL_PORT_ID            1
+#define RTE_I2C1_SCL_PORT_ID            0
 #if    (RTE_I2C1_SCL_PORT_ID == 0)
 #define RTE_I2C1_SCL_PORT               GPIOB
 #define RTE_I2C1_SCL_BIT                6
@@ -1030,7 +1030,7 @@
 #endif
 
 //   <o> I2C1_SDA Pin <0=>PB7 <1=>PB9
-#define RTE_I2C1_SDA_PORT_ID            1
+#define RTE_I2C1_SDA_PORT_ID            0
 #if    (RTE_I2C1_SDA_PORT_ID == 0)
 #define RTE_I2C1_SDA_PORT               GPIOB
 #define RTE_I2C1_SDA_BIT                7
@@ -1241,7 +1241,7 @@
 #endif
 
 //   <o> SPI1_MOSI Pin <0=>Not Used <1=>PA7 <2=>PB5
-#define RTE_SPI1_MOSI_PORT_ID           2
+#define RTE_SPI1_MOSI_PORT_ID           0
 #if    (RTE_SPI1_MOSI_PORT_ID == 0)
 #define RTE_SPI1_MOSI                   0
 #elif  (RTE_SPI1_MOSI_PORT_ID == 1)
@@ -1456,10 +1456,10 @@
 
 // <e> SPI3 (Serial Peripheral Interface 3) [Driver_SPI3]
 // <i> Configuration settings for Driver_SPI3 in component ::CMSIS Driver:SPI
-#define RTE_SPI3                        1
+#define RTE_SPI3                        0
 
 //   <o> SPI3_MISO Pin <0=>Not Used <1=>PB4 <2=>PC11
-#define RTE_SPI3_MISO_PORT_ID           2
+#define RTE_SPI3_MISO_PORT_ID           0
 #if    (RTE_SPI3_MISO_PORT_ID == 0)
 #define RTE_SPI3_MISO                   0
 #elif  (RTE_SPI3_MISO_PORT_ID == 1)
@@ -1475,7 +1475,7 @@
 #endif
 
 //   <o> SPI3_MOSI Pin <0=>Not Used <1=>PB5 <2=>PC12 <3=>PD6
-#define RTE_SPI3_MOSI_PORT_ID           2
+#define RTE_SPI3_MOSI_PORT_ID           0
 #if    (RTE_SPI3_MOSI_PORT_ID == 0)
 #define RTE_SPI3_MOSI                   0
 #elif  (RTE_SPI3_MOSI_PORT_ID == 1)
@@ -1495,7 +1495,7 @@
 #endif
 
 //   <o> SPI3_SCK Pin <0=>PB3 <1=>PB12 <2=>PC10
-#define RTE_SPI3_SCL_PORT_ID            2
+#define RTE_SPI3_SCL_PORT_ID            0
 #if    (RTE_SPI3_SCL_PORT_ID == 0)
 #define RTE_SPI3_SCL_PORT               GPIOB
 #define RTE_SPI3_SCL_BIT                3
@@ -2213,10 +2213,10 @@
 
 // <e> ETH (Ethernet Interface) [Driver_ETH_MAC0]
 // <i> Configuration settings for Driver_ETH_MAC0 in component ::CMSIS Driver:Ethernet MAC
-#define RTE_ETH                         1
+#define RTE_ETH                         0
 
 //   <e> MII (Media Independent Interface)
-#define RTE_ETH_MII                     0
+#define RTE_ETH_MII                     1
 
 //     <o> ETH_MII_TX_CLK Pin <0=>PC3
 #define RTE_ETH_MII_TX_CLK_PORT_ID      0
@@ -2369,10 +2369,10 @@
 //   </e>
 
 //   <e> RMII (Reduced Media Independent Interface)
-#define RTE_ETH_RMII                    1
+#define RTE_ETH_RMII                    0
 
 //     <o> ETH_RMII_TXD0 Pin <0=>PB12 <1=>PG13
-#define RTE_ETH_RMII_TXD0_PORT_ID       1
+#define RTE_ETH_RMII_TXD0_PORT_ID       0
 #if    (RTE_ETH_RMII_TXD0_PORT_ID == 0)
 #define RTE_ETH_RMII_TXD0_PORT          GPIOB
 #define RTE_ETH_RMII_TXD0_PIN           12
@@ -2394,7 +2394,7 @@
 #error "Invalid ETH_RMII_TXD1 Pin Configuration!"
 #endif
 //     <o> ETH_RMII_TX_EN Pin <0=>PB11 <1=>PG11
-#define RTE_ETH_RMII_TX_EN_PORT_ID      1
+#define RTE_ETH_RMII_TX_EN_PORT_ID      0
 #if    (RTE_ETH_RMII_TX_EN_PORT_ID == 0)
 #define RTE_ETH_RMII_TX_EN_PORT         GPIOB
 #define RTE_ETH_RMII_TX_EN_PIN          11

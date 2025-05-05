@@ -59,13 +59,13 @@ static int read16(uint8_t reg){
   //Select the register
   drv_I2C->MasterTransmit(m_ADDR, &reg, 1, false);
   /* Wait until transfer completed */
-  osThreadFlagsWait(TRANSFER_TEMP_COMPLETE, osFlagsWaitAny, 10000000);
+  //osThreadFlagsWait(TRANSFER_TEMP_COMPLETE, osFlagsWaitAny, 10000000);
 
 
 	//Read the 16-bit register
-  drv_I2C->MasterReceive(m_ADDR, buff, 2, false);
+  //drv_I2C->MasterReceive(m_ADDR, buff, 2, false);
   /* Wait until transfer completed */
-  osThreadFlagsWait(TRANSFER_TEMP_COMPLETE, osFlagsWaitAny, 10000000);
+  //osThreadFlagsWait(TRANSFER_TEMP_COMPLETE, osFlagsWaitAny, 10000000);
 	
 	//Return the combined 16-bit value
   return (buff[0] << 8) | buff[1];
