@@ -14,16 +14,18 @@
  * @stdperiph STM32F4xx/STM32F7xx HAL drivers required
  */
 /* Include core modules */
-#include "stm32f4xx_hal.h"
+#include "nRF24L01_TX.h"
 #include "cmsis_os2.h"
 #include "defines.h"
 //#include "tm_stm32_disco.h"
 //#include "tm_stm32_delay.h"
 #include "tm_stm32_nrf24l01.h"
 //#include "tm_stm32_usart.h"
-#include "tm_stm32_exti.h"
+//#include "tm_stm32_exti.h"
+#include "gpio.h"
 #include <stdio.h>
 #include <stdbool.h>
+#include "lcd.h"
 
 //control de leds
 extern bool LED_Rrun;	//referenciado a HTTP_Server.c
@@ -51,36 +53,30 @@ osThreadId_t id_thread__RF_TX = NULL;
 
 /* Data received and data for send */
 uint8_t dataOut[32], dataIn[32];
+uint32_t started_time = 0;
 
 /* Interrupt pin settings */
-#define IRQ_PORT    GPIOA
-#define IRQ_PIN     GPIO_PIN_10
+#define IRQ_PORT    GPIOG
+#define IRQ_PIN     GPIO_PIN_3
 
 /* NRF transmission status */
 TM_NRF24L01_Transmit_Status_t transmissionStatus;
 TM_NRF24L01_IRQ_t NRF_IRQ;
 
-
 /* Buffer for strings */
 char str[40];
 
+//DEBUG variables
+HAL_EXTI_Result_t status_IRQ = HAL_EXTI_Result_Not_Defined;
+
 void thread__test_transmissor_RF_TX(void *argument) 
 {
+    uint8_t status = 0;
 	uint8_t printed = 0;
-	uint32_t started_time = 0;
 
-	/* Init system clock for maximum system speed */
-	//TM_RCC_InitSystem();
-	
-	/* Init leds */
-	//TM_DISCO_LedInit();
-	
-	/* Init button */
-	//TM_DISCO_ButtonInit();
-	
-	/* Initialize USART, TX: PB6, RX: PB7 */
-	//TM_USART_Init(USART1, TM_USART_PinsPack_2, 115200);
-	
+    printf("Initializing...\n");
+    LCD_write(1, "initializing...");
+    
 	/* Initialize NRF24L01+ on channel 15 and 32bytes of payload */
 	/* By default 2Mbps data rate and 0dBm output power */
 	/* NRF24L01 goes to RX mode by default */
@@ -96,8 +92,12 @@ void thread__test_transmissor_RF_TX(void *argument)
 	TM_NRF24L01_SetTxAddress(TxAddress);
 	
 	/* Attach interrupt for NRF IRQ pin */
-	TM_EXTI_Attach(IRQ_PORT, IRQ_PIN, TM_EXTI_Trigger_Falling);
-	
+    init_nRF_IRQ();
+    
+    //Debug status
+    status = TM_NRF24L01_GetStatus();
+    printf("nRF initialized\n\n");
+    printf("STATUS register: 0x%02X\n\n", status);
 	
 	while (1)
     {
@@ -105,11 +105,12 @@ void thread__test_transmissor_RF_TX(void *argument)
 		/* Fill data with something */
 		sprintf((char *)dataOut, "abcdefghijklmnoszxABCDEFCBDA");
 		
-		/* Display on DEBUG */
-		printf("pinging: ");
-        
         started_time = HAL_GetTick();
-		
+        
+		/* Display on DEBUG */
+		printf("\nPinging at %d: \n", started_time);
+        LCD_write(2, "Pinging...          ");
+        
 		/* Transmit data, goes automatically to TX mode */
 		TM_NRF24L01_Transmit(dataOut);
 		
@@ -121,42 +122,73 @@ void thread__test_transmissor_RF_TX(void *argument)
 		
 		/* Reset printed flag */
 		printed = 0;
-
+        
+        status = TM_NRF24L01_GetStatus();
+        printf("Status Before = 0x%02X\n", status);
+        
+        // Fuerza el handler manualmente (solo para probar)
+        //TM_EXTI_Handler(GPIO_PIN_3);
+        //NVIC_SetPendingIRQ(EXTI3_IRQn);
         osDelay(2000);
+
 		/* Check if status has changed */
 		if (transmissionStatus != TM_NRF24L01_Transmit_Status_Sending && /*!< We are not sending anymore */
-			!printed                                                     /*!< We didn't print status to user */
-		) {
+			!printed)                                                     /*!< We didn't print status to user */
+        {
 			/* Print time in ms */
-            printf("pinging: %d", (started_time - HAL_GetTick()));
-						
+            printf("Check tranmision after : %d seconds\n", (HAL_GetTick() - started_time));
+            status = TM_NRF24L01_GetStatus();
+			printf("Status after IRQ = 0x%02X\n", status);
+
 			/* Transmission was OK */
 			if (transmissionStatus == TM_NRF24L01_Transmit_Status_Ok) {
-				printf("Transmission OK");
+				printf("Tramision result: OK\n\n");
+                LCD_write(2, "Transmission OK     ");
+
 			}
 			
 			/* Message LOST */
 			if (transmissionStatus == TM_NRF24L01_Transmit_Status_Lost) {
-				printf("Transmission Lost");
+				printf("Tramision result: Lost\n\n");
+                LCD_write(2, "Transmission Lost  ");
 			}
 			
 			/* Set flag */
 			printed = 1;
 		}
+        else
+        {
+            printf("FATAL ERROR: NO IRQ\n\n");
+            LCD_write(2, "no IRQ        ");
+        }
 	}
 }
 
+void Init_RF_TX(void) {
+
+    osThreadAttr_t thread_attr = {
+    .stack_size = 3072, // Aumenta si sospechas overflow
+    .priority = osPriorityNormal
+    };
+    id_thread__RF_TX = osThreadNew (thread__test_transmissor_RF_TX, NULL, &thread_attr);
+}
+
+
 /* Interrupt handler */ //revisarNAK mover funcion a fichero generico de gestion de interrupciones (por ahora servira creo)
-void TM_EXTI_Handler(uint16_t GPIO_Pin) 
+void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin)
 {
 	/* Check for proper interrupt pin */
-	if (GPIO_Pin == IRQ_PIN) {
+	if (GPIO_Pin == IRQ_PIN) 
+    {
+        printf("Note: Interrupcion PG3\n");
+        
 		/* Read interrupts */
 		TM_NRF24L01_Read_Interrupts(&NRF_IRQ);
 		
 		/* Check if transmitted OK (received ack)*/
-		if (NRF_IRQ.F.DataSent) { 		
-			printf("Data Sent IRQ");		
+		if (NRF_IRQ.F.DataSent) 
+        { 		
+			printf("IRQ: ACK Received\n");		
 			/* Save transmission status */
 			transmissionStatus = TM_NRF24L01_Transmit_Status_Ok;
 			
@@ -168,8 +200,9 @@ void TM_EXTI_Handler(uint16_t GPIO_Pin)
 		}
 		
 		/* Check if max retransmission reached and last transmission failed */
-		if (NRF_IRQ.F.MaxRT) {
-			printf("Max RT IRQ");
+		if (NRF_IRQ.F.MaxRT) 
+        {
+			printf("IRQ: Max RT IRQ\n");
 
 			/* Save transmission status */
 			transmissionStatus = TM_NRF24L01_Transmit_Status_Lost;
@@ -181,16 +214,18 @@ void TM_EXTI_Handler(uint16_t GPIO_Pin)
 			TM_NRF24L01_PowerUpRx();
 		}
 		
-		/* If data is ready on NRF24L01+ */
-		if (NRF_IRQ.F.DataReady) { //una vez se fue a RX, si recibe datos
-			printf("Data Ready IRQ");
+		/* If data is ready on NRF24L01+*/
+            //Si en modo RX: se activará si recibe datos normales. 
+            //Si en modo TX: se activará si recibe ACK Payload .
+		if (NRF_IRQ.F.DataReady) 
+        { //una vez se fue a RX, si recibe datos
+			printf("IRQ: Data Ready IRQ\n");
 
-			/* Get data from NRF24L01+ */
-			TM_NRF24L01_GetData(dataIn);		
+			/* Get data from RX FIFO NRF24L01+ */
+			TM_NRF24L01_GetData(dataIn);
+
+            printf ("Data received: %d\n", dataIn[0]);
 		}
 	}
 }
 
-void Init_RF_TX(void) {
-    id_thread__RF_TX = osThreadNew (thread__test_transmissor_RF_TX, NULL, NULL);
-}

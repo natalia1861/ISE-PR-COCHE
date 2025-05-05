@@ -33,7 +33,7 @@
  *----------------------------------------------------------------------------*/
 
 #include "stm32f4xx_hal.h"
-#include "led.h"
+#include "nak_led.h"
 
 #define ADC_RESOLUTION        12        /* Number of A/D converter bits       */
 

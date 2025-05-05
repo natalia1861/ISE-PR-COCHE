@@ -24,17 +24,18 @@
  * |----------------------------------------------------------------------
  */
 #include "tm_stm32_nrf24l01.h"
+#include <stdio.h>
 
 /* NRF24L01+ registers*/
 #define NRF24L01_REG_CONFIG			0x00	//Configuration Register
-#define NRF24L01_REG_EN_AA			0x01	//Enable ‘Auto Acknowledgment’ Function
+#define NRF24L01_REG_EN_AA			0x01	//Enable ï¿½Auto Acknowledgmentï¿½ Function
 #define NRF24L01_REG_EN_RXADDR		0x02	//Enabled RX Addresses
 #define NRF24L01_REG_SETUP_AW		0x03	//Setup of Address Widths (common for all data pipes)
 #define NRF24L01_REG_SETUP_RETR		0x04	//Setup of Automatic Retransmission
 #define NRF24L01_REG_RF_CH			0x05	//RF Channel
 #define NRF24L01_REG_RF_SETUP		0x06	//RF Setup Register	
 #define NRF24L01_REG_STATUS			0x07	//Status Register
-#define NRF24L01_REG_OBSERVE_TX		0x08	//Transmit observe registerf
+#define NRF24L01_REG_OBSERVE_TX		0x08	//Transmit observe register
 #define NRF24L01_REG_RPD			0x09	
 #define NRF24L01_REG_RX_ADDR_P0		0x0A	//Receive address data pipe 0. 5 Bytes maximum length.
 #define NRF24L01_REG_RX_ADDR_P1		0x0B	//Receive address data pipe 1. 5 Bytes maximum length.
@@ -106,7 +107,7 @@
 
 /* Enable auto acknowledgment - NRF24L01_REG_EN_AA */
 #define NRF24L01_ENAA_P5		5  /*Enable auto acknowledment data pipe 5*/
-#define NRF24L01_ENAA_P4		4  /* ... data pipe 4*/
+#define NRF24L01_ENAA_P4		4  /* ...                      data pipe 4*/
 #define NRF24L01_ENAA_P3		3
 #define NRF24L01_ENAA_P2		2
 #define NRF24L01_ENAA_P1		1
@@ -114,18 +115,18 @@
 
 /* Enable rx addresses - NRF24L01_REG_EN_RXADDR */
 #define NRF24L01_ERX_P5			5  /*Enable data pipe 5*/
-#define NRF24L01_ERX_P4			4  /* ... 4*/
+#define NRF24L01_ERX_P4			4  /* ...   data pipe 4*/
 #define NRF24L01_ERX_P3			3
 #define NRF24L01_ERX_P2			2
 #define NRF24L01_ERX_P1			1
 #define NRF24L01_ERX_P0			0
 
 /* Setup of address width - NRF24L01_REG_SETUP_AW */
-#define NRF24L01_AW				0 //2 bits, 01: 3 bytes, 10: 4 bytes, 11: 5 bytes
+#define NRF24L01_AW				0 //2 bits, 00: illegal, 01: 3 bytes, 10: 4 bytes, 11: 5 bytes
 
 /* Setup of auto re-transmission - NRF24L01_REG_SETUP_RETR*/
-#define NRF24L01_ARD			4 //4 bits, 0000: 250 us, 0001: 500 us, ...
-#define NRF24L01_ARC			0 //4 bits, 0000: re-transmits disabled, 0001: 1 re-transmits, 0010: 2 re-transmits, ...
+#define NRF24L01_ARD			4 //4 bits, 0000: 250 us, 0001: 500 us, ..., 1111: 4000 us 
+#define NRF24L01_ARC			0 //4 bits, 0000: re-transmits disabled, 0001: 1 re-transmits, 0010: 2 re-transmits, ..., 1111: 15 re-transmits
 
 /* RF setup register - NRF24L01_REG_SETUP_RETR */
 #define NRF24L01_PLL_LOCK		4 //Force PLL lock signal. Only used in test
@@ -136,7 +137,7 @@
 #define NRF24L01_RF_HCURR		0 //Setup LNA gain
 
 /* General status register - NRF24L01_REG_STATUS */
-#define NRF24L01_RX_DR			6  //Data ready RX FIFO interrupt. Asserted when new data arrives RX FIFO
+#define NRF24L01_RX_DR			6  //Data ready RX FIFO interrupt. Asserted when new data arrives in RX FIFO
 #define NRF24L01_TX_DS			5  //Data sent TX FIFO interrupt. Asserted when packet transmitted on TX. If AUTO_ACK is activated, this bit is set high only when ACK is received.
 #define NRF24L01_MAX_RT			4  //Maximum number of TX retransmits interrupt. 
 #define NRF24L01_RX_P_NO		1  //3 bits. Data pipe number for the payload avaiable for reading from RX FIFO.
@@ -147,11 +148,12 @@
 #define NRF24L01_ARC_CNT		0 //4 bits, count retransmitted packets. Counter reset when a transmission of a new packet starts.
 
 /* FIFO status - NRF24L01_REG_FIFO_STATUS*/
-#define NRF24L01_TX_REUSE		6
-#define NRF24L01_FIFO_FULL		5
-#define NRF24L01_TX_EMPTY		4
-#define NRF24L01_RX_FULL		1
-#define NRF24L01_RX_EMPTY		0
+#define NRF24L01_TX_REUSE		6 //Reuse last transmitted data packet if set high. The packet is repeatedly retransmitted as long as CE is high.
+                                  //TX_REUSE is set by the SPI command REUSE_TX_PL, and is reset by the SPI commands W_TX_PAYLOAD or FLUSH TX
+#define NRF24L01_FIFO_FULL		5 //TX FIFO full flag. 1: TX FIFO full. 0: Available locations in TX FIFO.
+#define NRF24L01_TX_EMPTY		4 //TX FIFO empty flag. 1: TX FIFO empty. 0: Data in TX FIFO.
+#define NRF24L01_RX_FULL		1 //RX FIFO full flag. 1: RX FIFO full. 0: Available locations in RX FIFO.
+#define NRF24L01_RX_EMPTY		0 //RX FIFO empty flag. 1: RX FIFO empty. 0: Data in RX FIFO.
 
 /*Dynamic length - NRF24L01_REG_DEFAULT_VAL_DYNPD*/
 #define NRF24L01_DPL_P0			0 //Enable dyn. payload length data pipe 0. Requires EN_DPL and ENAA_P0
@@ -163,7 +165,7 @@
 
 /*Feature register bits - NRF24L01_REG_FEATURE */
 #define NRF24L01_FT_EN_DPL		2	//Enables Dynamic Payload Length
-#define NRF24L01_FT_ACK_PAY		1	//Enables Payload with ACK
+#define NRF24L01_FT_EN_ACK_PAY	1	//Enables Payload with ACK
 #define NRF24L01_FT_EN_DYN_ACK	0	//Enables the W_TX_PAYLOAD_NOACK command
 
 //OTHER INFORMATION
@@ -182,7 +184,7 @@
 /* Configuration */
 #define NRF24L01_CONFIG			((1 << NRF24L01_EN_CRC) | (0 << NRF24L01_CRCO))
 
-/* Instruction Mnemonics - COMMANDS*/
+/***********************Instruction Mnemonics - COMMANDS***********************************************************/
 #define NRF24L01_REGISTER_MASK				0x1F
 
 //Last 5 bits will indicate reg. address
@@ -267,13 +269,13 @@ uint8_t TM_NRF24L01_Init(uint8_t channel, uint8_t payload_size) {
 	/* Channel select */
 	TM_NRF24L01_SetChannel(channel);
 	
-	/* Set pipeline to max possible 32 bytes */
-	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P0, TM_NRF24L01_Struct.PayloadSize); // Auto-ACK pipe
-	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P1, TM_NRF24L01_Struct.PayloadSize); // Data payload pipe
-	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P2, TM_NRF24L01_Struct.PayloadSize);
-	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P3, TM_NRF24L01_Struct.PayloadSize);
-	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P4, TM_NRF24L01_Struct.PayloadSize);
-	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P5, TM_NRF24L01_Struct.PayloadSize);
+//	/* Set pipeline to max possible 32 bytes */
+//	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P0, TM_NRF24L01_Struct.PayloadSize); // Auto-ACK pipe
+//	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P1, TM_NRF24L01_Struct.PayloadSize); // Data payload pipe
+//	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P2, TM_NRF24L01_Struct.PayloadSize);
+//	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P3, TM_NRF24L01_Struct.PayloadSize);
+//	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P4, TM_NRF24L01_Struct.PayloadSize);
+//	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P5, TM_NRF24L01_Struct.PayloadSize);
 	
 	/* Set RF settings (2mbps, output power) */
 	TM_NRF24L01_SetRF(TM_NRF24L01_Struct.DataRate, TM_NRF24L01_Struct.OutPwr);
@@ -310,7 +312,6 @@ uint8_t TM_NRF24L01_Init(uint8_t channel, uint8_t payload_size) {
 	/* Dynamic length configurations: No dynamic length */
 	TM_NRF24L01_WriteRegister(NRF24L01_REG_DYNPD, (0 << NRF24L01_DPL_P0) | (0 << NRF24L01_DPL_P1) | (0 << NRF24L01_DPL_P2) | (0 << NRF24L01_DPL_P3) | (0 << NRF24L01_DPL_P4) | (0 << NRF24L01_DPL_P5));
 	#endif
-
 	 
 	/* Clear FIFOs */
 	NRF24L01_FLUSH_TX;
@@ -418,6 +419,7 @@ void TM_NRF24L01_PowerDown(void) {
 /* Write TX-payload: 1 ? 32 bytes. A write operation
  * always starts at byte 0 used in TX payload.*/
 
+ //revisar_NAK quitar los printf
 void TM_NRF24L01_Transmit(uint8_t *data) {
 	uint8_t count = TM_NRF24L01_Struct.PayloadSize;
 
@@ -426,16 +428,19 @@ void TM_NRF24L01_Transmit(uint8_t *data) {
 	
 	/* Go to power up tx mode */
 	TM_NRF24L01_PowerUpTx();
-	
+    
 	/* Clear TX FIFO from NRF24L01+ */
 	NRF24L01_FLUSH_TX;
-	
+    
 	/* Send payload to nRF24L01+ */
 	NRF24L01_CSN_LOW;
+    
 	/* Send write payload command */
 	TM_SPI_Send(NRF24L01_SPI, NRF24L01_W_TX_PAYLOAD_MASK);
+    
 	/* Fill payload with data*/
 	TM_SPI_WriteMulti(NRF24L01_SPI, data, count);
+    
 	/* Disable SPI */
 	NRF24L01_CSN_HIGH;
 	
@@ -448,19 +453,22 @@ void TM_NRF24L01_Transmit(uint8_t *data) {
  * Maximum three ACK packet payloads can be pending. Payloads with same PPP are handled using first in - first out principle. 
  * Write payload: 1? 32 bytes. A write operation always starts at byte 0.*/
 
-void TM_NRF24L01_WriteAckPayload(uint8_t* data, uint8_t length) {
-	uint8_t pipe = 0;
-
+//Funcion que VACIA la cola de TX FIFO (en PRX) y aniade un PAYLOAD.
+void TM_NRF24L01_WriteAckPayload(uint8_t pipe, uint8_t* data, uint8_t length) {
 	/* Clear TX FIFO from NRF24L01+ */
 	NRF24L01_FLUSH_TX;
+    
+	printf("After flush TX FIFO: 0x%02X\n", TM_NRF24L01_TxFifoEmpty());
 	
 	/* Send payload to nRF24L01+ */
 	NRF24L01_CSN_LOW;
 	
 	/* Send write payload command */
 	TM_SPI_Send(NRF24L01_SPI, NRF24L01_W_ACK_PAYLOAD_MASK | (pipe & 0x05));
+
 	/* Fill payload with data*/
 	TM_SPI_WriteMulti(NRF24L01_SPI, data, length);
+
 	/* Disable SPI */
 	NRF24L01_CSN_HIGH;
 }
@@ -468,6 +476,10 @@ void TM_NRF24L01_WriteAckPayload(uint8_t* data, uint8_t length) {
 /* Read RX-payload: 1 ? 32 bytes. A read operation
  * always starts at byte 0. Payload is deleted from
  * FIFO after it is read. Used in RX mode.*/
+
+//Funcion que lee los datos recibidos. Se llama en modo RX. Vacia la cola RX tras leerlos.
+//Tanto para leer el payload normal como el del ACK.
+//Se tienen que mandar datos "basura" para que el sensor responda con los datos reales
 
 void TM_NRF24L01_GetData(uint8_t* data) {
 	/* Pull down chip select */
@@ -483,6 +495,7 @@ void TM_NRF24L01_GetData(uint8_t* data) {
 	TM_NRF24L01_WriteRegister(NRF24L01_REG_STATUS, (1 << NRF24L01_RX_DR));
 }
 
+//Funcion que mira si hay datos disponibles para leer en la RX FIFO (Interrupt Data Ready).
 uint8_t TM_NRF24L01_DataReady(void) {
 	uint8_t status = TM_NRF24L01_GetStatus();
 	
@@ -492,12 +505,24 @@ uint8_t TM_NRF24L01_DataReady(void) {
 	return !TM_NRF24L01_RxFifoEmpty();
 }
 
+//Funcion que mira si la RX FIFO esta vacia o no
+//0: not empty
+//1: empty
+
 uint8_t TM_NRF24L01_RxFifoEmpty(void) {
 	uint8_t reg = TM_NRF24L01_ReadRegister(NRF24L01_REG_FIFO_STATUS);
 	return NRF24L01_CHECK_BIT(reg, NRF24L01_RX_EMPTY);
 }
 
+//Funcion que mira si la RX FIFO esta vacia o no
+//0: not empty
+//1: empty
+uint8_t TM_NRF24L01_TxFifoEmpty(void) {
+	uint8_t reg = TM_NRF24L01_ReadRegister(NRF24L01_REG_FIFO_STATUS);
+	return NRF24L01_CHECK_BIT(reg, NRF24L01_TX_EMPTY);
+}
 
+//Funcion que devuelve el registro status del sensor.
 uint8_t TM_NRF24L01_GetStatus(void) {
 	uint8_t status;
 	
@@ -578,6 +603,7 @@ void TM_NRF24L01_SoftwareReset(void) {
 	TM_NRF24L01_WriteRegister(NRF24L01_REG_FEATURE, 	NRF24L01_REG_DEFAULT_VAL_FEATURE);
 }
 
+//Funcion que mira cuantas veces se han perdido o retransmitido los paquetes.
 uint8_t TM_NRF24L01_GetRetransmissionsCount(void) {
 	/* Low 4 bits */
 	return TM_NRF24L01_ReadRegister(NRF24L01_REG_OBSERVE_TX) & 0x0F;
@@ -615,6 +641,7 @@ void TM_NRF24L01_SetRF(TM_NRF24L01_DataRate_t DataRate, TM_NRF24L01_OutputPower_
 	TM_NRF24L01_WriteRegister(NRF24L01_REG_RF_SETUP, tmp);
 }
 
+//Funcion que devuelve el estado del registro status del sensor (principalmente orientado a IRQs)
 uint8_t TM_NRF24L01_Read_Interrupts(TM_NRF24L01_IRQ_t* IRQ) {
 	IRQ->Status = TM_NRF24L01_GetStatus();
 	return IRQ->Status;

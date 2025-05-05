@@ -24,6 +24,7 @@
  * |----------------------------------------------------------------------
  */
 #include "tm_stm32_spi.h"
+//#include "stm32f4xx.h"
 #define STM32F4xx
 /* Defines for alternate functions */
 #if defined(STM32F4xx) || defined(STM32F7xx)

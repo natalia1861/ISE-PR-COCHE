@@ -137,7 +137,7 @@ IRQ			Not used	Interrupt pin. Goes low when active. Pin functionality is active,
 /* Chip enable for transmitting */
 #ifndef NRF24L01_CE_PIN
 #define NRF24L01_CE_PORT			GPIOD
-#define NRF24L01_CE_PIN				GPIO_PIN_8
+#define NRF24L01_CE_PIN				GPIO_PIN_6
 #endif
 
 /* Pins configuration */
@@ -166,13 +166,14 @@ IRQ			Not used	Interrupt pin. Goes low when active. Pin functionality is active,
  */
 typedef union _TM_NRF24L01_IRQ_t {
 	struct {
-		uint8_t reserved0:4;
+      uint8_t TXFull:1;    /*!< Set to 1 if TX Fifo is full.*/
+      uint8_t RX_P_NO:3;   /*!< Data pipe number for the payload available for reading */
 		uint8_t MaxRT:1;     /*!< Set to 1 if MAX retransmissions flag is set */
 		uint8_t DataSent:1;  /*!< Set to 1 if last transmission is OK */
 		uint8_t DataReady:1; /*!< Set to 1 if data are ready to be read */
 		uint8_t reserved1:1;
 	} F;
-	uint8_t Status;          /*!< NRF status register value */
+	uint8_t Status;          /*!< Raw NRF status register value */
 } TM_NRF24L01_IRQ_t;
 
 /**
@@ -298,6 +299,11 @@ void TM_NRF24L01_Transmit(uint8_t *data);
  *            - 0: No data available for receive in bufferReturns
  *            - > 0: Data is ready to be collected
  */
+ 
+void TM_NRF24L01_WriteAckPayload(uint8_t pipe, uint8_t* data, uint8_t length); //revisar
+uint8_t TM_NRF24L01_TxFifoEmpty(void); //revisar tambien
+uint8_t TM_NRF24L01_ReadRegister(uint8_t reg); //quitar
+     
 uint8_t TM_NRF24L01_DataReady(void);
 
 /**

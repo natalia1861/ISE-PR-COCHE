@@ -2,7 +2,6 @@
 #define __GPIO_H_
 
 #include "stm32f4xx_hal.h"
-#include "rtc.h"
 
 typedef enum {
     HAL_EXTI_Result_Ok = 0x00,

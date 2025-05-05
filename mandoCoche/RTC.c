@@ -84,13 +84,14 @@ void init_RTC(void) {     //inicializa el RTC y configura una hora por defecto
 	
 	//TRAS REINICIAR HAY QUE ESPERAR 6 SEG PARA SINCRONIZAR CON EL SERVICIO SNTP
 	
+	//revisar_NAK descomentar y añadir la parte del RTC
 	RTC_set_Time(18,6,1,0,0,0);
-	Init_alarma(5);
+	//Init_alarma(5);
 	tim_id_6seg = osTimerNew((osTimerFunc_t)&Timer_Callback_6seg, osTimerOnce, NULL, NULL);
 	tim_id_3min = osTimerNew((osTimerFunc_t)&Timer_Callback_3min, osTimerPeriodic, NULL, NULL);
 	tim_id_verde = osTimerNew((osTimerFunc_t)&Timer_Callback_verde, osTimerOnce, NULL, NULL);
 	tim_id_2seg = osTimerNew((osTimerFunc_t)&Timer_Callback_2seg, osTimerOnce, NULL, NULL);
-	osTimerStart(tim_id_6seg, 6000);
+	//osTimerStart(tim_id_6seg, 6000);
 	
 }
   
