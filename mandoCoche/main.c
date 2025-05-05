@@ -43,6 +43,13 @@
 #include "I2C_prueba_temp.h"
 #include "temp.h"
 #include "nRF24L01_TX.h"
+#include "lcd.h"
+#include "adc.h"
+#include "cmsis_os2.h"                  // ::CMSIS:RTOS2
+#include "rtc.h"
+#include "Thread.h"
+#include "i2c.h"
+#include "sensorDistancia.h"
 
 #ifdef RTE_CMSIS_RTOS2_RTX5
 /**
@@ -82,12 +89,22 @@ uint32_t HAL_GetTick (void) {
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
 static void Error_Handler(void);
+
 /* Private functions ---------------------------------------------------------*/
 /**
   * @brief  Main program
   * @param  None
   * @retval None
   */
+	
+void LED_Init(void);
+void RGB_mbed(void);
+void LED_Init(void);
+void config_pulsador(void);
+extern VL53L0X sensor1;
+extern I2C_HandleTypeDef hi2c2;
+void InitVL53(void); 
+
 int main(void)
 {
 
@@ -108,7 +125,16 @@ int main(void)
 
   /* Add your application code here
      */
-
+   LED_Init();
+	 RGB_mbed();
+   LED_Init();
+	 config_pulsador();
+	 MX_I2C2_Init();
+	 HAL_I2C_MspInit(&hi2c2);
+	 InitVL53();
+	
+	 
+	HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);	
 #ifdef RTE_CMSIS_RTOS2
   /* Initialize CMSIS-RTOS2 */
   osKernelInitialize ();
@@ -120,6 +146,8 @@ int main(void)
     //tid_Thread_sensor = osThreadNew(thread__temp, NULL, NULL);
    //Init_RF_TX();
     //Init_sensor();
+        //Init_sensor();
+    //Init_Thread();
   /* Start thread execution */
   osKernelStart();
 #endif
@@ -168,8 +196,8 @@ static void SystemClock_Config(void)
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLM = 8U;
-  RCC_OscInitStruct.PLL.PLLN = 336U;
+  RCC_OscInitStruct.PLL.PLLM = 4U;
+  RCC_OscInitStruct.PLL.PLLN = 168U;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 7U;
   if(HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
@@ -233,7 +261,66 @@ void assert_failed(uint8_t* file, uint32_t line)
 }
 
 #endif
+void LED_Init(void) { //configuracion de los leds pin0=verde pin14=rojo
+GPIO_InitTypeDef GPIO_InitStruct;
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  
+  GPIO_InitStruct.Pin =GPIO_PIN_0 | GPIO_PIN_7 | GPIO_PIN_14;
+  HAL_GPIO_Init(GPIOB,&GPIO_InitStruct);
+}
+
+void config_pulsador(){
+	//CONFIGURACION PULSADOR USER
+
+ GPIO_InitTypeDef GPIO_InitStruct;
+	__HAL_RCC_GPIOC_CLK_ENABLE();
+  
+  //Configure GPIO pin :PC13 - USER BUTTON
+    GPIO_InitStruct.Pin = GPIO_PIN_13;
+    GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING; //Flancos de subida
+    GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+   
+   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+ 
+}
+
+//config RGB
+void RGB_mbed(void){
+	
+	 GPIO_InitTypeDef GPIO_InitStruct;
+ __HAL_RCC_GPIOD_CLK_ENABLE();	
+ 
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  
+  GPIO_InitStruct.Pin = GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13; //BGR
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+	
+	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_11, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOD,GPIO_PIN_12, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOD,GPIO_PIN_13, GPIO_PIN_SET);
+
+}
+
+void InitVL53(void){
+  setAddress(&sensor1,0x29);//Default
+  osDelay(200);//Wait sensor startup
+  if(!init(&sensor1,true)) //Returns 0 if fail, 1 if success.
+    {
+//	snprintf(msg,sizeof(msg),"Failed to initialize\r\n");
+//	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), 0xFFFF);
+    }
+  setVcselPulsePeriod (& sensor1, VcselPeriodPreRange, 16);
+  setTimeout(&sensor1,500); //Max time before timeout.
+  setAddress(&sensor1,0x04); //New addr
+	osDelay(5200);
+}
 /**
   * @}
   */ 
