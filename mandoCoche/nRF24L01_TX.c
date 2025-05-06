@@ -53,6 +53,7 @@ osThreadId_t id_thread__RF_TX = NULL;
 
 /* Data received and data for send */
 uint8_t dataOut[32], dataIn[32];
+uint8_t* dataInptr = dataIn;
 uint32_t started_time = 0;
 
 /* Interrupt pin settings */
@@ -86,10 +87,10 @@ void thread__test_transmissor_RF_TX(void *argument)
 	TM_NRF24L01_SetRF(TM_NRF24L01_DataRate_2M, TM_NRF24L01_OutputPower_M18dBm);
 	
 	/* Set my address, 5 bytes */
-	TM_NRF24L01_SetMyAddress(MyAddress);
+	//TM_NRF24L01_SetMyAddress(MyAddress); //revisar eliminabamos esto
 	
 	/* Set TX address, 5 bytes */
-	TM_NRF24L01_SetTxAddress(TxAddress);
+	TM_NRF24L01_SetTxAddress(MyAddress); //revisar lo poniamos a MyAddress (para que funcione)
 	
 	/* Attach interrupt for NRF IRQ pin */
     init_nRF_IRQ();
@@ -98,13 +99,13 @@ void thread__test_transmissor_RF_TX(void *argument)
     status = TM_NRF24L01_GetStatus();
     printf("nRF initialized\n\n");
     printf("STATUS register: 0x%02X\n\n", status);
+    
+    /* Fill data with something */
+    sprintf((char *)dataOut, "abcdefghijklmnoszxABCDEFCBDA");
 	
 	while (1)
     {
 		/* Every 2 seconds */
-		/* Fill data with something */
-		sprintf((char *)dataOut, "abcdefghijklmnoszxABCDEFCBDA");
-		
         started_time = HAL_GetTick();
         
 		/* Display on DEBUG */
@@ -181,7 +182,7 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin)
 	if (GPIO_Pin == IRQ_PIN) 
     {
         printf("Note: Interrupcion PG3\n");
-        
+        dataOut[0] = dataOut[0] + 1;
 		/* Read interrupts */
 		TM_NRF24L01_Read_Interrupts(&NRF_IRQ);
 		
@@ -195,8 +196,10 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin)
 			/* Turn off led */
 			LED_Grun = false;
 			
+            printf("STATUS FIFO in Data Sent %d\n", TM_NRF24L01_ReadRegister(0x17));
 			/* Go back to RX mode */
-			TM_NRF24L01_PowerUpRx();
+			//TM_NRF24L01_PowerUpRx();
+            //TM_NRF24L01_Clear_Interrupts(); //revisar
 		}
 		
 		/* Check if max retransmission reached and last transmission failed */
@@ -211,21 +214,32 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin)
 			LED_Grun = false;
 			
 			/* Go back to RX mode */
-			TM_NRF24L01_PowerUpRx();
+			//TM_NRF24L01_PowerUpRx();
+             //TM_NRF24L01_Clear_Interrupts(); //cambio
 		}
 		
 		/* If data is ready on NRF24L01+*/
-            //Si en modo RX: se activará si recibe datos normales. 
-            //Si en modo TX: se activará si recibe ACK Payload .
+            //Si en modo RX: se activara si envia correctamente el ACK
+            //Si en modo TX: se activara si recibe ACK Payload.
 		if (NRF_IRQ.F.DataReady) 
         { //una vez se fue a RX, si recibe datos
 			printf("IRQ: Data Ready IRQ\n");
+            printf("STATUS FIFO before read %d\n", TM_NRF24L01_ReadRegister(0x17));
+            printf("FIFO RX before read: %d\n", TM_NRF24L01_RxFifoEmpty());
 
 			/* Get data from RX FIFO NRF24L01+ */
-			TM_NRF24L01_GetData(dataIn);
+			TM_NRF24L01_GetData(dataInptr++);
+            printf ("Data received: %d\n", *dataInptr);
+            
+            printf("STATUS FIFO after read %d\n", TM_NRF24L01_ReadRegister(0x17));
+            printf("FIFO RX after read: %d\n", TM_NRF24L01_RxFifoEmpty());
 
-            printf ("Data received: %d\n", dataIn[0]);
+            /* Go back to RX mode */
+			//TM_NRF24L01_PowerUpRx(); //cambio
 		}
+        
+        /* Go back to RX mode */
+		TM_NRF24L01_PowerUpRx();
 	}
 }
 
