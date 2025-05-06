@@ -124,11 +124,14 @@
 /* Setup of address width - NRF24L01_REG_SETUP_AW */
 #define NRF24L01_AW				0 //2 bits, 00: illegal, 01: 3 bytes, 10: 4 bytes, 11: 5 bytes
 
-/* Setup of auto re-transmission - NRF24L01_REG_SETUP_RETR*/
+/* Setup of Automatic Retransmission - NRF24L01_REG_SETUP_RETR*/
 #define NRF24L01_ARD			4 //4 bits, 0000: 250 us, 0001: 500 us, ..., 1111: 4000 us 
 #define NRF24L01_ARC			0 //4 bits, 0000: re-transmits disabled, 0001: 1 re-transmits, 0010: 2 re-transmits, ..., 1111: 15 re-transmits
 
-/* RF setup register - NRF24L01_REG_SETUP_RETR */
+/* Setup of RF Channel - NRF24L01_REG_RF_CH*/
+#define NRF24L01_RF_CH			0 //7 bits, Sets the frequency channel nRF24L01 operates on
+
+/* RF setup register - NRF24L01_REG_RF_SETUP */
 #define NRF24L01_PLL_LOCK		4 //Force PLL lock signal. Only used in test
 #define NRF24L01_RF_DR_LOW		5 
 #define NRF24L01_RF_DR_HIGH		3 
@@ -146,6 +149,9 @@
 /* Transmit observe register - NRF24L01_REG_OBSERVE_TX*/
 #define NRF24L01_PLOS_CNT		4 //4 bits, counts lost packets. Counter resets by writing to RF_CH
 #define NRF24L01_ARC_CNT		0 //4 bits, count retransmitted packets. Counter reset when a transmission of a new packet starts.
+
+/* Carrier Detect register - NRF24L01_REG_RPD*/
+#define NRF24L01_CD				0 //1 bit, Carrier detect (Only read) - use only when MAX_RT is reccurrent
 
 /* FIFO status - NRF24L01_REG_FIFO_STATUS*/
 #define NRF24L01_TX_REUSE		6 //Reuse last transmitted data packet if set high. The packet is repeatedly retransmitted as long as CE is high.
@@ -269,13 +275,6 @@ uint8_t TM_NRF24L01_Init(uint8_t channel, uint8_t payload_size) {
 	/* Channel select */
 	TM_NRF24L01_SetChannel(channel);
 	
-//	/* Set pipeline to max possible 32 bytes */
-//	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P0, TM_NRF24L01_Struct.PayloadSize); // Auto-ACK pipe
-//	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P1, TM_NRF24L01_Struct.PayloadSize); // Data payload pipe
-//	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P2, TM_NRF24L01_Struct.PayloadSize);
-//	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P3, TM_NRF24L01_Struct.PayloadSize);
-//	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P4, TM_NRF24L01_Struct.PayloadSize);
-//	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P5, TM_NRF24L01_Struct.PayloadSize);
 	
 	/* Set RF settings (2mbps, output power) */
 	TM_NRF24L01_SetRF(TM_NRF24L01_Struct.DataRate, TM_NRF24L01_Struct.OutPwr);
@@ -308,7 +307,18 @@ uint8_t TM_NRF24L01_Init(uint8_t channel, uint8_t payload_size) {
 	/* Enable dynamic payload length for all pipes*/
 	TM_NRF24L01_WriteRegister(NRF24L01_REG_DYNPD, (1 << NRF24L01_DPL_P0) | (1 << NRF24L01_DPL_P1) | (1 << NRF24L01_DPL_P2) | (1 << NRF24L01_DPL_P3) | (1 << NRF24L01_DPL_P4) | (1 << NRF24L01_DPL_P5));
 	
+	 /* Enabled RX Addresses for all pipes (used to receive ACK payload in PRX)*/
+	TM_NRF24L01_WriteRegister(NRF24L01_REG_EN_RXADDR, (1 << NRF24L01_ERX_P0) | (1 << NRF24L01_ERX_P1) | (1 << NRF24L01_ERX_P2) | (1 << NRF24L01_ERX_P3) | (1 << NRF24L01_ERX_P4) | (1 << NRF24L01_ERX_P5));
 	#else
+
+	/* Set pipeline to max possible 32 bytes */
+	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P0, TM_NRF24L01_Struct.PayloadSize); // Auto-ACK pipe
+	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P1, TM_NRF24L01_Struct.PayloadSize); // Data payload pipe
+	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P2, TM_NRF24L01_Struct.PayloadSize);
+	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P3, TM_NRF24L01_Struct.PayloadSize);
+	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P4, TM_NRF24L01_Struct.PayloadSize);
+	TM_NRF24L01_WriteRegister(NRF24L01_REG_RX_PW_P5, TM_NRF24L01_Struct.PayloadSize);
+	
 	/* Dynamic length configurations: No dynamic length */
 	TM_NRF24L01_WriteRegister(NRF24L01_REG_DYNPD, (0 << NRF24L01_DPL_P0) | (0 << NRF24L01_DPL_P1) | (0 << NRF24L01_DPL_P2) | (0 << NRF24L01_DPL_P3) | (0 << NRF24L01_DPL_P4) | (0 << NRF24L01_DPL_P5));
 	#endif
@@ -334,8 +344,10 @@ void TM_NRF24L01_SetMyAddress(uint8_t *adr) {
 }
 
 void TM_NRF24L01_SetTxAddress(uint8_t *adr) {
+    NRF24L01_CE_LOW;
 	TM_NRF24L01_WriteRegisterMulti(NRF24L01_REG_RX_ADDR_P0, adr, 5);
 	TM_NRF24L01_WriteRegisterMulti(NRF24L01_REG_TX_ADDR, adr, 5);
+    NRF24L01_CE_HIGH;
 }
 
 void TM_NRF24L01_WriteBit(uint8_t reg, uint8_t bit, uint8_t value) {
@@ -464,7 +476,7 @@ void TM_NRF24L01_WriteAckPayload(uint8_t pipe, uint8_t* data, uint8_t length) {
 	NRF24L01_CSN_LOW;
 	
 	/* Send write payload command */
-	TM_SPI_Send(NRF24L01_SPI, NRF24L01_W_ACK_PAYLOAD_MASK | (pipe & 0x05));
+	TM_SPI_Send(NRF24L01_SPI, NRF24L01_W_ACK_PAYLOAD_MASK | (pipe & 0x07));
 
 	/* Fill payload with data*/
 	TM_SPI_WriteMulti(NRF24L01_SPI, data, length);

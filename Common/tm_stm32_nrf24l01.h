@@ -166,9 +166,9 @@ IRQ			Not used	Interrupt pin. Goes low when active. Pin functionality is active,
  */
 typedef union _TM_NRF24L01_IRQ_t {
 	struct {
-      uint8_t TXFull:1;    /*!< Set to 1 if TX Fifo is full.*/
-      uint8_t RX_P_NO:3;   /*!< Data pipe number for the payload available for reading */
-		uint8_t MaxRT:1;     /*!< Set to 1 if MAX retransmissions flag is set */
+        uint8_t TXFull:1;    /*!< Set to 1 if TX Fifo is full.*/
+        uint8_t RX_P_NO:3;   /*!< Data pipe number for the payload available for reading */
+        uint8_t MaxRT:1;     /*!< Set to 1 if MAX retransmissions flag is set */
 		uint8_t DataSent:1;  /*!< Set to 1 if last transmission is OK */
 		uint8_t DataReady:1; /*!< Set to 1 if data are ready to be read */
 		uint8_t reserved1:1;
