@@ -390,9 +390,7 @@ void LCD_mostrarConsumo(uint8_t muestra, uint16_t consumo)
     char linea1[10];
     char linea2[20];
     
-    snprintf(linea1, sizeof(linea2), "Muestra: %u", muestra);
-    snprintf(linea2, sizeof(linea1), "%u", consumo);
+    snprintf(linea2, sizeof(linea1), "M:%u, C:%u", muestra, consumo);
     
-    LCD_write(1, linea1);
     LCD_write(2, linea2);
 }

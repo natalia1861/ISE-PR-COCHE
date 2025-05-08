@@ -12,11 +12,10 @@ static void timer__mesureTemperature_callback (void *no_argument) {
 }
 
 void thread__measureTemperature (void *argument) {
-    uint8_t nose;
     uint32_t value;
     float temperatura_real;
     uint8_t buff[2];
-    nose = I2C_Init_All();
+    I2C_Init_All();
     id_timer__measureTemperature = osTimerNew (timer__mesureTemperature_callback, osTimerPeriodic, NULL, NULL);
     osTimerStart(id_timer__measureTemperature, 100);
     for(;;) {

@@ -87,10 +87,10 @@ void thread__test_transmissor_RF_TX(void *argument)
 	TM_NRF24L01_SetRF(TM_NRF24L01_DataRate_2M, TM_NRF24L01_OutputPower_M18dBm);
 	
 	/* Set my address, 5 bytes */
-	//TM_NRF24L01_SetMyAddress(MyAddress); //revisar eliminabamos esto
+	//TM_NRF24L01_SetMyAddress(MyAddress); //Se utilizaba para tener una pipe por donde transmitia el PTX y otra por donde transmitia PRX
 	
 	/* Set TX address, 5 bytes */
-	TM_NRF24L01_SetTxAddress(MyAddress); //revisar lo poniamos a MyAddress (para que funcione)
+	TM_NRF24L01_SetTxAddress(MyAddress);  //Pipe 0
 	
 	/* Attach interrupt for NRF IRQ pin */
     init_nRF_IRQ();
@@ -175,7 +175,7 @@ void Init_RF_TX(void) {
 }
 
 
-/* Interrupt handler */ //revisarNAK mover funcion a fichero generico de gestion de interrupciones (por ahora servira creo)
+/* Interrupt handler */
 void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin)
 {
 	/* Check for proper interrupt pin */
@@ -197,9 +197,6 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin)
 			LED_Grun = false;
 			
             printf("STATUS FIFO in Data Sent %d\n", TM_NRF24L01_ReadRegister(0x17));
-			/* Go back to RX mode */
-			//TM_NRF24L01_PowerUpRx();
-            //TM_NRF24L01_Clear_Interrupts(); //revisar
 		}
 		
 		/* Check if max retransmission reached and last transmission failed */
@@ -212,10 +209,6 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin)
 			
 			/* Turn off led */
 			LED_Grun = false;
-			
-			/* Go back to RX mode */
-			//TM_NRF24L01_PowerUpRx();
-             //TM_NRF24L01_Clear_Interrupts(); //cambio
 		}
 		
 		/* If data is ready on NRF24L01+*/
@@ -233,9 +226,6 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin)
             
             printf("STATUS FIFO after read %d\n", TM_NRF24L01_ReadRegister(0x17));
             printf("FIFO RX after read: %d\n", TM_NRF24L01_RxFifoEmpty());
-
-            /* Go back to RX mode */
-			//TM_NRF24L01_PowerUpRx(); //cambio
 		}
         
         /* Go back to RX mode */

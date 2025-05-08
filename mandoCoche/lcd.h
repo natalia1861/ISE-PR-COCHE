@@ -3,6 +3,8 @@
 
 #include "Driver_SPI.h"
 
+#define LCD_MAX_CHARACTERS          20
+
 typedef enum
 {
     LCD_LINE__NO_LINE = 0, 
@@ -15,11 +17,12 @@ typedef enum
 } lineas_distancia_t;
 
 //Funciones básicas
+void LCD_start(void);
 void LCD_clean(void);
 void LCD_write(uint8_t line, char a[]);
 
 //Funciones de lineas distancia
-void LCD_mostrarLineasDistancia (lineas_distancia_t lineas);
-void LCD_mostrarConsumo(uint8_t muestra, uint16_t consumo);
+void LCD_mostrarLineasDistancia (lineas_distancia_t lineas); //Muesta las lineas correspondientes
+void LCD_mostrarConsumo(uint8_t muestra, uint16_t consumo);  //Muestra el consumo en la linea 2 del LCD
 
 #endif /* _LCD_H */

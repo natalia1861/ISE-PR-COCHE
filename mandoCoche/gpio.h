@@ -4,6 +4,13 @@
 #include "stm32f4xx_hal.h"
 #include "rtc.h"
 
+typedef struct {
+  uint16_t pin;
+  GPIO_TypeDef * port;
+} joy_pin_puerto;
+
+extern joy_pin_puerto joy_pin_pulsado;
+
 typedef enum {
     HAL_EXTI_Result_Ok = 0x00,
     HAL_EXTI_Result_Error,
@@ -12,5 +19,7 @@ typedef enum {
 
 void init_pulsador(void);
 void init_nRF_IRQ (void);
-//HAL_EXTI_Result_t HAL_EXTI_Attach(GPIO_TypeDef* GPIOx, uint16_t GPIO_Line, uint32_t trigger);
+void init_Joystick(void);
+void InitAllGPIOs (void);
+
 #endif

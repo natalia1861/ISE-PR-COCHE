@@ -1,10 +1,6 @@
 #include "nak_led.h"
 #include "Board_LED.h"
 
-#define LED_GREEN           0x00
-#define LED_BLUE            0x01
-#define LED_RED             0x02
-
 void LED_GREEN_ON (void)
 {
     LED_On(LED_GREEN);

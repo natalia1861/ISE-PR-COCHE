@@ -44,6 +44,7 @@
 #include "lcd.h"
 #include "adc.h"
 #include "rtc.h"
+#include "app_main.h"
 
 #ifdef RTE_CMSIS_RTOS2_RTX5
 /**
@@ -91,12 +92,13 @@ static void Error_Handler(void);
   * @retval None
   */
 	
-void LED_Init(void);
-void RGB_mbed(void);
-void LED_Init(void);
-void config_pulsador(void);
-extern I2C_HandleTypeDef hi2c2;
-void InitVL53(void); 
+//revisar
+//void LED_Init(void);
+//void RGB_mbed(void);
+//void LED_Init(void);
+//void config_pulsador(void);
+//extern I2C_HandleTypeDef hi2c2;
+//void InitVL53(void); 
 
 int main(void)
 {
@@ -118,8 +120,9 @@ int main(void)
 
   /* Add your application code here*/
     
-   //Init tasks
+    Init_AllAppThreads();
    
+ //revisar
     //meter RGB en caso de querer usarse
 	//RGB_mbed();
     //meter pulsador 

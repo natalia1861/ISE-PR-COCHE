@@ -3,6 +3,10 @@
 
 #include "stm32f4xx_hal.h"
 
+#define LED_GREEN           0x00
+#define LED_BLUE            0x01
+#define LED_RED             0x02
+
 void INITIALIZE_LEDS (void);
 void RGB_mbed(void);
 
