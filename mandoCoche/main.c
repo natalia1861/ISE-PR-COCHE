@@ -119,10 +119,8 @@ int main(void)
   SystemCoreClockUpdate();
 
   /* Add your application code here*/
-    
-    Init_AllAppThreads();
-   
- //revisar
+       
+ //revisar (no se hace aqui, se hace abajo)
     //meter RGB en caso de querer usarse
 	//RGB_mbed();
     //meter pulsador 
@@ -136,6 +134,7 @@ int main(void)
   osKernelInitialize ();
 
   /* Create application main thread */
+  Init_AllAppThreads();
   osThreadNew(app_main, NULL, &app_main_attr);
     //Init_temp_sensor();
     //initModTemp();
