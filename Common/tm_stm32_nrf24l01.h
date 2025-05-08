@@ -204,6 +204,29 @@ typedef enum _TM_NRF24L01_OutputPower_t {
 	TM_NRF24L01_OutputPower_0dBm          /*!< Output power set to 0dBm */
 } TM_NRF24L01_OutputPower_t;
 
+
+/********************Application Data****************************************/
+typedef enum
+{
+    nRF_CMD__DIRECTION = 0,
+    nRF_CMD__VELOCITY,
+    nRF_CMD__ASK_CONSUMPTION,
+    nRF_CMD__RECIEVE_CONSUMPTION
+} nRF_commands_t;
+
+typedef enum
+{
+    nRF_DATA__COMMAND = 0,
+    nRF_DATA__AUX_DATA_LOW = 1,
+    nRF_DATA__AUX_DATA_HIGH = 2,
+    nRF_DATA__MAX
+} nRF_data_struct_t;
+
+#define GET_NRF_COMMAND(dataIn)             ((dataIn)[nRF_DATA__COMMAND])
+#define GET_NRF_AUX_DATA_LOW(dataIn)        ((dataIn)[nRF_DATA__AUX_DATA_LOW])
+#define GET_NRF_AUX_DATA_HIGH(dataIn)       ((dataIn)[nRF_DATA__AUX_DATA_HIGH])
+
+/****************************************************************************/
 /**
  * @}
  */
@@ -287,10 +310,10 @@ TM_NRF24L01_Transmit_Status_t TM_NRF24L01_GetTransmissionStatus(void);
 /**
  * @brief  Transmits data with NRF24L01+ to another NRF module
  * @param  *data: Pointer to 8-bit array with data.
- *         Maximum length of array can be the same as "payload_size" parameter on initialization
+ *         Maximum length of array can be the same as "payload_size" parameter on initialization (not in dynamic)
  * @retval None
  */
-void TM_NRF24L01_Transmit(uint8_t *data);
+void TM_NRF24L01_Transmit(uint8_t *data, uint8_t size);
 
 /**
  * @brief  Checks if data is ready to be read from NRF24L01+

@@ -94,8 +94,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
   
   if(GPIO_Pin==GPIO_PIN_13) //Boton azul
   {
-  //*Mandamos comando para despertar al microcontrolador del modo bajo consumo*/
-   //revisarNAK
+    //*Mandamos comando para despertar al microcontrolador del modo bajo consumo*/
+    osThreadFlagsSet(id_thread__app_main, FLAG__ENTER_LOW_POWER);
   }
   
   if(GPIO_Pin==GPIO_PIN_10) //UP 

@@ -12,7 +12,8 @@
 #define FLAG__CARGAR_CONSUMOS       0x0020
 #define FLAG__MOSTRAR_HORA          0x0040
 #define FLAG__MOSTRAR_DISTANCIA     0x0080
-#define FLAG__ERROR                 0x0100
+#define FLAG__ENTER_LOW_POWER       0x0100
+#define FLAG__ERROR                 0x0200
 
 #define FLAG__MAIN_CONTROL  (FLAG__PRESS_UP             | \
                              FLAG__PRESS_DOWN           | \
@@ -22,14 +23,15 @@
                              FLAG__CARGAR_CONSUMOS      | \
                              FLAG__MOSTRAR_HORA         | \
                              FLAG__MOSTRAR_DISTANCIA    | \
+                             FLAG__ENTER_LOW_POWER      | \
                              FLAG__ERROR                )
 
 typedef enum
 {
-    APP_STATE__NORMAL = 0,      //FIRST_APP_STAGE
-    APP_STAGE__LOW_POWER,
+    APP_STATE__NORMAL = 0,          //FIRST_APP_STAGE
     APP_STAGE__BACK_GEAR,    
-    APP_STAGE__MOSTRAR_CONSUMO  //MAX_APP_STATE
+    APP_STAGE__MOSTRAR_CONSUMO,     //MAX_APP_STATE
+    APP_STAGE__LOW_POWER            //Se deja fuera porque se entrara desde el boton azul (no joystick como el resto)
 } app_state_t;  
 
 #define FIRST_APP_STAGE     APP_STATE__NORMAL

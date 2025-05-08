@@ -4,6 +4,7 @@
 #include "nRF24L01_TX.h"
 #include "joystick_control.h"
 #include "consumption.h"
+#include "nak_led.h"
 #include "leds_control.h"
 #include "RTC.h"
 
@@ -34,8 +35,8 @@ void thread__app_main_control (void *no_argument)
         
         if (flags & FLAG__ERROR) //Flag de error
         {
-            LCD_write(1, "ERROR...");
-            LCD_write(2, "DETAIL"); //revisarNAK añadir detalle de error
+            LCD_write(LCD_LINE__ONE, "ERROR...");
+            LCD_write(LCD_LINE__TWO, "DETAIL"); //revisarNAK añadir detalle de error
         }
         
         if (flags & FLAG__PRESS_CENTER) //Se sale del estado de error tras presionar el boton central
@@ -45,6 +46,11 @@ void thread__app_main_control (void *no_argument)
                 state_error = false;
             }
         }
+        
+        if (flags & FLAG__ENTER_LOW_POWER)
+        {
+            app_state = (app_state == APP_STAGE__LOW_POWER) ? APP_STATE__NORMAL : APP_STAGE__LOW_POWER;
+        }
          
         if (!state_error)
         {
@@ -53,30 +59,52 @@ void thread__app_main_control (void *no_argument)
                 case APP_STATE__NORMAL:
                     if (state_enter)
                     {
+                        //Mostramos estado inicial de LEDs
+                        leds_activate_mask |= GET_MASK_LED(LED_GREEN);
+                        leds_activate_mask &= ~GET_MASK_LED(LED_BLUE);
+                        leds_activate_mask &= ~GET_MASK_LED(LED_RED);
+                        
                         //Mostramos por el LCD que estamos en modo normal de funcionamiento
-                        LCD_write (1, "State: Normal");
+                        LCD_write (LCD_LINE__ONE, "State: Normal");
                         state_enter = false;
                     }
                 
                     if (flags & FLAG__MOSTRAR_HORA)
                     {
                         //Mostramos la hora en el LCD
-                        LCD_write (2, rtc_date_time[RTC_HOUR]);
+                        LCD_write (LCD_LINE__TWO, rtc_date_time[RTC_HOUR]);
                     }
                     //En caso de error, se muestra en LCD
                     break;
+                    
                 case APP_STAGE__LOW_POWER:
                     if (state_enter)
                     {
+                        //Mostramos estado inicial de LEDs
+                        leds_activate_mask &= ~GET_MASK_LED(LED_GREEN);
+                        leds_activate_mask |= GET_MASK_LED(LED_BLUE);
+                        leds_activate_mask &= ~GET_MASK_LED(LED_RED);
+                        
                         //Mostramos por el LCD que estamos en modo de bajo consumo
-                        LCD_write (1, "State: Low Power");
+                        LCD_write (LCD_LINE__ONE, "State: Low Power");
                         state_enter = false;
                     }
                 
+                    if (flags & FLAG__MOSTRAR_HORA)
+                    {
+                        //Mostramos la hora en el LCD
+                        LCD_write (LCD_LINE__TWO, rtc_date_time[RTC_HOUR]);
+                    }
                     break;
+                    
                 case APP_STAGE__BACK_GEAR:
                     if (state_enter)
                     {
+                        //Mostramos estado inicial de LEDs
+                        leds_activate_mask &= ~GET_MASK_LED(LED_GREEN);
+                        leds_activate_mask &= ~GET_MASK_LED(LED_BLUE);
+                        leds_activate_mask |= GET_MASK_LED(LED_RED);
+                        
                         //Mostramos por el LCD que estamos en modo de bajo consumo
                         LCD_write (1, "State: Back Gear");
                         state_enter = false;
@@ -92,9 +120,18 @@ void thread__app_main_control (void *no_argument)
                         // LCD_mostrarLineasDistancia(lineas); //revisarNAK RF
                     }
                     break;
+                    
                 case APP_STAGE__MOSTRAR_CONSUMO:
-                    //Mostramos en la línea 1 del LCD que estamos en el modo de mostrar consumo
-                    LCD_write (1, "State: Consumpion");
+                    if (state_enter)
+                    {
+                        //Mostramos estado inicial de LEDs
+                        leds_activate_mask |= GET_MASK_LED(LED_GREEN);
+                        leds_activate_mask |= GET_MASK_LED(LED_BLUE);
+                        leds_activate_mask |= GET_MASK_LED(LED_RED);
+                        
+                        //Mostramos en la línea 1 del LCD que estamos en el modo de mostrar consumo
+                        LCD_write (LCD_LINE__ONE, "State: Consumpion");
+                    }
                     
                     if (flags & FLAG__PRESS_RIGHT) //Mostramos el consumo de la flash en el LCD
                     {

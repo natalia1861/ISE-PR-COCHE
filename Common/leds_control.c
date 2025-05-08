@@ -9,15 +9,15 @@ void thread__ledsControl (void *no_argument)
     INITIALIZE_LEDS();
     for(;;)
     {
-        if (leds_activate_mask & (1 << LED_GREEN))
+        if (leds_activate_mask & (GET_MASK_LED(LED_GREEN)))
         {
             LED_GREEN_ON();
         }
-        if (leds_activate_mask & (1 << LED_BLUE))
+        if (leds_activate_mask & (GET_MASK_LED(LED_BLUE)))
         {
             LED_BLUE_ON();
         }
-        if (leds_activate_mask & (1 << LED_RED))
+        if (leds_activate_mask & (GET_MASK_LED(LED_RED)))
         {
             LED_RED_ON();
         }

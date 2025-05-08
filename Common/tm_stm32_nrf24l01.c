@@ -433,8 +433,10 @@ void TM_NRF24L01_PowerDown(void) {
  * always starts at byte 0 used in TX payload.*/
 
  //revisar_NAK quitar los printf
-void TM_NRF24L01_Transmit(uint8_t *data) {
-	uint8_t count = TM_NRF24L01_Struct.PayloadSize;
+void TM_NRF24L01_Transmit(uint8_t *data, uint8_t count) {
+    #ifndef ACK_PAY_EN
+	count = TM_NRF24L01_Struct.PayloadSize;
+    #endif
 
 	/* Chip enable put to low, disable it */
 	NRF24L01_CE_LOW;
