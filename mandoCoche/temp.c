@@ -1,17 +1,20 @@
 #include "temp.h"
+#include <stdio.h>
 
 /*--------------------------VARIABLES----------------------------*/
 
 //I2C register addresses
 #define REG_TEMP    0x00
-#define m_ADDR 0x48
+#define m_ADDR      0x48
 
 //driver I2C
 extern ARM_DRIVER_I2C            Driver_I2C1;
 static ARM_DRIVER_I2C *drv_I2C = &Driver_I2C1;
 
+//cola
 static osMessageQueueId_t mid_MsgQueueTemp;
 
+//sensor
 osThreadId_t tid_Thread_sensor;
 
 
@@ -74,6 +77,7 @@ static int read16(uint8_t reg){
 void leer_temp (void) {
 	MSGQUEUE_TEMP_t temperatura;
 	temperatura.temp = temp();
+    printf("Temperatura: %f", temperatura.temp);
 	//osMessageQueuePut (mid_MsgQueueTemp, &temperatura, NULL, 5000);
 	//osThreadFlagsSet (tid_Thread_sensor, TEMP_FLAG);
 }
@@ -94,7 +98,6 @@ void initModTemp(void){
 } 
 
 void thread__temp (void *no_argument) {
-    float temperature;
     initModTemp();
     while (1) {
         leer_temp();

@@ -1,4 +1,5 @@
 #include "RTC.h"
+#include "cmsis_os2.h"                  // ::CMSIS:RTOS2a
 
 #define FLAG_RTC 0x02
 

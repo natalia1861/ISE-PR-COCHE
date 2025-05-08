@@ -35,7 +35,28 @@ void LED_RED_OFF(void)
     LED_Off(LED_RED);
 }
 
+//Inicializa los leds
 void INITIALIZE_LEDS (void)
 {
     LED_Initialize();
+}
+
+
+//Configura RGB
+void RGB_mbed(void){
+	
+	 GPIO_InitTypeDef GPIO_InitStruct;
+ __HAL_RCC_GPIOD_CLK_ENABLE();	
+ 
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  
+  GPIO_InitStruct.Pin = GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13; //BGR
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+	
+	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_11, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOD,GPIO_PIN_12, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOD,GPIO_PIN_13, GPIO_PIN_SET);
+
 }

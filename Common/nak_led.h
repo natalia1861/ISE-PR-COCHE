@@ -3,13 +3,15 @@
 
 #include "stm32f4xx_hal.h"
 
-extern void INITIALIZE_LEDS (void);
-extern void LED_GREEN_ON (void);
-extern void LED_GREEN_OFF(void);
-extern void LED_BLUE_ON (void);
-extern void LED_BLUE_OFF(void);
-extern void LED_RED_ON (void);
-extern void LED_RED_OFF(void);
+void INITIALIZE_LEDS (void);
+void RGB_mbed(void);
+
+void LED_GREEN_ON (void);
+void LED_GREEN_OFF(void);
+void LED_BLUE_ON (void);
+void LED_BLUE_OFF(void);
+void LED_RED_ON (void);
+void LED_RED_OFF(void);
 
 //from LED_NUCLEO_F429ZI
 extern int32_t  LED_Initialize   (void);
