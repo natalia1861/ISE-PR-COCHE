@@ -216,6 +216,8 @@
 
 #define NRF24L01_CHECK_BIT(reg, bit)       (reg & (1 << bit))
 
+#define ACK_PAY_EN
+
 typedef struct {
 	uint8_t PayloadSize;				//Payload size
 	uint8_t Channel;					//Channel selected
@@ -231,7 +233,6 @@ uint8_t TM_NRF24L01_ReadRegister(uint8_t reg);
 void TM_NRF24L01_ReadRegisterMulti(uint8_t reg, uint8_t* data, uint8_t count);
 void TM_NRF24L01_WriteRegisterMulti(uint8_t reg, uint8_t *data, uint8_t count);
 void TM_NRF24L01_SoftwareReset(void);
-uint8_t TM_NRF24L01_RxFifoEmpty(void);
 
 /* NRF structure */
 static TM_NRF24L01_t TM_NRF24L01_Struct;

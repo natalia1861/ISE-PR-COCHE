@@ -7,11 +7,18 @@
 #include "rl_net.h"
 #include "lcd.h"
 
-#define FLAG_ALARMA 0x40
+typedef enum
+{
+    RTC_HOUR = 0,
+    RTC_TIME,
+    RTC_MAX
+} time_hour_type_t;
 
-void init_RTC(void);
-void RTC_set_Time(uint8_t day, uint8_t month, uint8_t year, uint8_t hora, uint8_t minutos, uint8_t segundos);
-void RTC_getTime_Date(void);
-void Init_alarma(int seg_alarm);
-//void RTC_Set_Time_EXAMEN1(void);
+extern char rtc_date_time[RTC_MAX][LCD_MAX_CHARACTERS+1];
+
+void Init_RTC_Update (void); //Crea el hilo que ira actualizando el RTC
+
+void RTC_set_Time(uint8_t day, uint8_t month, uint8_t year, uint8_t hora, uint8_t minutos, uint8_t segundos); //Permite poner una hora especifica
+void RTC_getTime_Date(void); //Actualiza las variables globales de fecha y hora
+
 #endif /* __RTC_H */

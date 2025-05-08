@@ -79,7 +79,7 @@ void thread__test_transmissor_RF_RX(void *argument)
 	TM_NRF24L01_SetRF(TM_NRF24L01_DataRate_2M, TM_NRF24L01_OutputPower_M18dBm);
 	
 	/* Set my address, 5 bytes */
-	//TM_NRF24L01_SetMyAddress(MyAddress); //REVISAR ELIMINABAMOS EL SET MY ADDRESS
+	//TM_NRF24L01_SetMyAddress(MyAddress); //Se utilizaba para tener la transmision de TX por un lado y la de RX por otro
 
 	/* Set TX address, 5 bytes */
 	TM_NRF24L01_SetTxAddress(TxAddress);
@@ -142,9 +142,6 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin) {
 			
 			//Miramos si la cola esta llena o vacia
 			printf("TX FIFO: 0x%02X\n", TM_NRF24L01_TxFifoEmpty());
-
-			/* Go back to RX mode */
-			//TM_NRF24L01_PowerUpRx();	revisar
 			printf("After Transmission status: 0x%02X\n", TM_NRF24L01_GetStatus());
 		}
         
@@ -165,7 +162,9 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin) {
         printf("AAAAA Status reg: 0x%02X\n", TM_NRF24L01_GetStatus());
         printf("TX FIFO: 0x%02X\n", TM_NRF24L01_TxFifoEmpty());
 		/* Clear interrupts */
-		TM_NRF24L01_Clear_Interrupts();
+		//TM_NRF24L01_Clear_Interrupts();
+		/* Go back to RX mode */
+		TM_NRF24L01_PowerUpRx();	//revisar como ya estamos en RX unicamente haria falta limpiar las interrupciones (PROBAR AHORA)
 	}
 }
 
