@@ -28,7 +28,7 @@
 
 /* NRF24L01+ registers*/
 #define NRF24L01_REG_CONFIG			0x00	//Configuration Register
-#define NRF24L01_REG_EN_AA			0x01	//Enable �Auto Acknowledgment� Function
+#define NRF24L01_REG_EN_AA			0x01	//Enable Auto Acknowledgment Function
 #define NRF24L01_REG_EN_RXADDR		0x02	//Enabled RX Addresses
 #define NRF24L01_REG_SETUP_AW		0x03	//Setup of Address Widths (common for all data pipes)
 #define NRF24L01_REG_SETUP_RETR		0x04	//Setup of Automatic Retransmission
@@ -433,9 +433,9 @@ void TM_NRF24L01_PowerDown(void) {
  * always starts at byte 0 used in TX payload.*/
 
  //revisar_NAK quitar los printf
-void TM_NRF24L01_Transmit(uint8_t *data, uint8_t count) {
+void TM_NRF24L01_Transmit(uint8_t *data, uint8_t lenght) {
     #ifndef ACK_PAY_EN
-	count = TM_NRF24L01_Struct.PayloadSize;
+	lenght = TM_NRF24L01_Struct.PayloadSize;
     #endif
 
 	/* Chip enable put to low, disable it */
@@ -454,7 +454,7 @@ void TM_NRF24L01_Transmit(uint8_t *data, uint8_t count) {
 	TM_SPI_Send(NRF24L01_SPI, NRF24L01_W_TX_PAYLOAD_MASK);
     
 	/* Fill payload with data*/
-	TM_SPI_WriteMulti(NRF24L01_SPI, data, count);
+	TM_SPI_WriteMulti(NRF24L01_SPI, data, lenght);
     
 	/* Disable SPI */
 	NRF24L01_CSN_HIGH;
@@ -496,13 +496,13 @@ void TM_NRF24L01_WriteAckPayload(uint8_t pipe, uint8_t* data, uint8_t length) {
 //Tanto para leer el payload normal como el del ACK.
 //Se tienen que mandar datos "basura" para que el sensor responda con los datos reales
 
-void TM_NRF24L01_GetData(uint8_t* data) {
+void TM_NRF24L01_GetData(uint8_t* data, uint8_t lenght) {
 	/* Pull down chip select */
 	NRF24L01_CSN_LOW;
 	/* Send read payload command*/
 	TM_SPI_Send(NRF24L01_SPI, NRF24L01_R_RX_PAYLOAD_MASK);
 	/* Read payload */
-	TM_SPI_SendMulti(NRF24L01_SPI, data, data, TM_NRF24L01_Struct.PayloadSize);
+	TM_SPI_SendMulti(NRF24L01_SPI, data, data, lenght);
 	/* Pull up chip select */
 	NRF24L01_CSN_HIGH;
 	
@@ -518,6 +518,19 @@ uint8_t TM_NRF24L01_DataReady(void) {
 		return 1;
 	}
 	return !TM_NRF24L01_RxFifoEmpty();
+}
+
+/*Funcion que lee el status de la cola FIFO*/
+/* FIFO status - NRF24L01_REG_FIFO_STATUS
+ * bit: NRF24L01_TX_REUSE		6 //Reuse last transmitted data packet if set high. The packet is repeatedly retransmitted as long as CE is high.
+ * bit:                           //TX_REUSE is set by the SPI command REUSE_TX_PL, and is reset by the SPI commands W_TX_PAYLOAD or FLUSH TX
+ * bit: NRF24L01_FIFO_FULL		5 //TX FIFO full flag. 1: TX FIFO full. 0: Available locations in TX FIFO.
+ * bit: NRF24L01_TX_EMPTY		4 //TX FIFO empty flag. 1: TX FIFO empty. 0: Data in TX FIFO.
+ * bit: NRF24L01_RX_FULL			1 //RX FIFO full flag. 1: RX FIFO full. 0: Available locations in RX FIFO.
+ * bit: NRF24L01_RX_EMPTY		0 //RX FIFO empty flag. 1: RX FIFO empty. 0: Data in RX FIFO. */
+uint8_t TM_NRF24L01_GetFIFOStatus (void)
+{
+	return TM_NRF24L01_ReadRegister(NRF24L01_REG_FIFO_STATUS);
 }
 
 //Funcion que mira si la RX FIFO esta vacia o no
@@ -662,7 +675,17 @@ uint8_t TM_NRF24L01_Read_Interrupts(TM_NRF24L01_IRQ_t* IRQ) {
 	return IRQ->Status;
 }
 
+//Funcion que limpia las interrupciones del sensor para no volver a leerlas
 void TM_NRF24L01_Clear_Interrupts(void) {
-	TM_NRF24L01_WriteRegister(0x07, 0x70);
+	TM_NRF24L01_WriteRegister(NRF24L01_REG_STATUS, 0x70);
 }
 
+void TM_NRF24L01_Clear_RX_FIFO (void)
+{
+	NRF24L01_FLUSH_RX;
+}
+
+void TM_NRF24L01_Clear_TX_FIFO (void)
+{
+	NRF24L01_FLUSH_TX;
+}

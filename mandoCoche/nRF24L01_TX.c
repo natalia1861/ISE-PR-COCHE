@@ -52,10 +52,11 @@ osThreadId_t id_thread__RF_TX = NULL;
 #define MAX_RF_MESS_QUEUE           5
 osMessageQueueId_t id_queue__nRF_TX_Data = NULL;
 
-/* Data received and data for send */
-uint8_t dataOut[3], dataIn[3];
-uint8_t* dataInptr = dataIn;
 uint32_t started_time = 0;
+
+/* Data received and data for send */
+uint8_t dataOut[nRF_DATA_LENGTH] = {0};
+uint8_t dataIn[nRF_DATA_LENGTH] = {0};
 
 /* Interrupt pin settings */
 #define IRQ_PORT    GPIOG
@@ -68,7 +69,6 @@ TM_NRF24L01_IRQ_t NRF_IRQ;
 void thread__test_transmissor_RF_TX(void *argument) 
 {
 	uint8_t printed = 0;
-    
     nRF_data_t nRF_data;
 
     printf("Initializing...\n");
@@ -96,7 +96,7 @@ void thread__test_transmissor_RF_TX(void *argument)
     printf("STATUS register: 0x%02X\n\n", TM_NRF24L01_GetStatus());
     
     /* Fill data with something */
-    sprintf((char *)dataOut, "abcdefghijklmnoszxABCDEFCBDA");
+    sprintf((char *)dataOut, "987");
 	
 	while (1)
     {
@@ -109,7 +109,7 @@ void thread__test_transmissor_RF_TX(void *argument)
         LCD_write(2, "Pinging...          ");
         
 		/* Transmit data, goes automatically to TX mode */
-		TM_NRF24L01_Transmit(dataOut);
+        TM_NRF24L01_Transmit(dataOut, sizeof(dataOut));
 		
 		/* Turn on led to indicate sending */
 		LED_Grun = true;
@@ -133,8 +133,7 @@ void thread__test_transmissor_RF_TX(void *argument)
         {
 			/* Print time in ms */
             printf("Check tranmision after : %d seconds\n", (HAL_GetTick() - started_time));
-            status = TM_NRF24L01_GetStatus();
-			printf("Status after IRQ = 0x%02X\n", status);
+			printf("Status after IRQ = 0x%02X\n", TM_NRF24L01_GetStatus());
 
 			/* Transmission was OK */
 			if (transmissionStatus == TM_NRF24L01_Transmit_Status_Ok) {
@@ -165,9 +164,9 @@ void thread__test_transmissor_RF_TX(void *argument)
             /* Display on DEBUG */
             printf("\nPinging at %d: \n", started_time);
             
-            dataOut[2] = (uint8_t) (nRF_data.command);
-            dataOut[1] = (uint8_t)(nRF_data.auxiliar_data >> 8);    // Byte alto
-            dataOut[2] = (uint8_t)(nRF_data.auxiliar_data);         // Byte alto
+            dataOut[nRF_DATA__COMMAND]        = (uint8_t) (nRF_data.command);
+            dataOut[nRF_DATA__AUX_DATA_LOW]   = (uint8_t) (nRF_data.auxiliar_data);         // Byte bajo
+            dataOut[nRF_DATA__AUX_DATA_HIGH]  = (uint8_t) (nRF_data.auxiliar_data >> 8);    // Byte alto
 
             TM_NRF24L01_Transmit(dataOut, sizeof(dataOut));
 
@@ -203,7 +202,7 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin)
 			/* Save transmission status */
 			transmissionStatus = TM_NRF24L01_Transmit_Status_Ok;
 			
-            printf("STATUS FIFO in Data Sent %d\n", TM_NRF24L01_ReadRegister(0x17));
+            printf("STATUS FIFO in Data Sent %d\n", TM_NRF24L01_GetFIFOStatus());
 		}
 		
 		/* Check if max retransmission reached and last transmission failed */
@@ -226,21 +225,14 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin)
 		if (NRF_IRQ.F.DataReady) 
         { //una vez se fue a RX, si recibe datos
 			printf("IRQ: Data Ready IRQ\n");
-            printf("STATUS FIFO before read %d\n", TM_NRF24L01_ReadRegister(0x17));
+            printf("STATUS FIFO before read %d\n", TM_NRF24L01_GetFIFOStatus());
             printf("FIFO RX before read: %d\n", TM_NRF24L01_RxFifoEmpty());
 
-            #ifdef TEST_RF
+
 			/* Get data from RX FIFO NRF24L01+ */
-			TM_NRF24L01_GetData(dataInptr++);
-            printf ("Data received: %d\n", *dataInptr);
-            #else
-            do
-            {
-                TM_NRF24L01_GetData(dataIn);
-                printf ("Data received: %x%x%x\n", dataIn[0], dataIn[1], dataIn[2]);
-            }
-            while (!TM_NRF24L01_RxFifoEmpty()); //revisarNAK quizas podria llegar a ser bloqueante (aunque es verdad que siempre coge el ultimo valor, teniendo en cuenta que todo es distancia
-            
+			TM_NRF24L01_GetData(dataIn, sizeof(dataIn));
+            printf ("Data received: [0]: %x [1] %x [2] %x\n", dataIn[0], dataIn[1], dataIn[2]);
+            #ifndef TEST_RF
             
             //Siempre van a ser datos de distancia - por si acaso, comprobamos
             if (GET_NRF_COMMAND(dataIn) == nRF_CMD__ASK_CONSUMPTION)
@@ -253,7 +245,7 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin)
             
             #endif
             
-            printf("STATUS FIFO after read %d\n", TM_NRF24L01_ReadRegister(0x17));
+            printf("STATUS FIFO after read %d\n", TM_NRF24L01_GetFIFOStatus());
             printf("FIFO RX after read: %d\n", TM_NRF24L01_RxFifoEmpty());
 		}
         
