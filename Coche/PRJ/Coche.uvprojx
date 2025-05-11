@@ -398,6 +398,21 @@
               <FileType>1</FileType>
               <FilePath>.\nRF24L01_RX.c</FilePath>
             </File>
+            <File>
+              <FileName>distance_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\distance_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>leds_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Common\leds_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>app_main.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\app_main.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -424,9 +439,14 @@
               <FilePath>..\Common\tm_stm32_spi.c</FilePath>
             </File>
             <File>
-              <FileName>nak_led.c</FileName>
+              <FileName>i2c.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Common\nak_led.c</FilePath>
+              <FilePath>.\i2c.c</FilePath>
+            </File>
+            <File>
+              <FileName>VL53L0X.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\VL53L0X.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -437,6 +457,11 @@
               <FileName>gpio.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\gpio.c</FilePath>
+            </File>
+            <File>
+              <FileName>nak_led.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Common\nak_led.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -204,6 +204,30 @@ typedef enum _TM_NRF24L01_OutputPower_t {
 	TM_NRF24L01_OutputPower_0dBm          /*!< Output power set to 0dBm */
 } TM_NRF24L01_OutputPower_t;
 
+
+/********************Application Data****************************************/
+typedef enum
+{
+    nRF_CMD__DIRECTION = 0,
+    nRF_CMD__VELOCITY,
+    nRF_CMD__ASK_DISTANCE,
+    nRF_CMD__RECEIVE_DISTANCE
+} nRF_commands_t;
+
+typedef enum
+{
+    nRF_DATA__COMMAND = 0,
+    nRF_DATA__AUX_DATA_LOW = 1,
+    nRF_DATA__AUX_DATA_HIGH = 2,
+    nRF_DATA__MAX
+} nRF_data_struct_t;
+
+#define GET_NRF_COMMAND(dataIn)             ((dataIn)[nRF_DATA__COMMAND])
+#define GET_NRF_AUX_DATA_LOW(dataIn)        ((dataIn)[nRF_DATA__AUX_DATA_LOW])
+#define GET_NRF_AUX_DATA_HIGH(dataIn)       ((dataIn)[nRF_DATA__AUX_DATA_HIGH])
+
+#define nRF_DATA_LENGTH                     3   //bytes
+/****************************************************************************/
 /**
  * @}
  */
@@ -287,10 +311,10 @@ TM_NRF24L01_Transmit_Status_t TM_NRF24L01_GetTransmissionStatus(void);
 /**
  * @brief  Transmits data with NRF24L01+ to another NRF module
  * @param  *data: Pointer to 8-bit array with data.
- *         Maximum length of array can be the same as "payload_size" parameter on initialization
+ *         Maximum length of array can be the same as "payload_size" parameter on initialization (not in dynamic)
  * @retval None
  */
-void TM_NRF24L01_Transmit(uint8_t *data);
+void TM_NRF24L01_Transmit(uint8_t *data, uint8_t size);
 
 /**
  * @brief  Checks if data is ready to be read from NRF24L01+
@@ -300,19 +324,79 @@ void TM_NRF24L01_Transmit(uint8_t *data);
  *            - > 0: Data is ready to be collected
  */
  
-void TM_NRF24L01_WriteAckPayload(uint8_t pipe, uint8_t* data, uint8_t length); //revisar
-uint8_t TM_NRF24L01_TxFifoEmpty(void); //revisar tambien
-uint8_t TM_NRF24L01_ReadRegister(uint8_t reg); //quitar
-uint8_t TM_NRF24L01_RxFifoEmpty(void);
-     
 uint8_t TM_NRF24L01_DataReady(void);
+
+/**
+ * @brief  Checks if data is ready to be read from NRF24L01+.
+ * @param  None
+ * @retval Data ready status:
+ *            - 0: No data available in RX buffer
+ *            - >0: Data is ready to be collected
+ */
+uint8_t TM_NRF24L01_DataReady(void);
+
+/**
+ * @brief  Writes an ACK payload to be sent with the next ACK packet.
+ * @param  pipe: Pipe number to which the ACK payload will be attached (0?5).
+ * @param  data: Pointer to the data buffer containing the payload.
+ * @param  length: Length of the payload data in bytes (max 32).
+ * @retval None
+ */
+void TM_NRF24L01_WriteAckPayload(uint8_t pipe, uint8_t* data, uint8_t length);
+
+/**
+ * @brief  Gets the FIFO status of the NRF24L01+.
+ * @param  None
+ * @retval FIFO status register value.
+ */
+uint8_t TM_NRF24L01_GetFIFOStatus(void);
+
+/**
+ * @brief  Checks if the TX FIFO is empty.
+ * @param  None
+ * @retval Status:
+ *            - 1: TX FIFO is empty
+ *            - 0: TX FIFO contains data
+ */
+uint8_t TM_NRF24L01_TxFifoEmpty(void);
+
+/**
+ * @brief  Checks if the RX FIFO is empty.
+ * @param  None
+ * @retval Status:
+ *            - 1: RX FIFO is empty
+ *            - 0: RX FIFO contains data
+ */
+uint8_t TM_NRF24L01_RxFifoEmpty(void);
+
+/**
+ * @brief  Reads a single register from the NRF24L01+.
+ * @param  reg: Register address to read.
+ * @retval Register value.
+ */
+uint8_t TM_NRF24L01_ReadRegister(uint8_t reg);
+
+/**
+ * @brief  Clears the RX FIFO buffer.
+ * @param  None
+ * @retval None
+ */
+void TM_NRF24L01_Clear_RX_FIFO(void);
+
+/**
+ * @brief  Clears the TX FIFO buffer.
+ * @param  None
+ * @retval None
+ */
+void TM_NRF24L01_Clear_TX_FIFO(void);
+
 
 /**
  * @brief  Gets data from NRF24L01+
  * @param  *data: Pointer to 8-bits array where data from NRF will be saved
  * @retval None
  */
-void TM_NRF24L01_GetData(uint8_t *data);
+void TM_NRF24L01_GetData(uint8_t *data, uint8_t lenght);
 
 /**
  * @brief  Sets working channel

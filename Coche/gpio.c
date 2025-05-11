@@ -47,3 +47,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
     HAL_GPIO_EXTI_Callback_NRF(GPIO_Pin);  // o copia aqu� todo lo que ya tienes
   }
 }
+
+void InitAllGPIOs (void)
+{
+    init_pulsador();
+    init_nRF_IRQ();
+}
+

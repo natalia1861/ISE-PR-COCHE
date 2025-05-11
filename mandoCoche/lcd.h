@@ -11,10 +11,13 @@ typedef enum
     LCD_LINE__ONE,
     LCD_LINE__TWO,
     LCD_LINE__THREE, 
-    LCD_LINE__FOUR,
+    LCD_LINE__FOUR,     //LCD_MAX_LINES
     
     LCD_LINE__MAX
 } lineas_distancia_t;
+
+#define LCD_MAX_LINES       LCD_LINE__FOUR
+#define LCD_MIN_LINES       LCD_LINE__NO_LINE
 
 //Funciones básicas
 void LCD_start(void);

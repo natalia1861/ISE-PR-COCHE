@@ -25,9 +25,10 @@
 //#include "tm_stm32_delay.h"
 #include "tm_stm32_nrf24l01.h"
 //#include "tm_stm32_usart.h"
-#include "tm_stm32_exti.h"
+//#include "tm_stm32_exti.h"
 #include "gpio.h"
 #include "nak_led.h"
+#include "distance_control.h"
 
 
 /* Receiver address */
@@ -52,8 +53,8 @@ uint8_t MyAddress[] = {
 osThreadId_t id_thread__RF_RX = NULL;
 
 /* Data received and data for send */
-uint8_t dataIn[32];
-uint8_t dataOut[1] = {0};
+uint8_t dataIn[nRF_DATA_LENGTH] = {0};
+uint8_t dataOut[nRF_DATA_LENGTH] = {0};
 
 /* Interrupt pin settings */
 #define IRQ_PORT    GPIOG
@@ -68,6 +69,10 @@ HAL_EXTI_Result_t status_IRQ = HAL_EXTI_Result_Not_Defined;
 
 void thread__test_transmissor_RF_RX(void *argument) 
 {
+    
+    dataOut[1] = 0x02;
+    dataOut[2] = 0x03;
+    
     printf("Initializing...");
 
 	/* Initialize NRF24L01+ on channel 15 and 32bytes of payload */
@@ -86,25 +91,15 @@ void thread__test_transmissor_RF_RX(void *argument)
 	
 	/* Enable interrupts for NRF24L01+ IRQ pin */
     init_nRF_IRQ();
-    
+        
     //Debug status
     printf("nRF initialized\n\n");
-    printf("STATUS register: 0x%02X\n\n", TM_NRF24L01_GetStatus());
     
-    printf("FEATURE register: 0x%02X\n\n", TM_NRF24L01_ReadRegister(0x1D));
+    printf("STATUS register: 0x%02X\n\n", TM_NRF24L01_GetStatus());         //Status: 0x0E
     
-    printf("DYNPD register: 0x%02X\n\n", TM_NRF24L01_ReadRegister(0x1C));
-
-	while (1) 
-    {
-        //Únicamente espera interrupciones. El hilo se eliminará
-        //Se emplea para parpadear led azul para ver que este funcionando la placa
-        //revisar_NAK quitar y crear tarea independiente
-        LED_BLUE_ON();
-        osDelay(200);
-        LED_BLUE_OFF();
-        osDelay(200);
-	}
+    printf("FEATURE register: 0x%02X\n\n", TM_NRF24L01_ReadRegister(0x1D)); //Feature: 0x
+    
+    printf("DYNPD register: 0x%02X\n\n", TM_NRF24L01_ReadRegister(0x1C));   //DYNDP: 
 }
 
 /* Interrupt handler */
@@ -124,13 +119,37 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin) {
 			printf("IRQ: Data Ready IRQ\n");
 
 			/* Get data from NRF24L01+ */
-			TM_NRF24L01_GetData(dataIn);
-			
-			/* Write ACK Payload into TX FIFO */
-            dataOut[0] = dataOut[0]+1; //Se añaden datos de payload (numero ascendente)
+			TM_NRF24L01_GetData(dataIn, sizeof(dataIn));
+			printf("Data received: [0]: %x [1]: %x [2]: %x\n", dataIn[0], dataIn[1], dataIn[2]);
+            #ifndef TEST_RF
+            switch (GET_NRF_COMMAND(dataIn))
+            {
+                case nRF_CMD__DIRECTION:
+                    //Se manda comando de dirección a los servos
+                    //revisar
+                    break;
+                case nRF_CMD__VELOCITY:
+                    //Se manda comando de velocidad a los servos
+                    //revisar
+                    break;
+                case nRF_CMD__ASK_DISTANCE:
+                    //Se añaden datos al ACK PAYLOAD
+                    dataOut[nRF_DATA__COMMAND] = nRF_CMD__ASK_DISTANCE;             //Se añade el comando de recibir consumo como respuesta
+                    dataOut[nRF_DATA__AUX_DATA_LOW] = (uint8_t) distancia;          //Se añade el valor de distancia (low byte)
+                    dataOut[nRF_DATA__AUX_DATA_HIGH] = (uint8_t) distancia >> 8;    //Se añade el valor de distancia (high byte)
+                    TM_NRF24L01_WriteAckPayload(NRF_IRQ.F.RX_P_NO, dataOut, sizeof(dataOut));
+                    break;
+                case nRF_CMD__RECEIVE_DISTANCE:
+                    //No se realiza ninguna accion. Comando utilizado para mandar el ack previamente cargado
+                    break;
+            }
 
+            #else
+			/* Write ACK Payload into TX FIFO */
+            dataOut[0] = dataOut[0] +1; //Se añaden datos de payload (numero ascendente)
+            printf("TX FIFO before: 0x%02X\n", TM_NRF24L01_TxFifoEmpty());
             TM_NRF24L01_WriteAckPayload(NRF_IRQ.F.RX_P_NO, dataOut, sizeof(dataOut));
-            
+
 //			/* Send it back, NRF goes automatically to TX mode */
 //			TM_NRF24L01_Transmit(dataIn);
 //			
@@ -143,6 +162,7 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin) {
 			//Miramos si la cola esta llena o vacia
 			printf("TX FIFO: 0x%02X\n", TM_NRF24L01_TxFifoEmpty());
 			printf("After Transmission status: 0x%02X\n", TM_NRF24L01_GetStatus());
+            #endif
 		}
         
 		/* If data is ready on NRF24L01+*/
@@ -162,9 +182,11 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin) {
         printf("AAAAA Status reg: 0x%02X\n", TM_NRF24L01_GetStatus());
         printf("TX FIFO: 0x%02X\n", TM_NRF24L01_TxFifoEmpty());
 		/* Clear interrupts */
-		//TM_NRF24L01_Clear_Interrupts();
+		TM_NRF24L01_Clear_Interrupts();
+		/* Clear RX FIFO*/
+		TM_NRF24L01_Clear_RX_FIFO();
 		/* Go back to RX mode */
-		TM_NRF24L01_PowerUpRx();	//revisar como ya estamos en RX unicamente haria falta limpiar las interrupciones (PROBAR AHORA)
+		//TM_NRF24L01_PowerUpRx();	//No hace falta: como ya estamos en RX unicamente haria falta limpiar las interrupciones y limpiar RX FIFO
 	}
 }
 
