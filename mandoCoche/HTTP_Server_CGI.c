@@ -118,7 +118,7 @@ void netCGI_ProcessData (uint8_t code, const char *data, uint32_t len) {
   LEDrun = true;
   if (len == 0) {
     // No data or all items (radio, checkbox) are off
-    LED_SetOut (P2);
+    //LED_SetOut (P2);
     return;
   }
   passw[0] = 1;
@@ -179,7 +179,7 @@ void netCGI_ProcessData (uint8_t code, const char *data, uint32_t len) {
       }
     }
   } while (data);
-  LED_SetOut (P2);
+  //LED_SetOut (P2);
 }
 
 // Generate dynamic web data from a script line.

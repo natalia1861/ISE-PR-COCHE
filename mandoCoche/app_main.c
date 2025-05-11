@@ -7,13 +7,20 @@
 #include "nak_led.h"
 #include "leds_control.h"
 #include "RTC.h"
+#include "ask_distance_control.h"
 
-#define NUM_MAX_MUESTRA_CONSUMO     10
+#define NUM_MAX_MUESTRA_CONSUMO     10      //Buffer circular de consumo (memoria flash)
+#define MAX_DISTANCE                4096    //Definir el maximo valor para la distancia revisarMSP
+#define MIN_DISTANCE                0       //Definir el minimo valor para la distancia revisarMSP
 
+//Variables globales
 osThreadId_t id_thread__app_main;
+
+//Variables locales
 app_state_t app_state = FIRST_APP_STAGE;
 
-void Init_AllAppThreads(void);
+//Funciones locales
+lineas_distancia_t calcularLineasDistancia (uint16_t distancia);
 
 void thread__app_main_control (void *no_argument)
 {
@@ -110,20 +117,23 @@ void thread__app_main_control (void *no_argument)
                         state_enter = false;
                         
                         //Creamos el hilo de solicitud de distancia cada x tiempo que mandará comando de solicitud de distancia revisarNAK revisarMSP
-                        
+                        Init_askDistanceControl();
                     }
                     
                     osDelay (2000); //Espera 2 segundos para visualizar que se entró al estado de marcha atrás
                     if (flags & FLAG__MOSTRAR_DISTANCIA) //Flag enviado desde nRF TX tras recibir la distancia
                     {
                         //Se muestra la distancia por el LCD
-                        // LCD_mostrarLineasDistancia(lineas); //revisarNAK RF
+                        LCD_mostrarLineasDistancia(calcularLineasDistancia(nRF_data_received.distancia));
                     }
                     break;
                     
                 case APP_STAGE__MOSTRAR_CONSUMO:
                     if (state_enter)
                     {
+                        //Desactivamos el control anterior
+                        Stop_askDistanceControl();
+                        
                         //Mostramos estado inicial de LEDs
                         leds_activate_mask |= GET_MASK_LED(LED_GREEN);
                         leds_activate_mask |= GET_MASK_LED(LED_BLUE);
@@ -156,5 +166,24 @@ void Init_AllAppThreads(void)
     //Init_thread_GetConsumption();
     //Init_LedsControl();
     Init_RF_TX();
+    //osThreadNew(app_main, NULL, &app_main_attr);
+    netInitialize();
     //id_thread__app_main = osThreadNew(thread__app_main_control, NULL, NULL);
+}
+
+lineas_distancia_t calcularLineasDistancia (uint16_t distancia)
+{
+    uint32_t lines;
+    if (distancia <= MIN_DISTANCE)
+    {
+        distancia = MIN_DISTANCE;
+    }
+    else if (distancia >= MAX_DISTANCE)
+    {
+        distancia = MAX_DISTANCE;
+    }
+
+    lines = ((distancia* (LCD_MAX_LINES - LCD_MIN_LINES))/(MAX_DISTANCE - MIN_DISTANCE));
+
+    return (lineas_distancia_t) lines;
 }

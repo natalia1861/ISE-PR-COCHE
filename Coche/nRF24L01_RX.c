@@ -25,9 +25,10 @@
 //#include "tm_stm32_delay.h"
 #include "tm_stm32_nrf24l01.h"
 //#include "tm_stm32_usart.h"
-#include "tm_stm32_exti.h"
+//#include "tm_stm32_exti.h"
 #include "gpio.h"
 #include "nak_led.h"
+#include "distance_control.h"
 
 
 /* Receiver address */
@@ -131,14 +132,14 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin) {
                     //Se manda comando de velocidad a los servos
                     //revisar
                     break;
-                case nRF_CMD__ASK_CONSUMPTION:
+                case nRF_CMD__ASK_DISTANCE:
                     //Se añaden datos al ACK PAYLOAD
-                    dataOut[0] = nRF_CMD__ASK_CONSUMPTION; //Se añade el comando de recibir consumo como respuesta
-                    //dataOut[1] = consumo; //revisar añadir consumo low
-                    //dataOut[2] = consumo; //revisar añadir consumo high
+                    dataOut[nRF_DATA__COMMAND] = nRF_CMD__ASK_DISTANCE;             //Se añade el comando de recibir consumo como respuesta
+                    dataOut[nRF_DATA__AUX_DATA_LOW] = (uint8_t) distancia;          //Se añade el valor de distancia (low byte)
+                    dataOut[nRF_DATA__AUX_DATA_HIGH] = (uint8_t) distancia >> 8;    //Se añade el valor de distancia (high byte)
                     TM_NRF24L01_WriteAckPayload(NRF_IRQ.F.RX_P_NO, dataOut, sizeof(dataOut));
                     break;
-                case nRF_CMD__RECEIVE_CONSUMPTION:
+                case nRF_CMD__RECEIVE_DISTANCE:
                     //No se realiza ninguna accion. Comando utilizado para mandar el ack previamente cargado
                     break;
             }

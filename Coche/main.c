@@ -22,7 +22,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "nRF24L01_RX.h"
+#include "app_main.h"
 
 #ifdef _RTE_
 #include "RTE_Components.h"             // Component selection
@@ -111,9 +111,8 @@ int main(void)
   /* Initialize CMSIS-RTOS2 */
   osKernelInitialize ();
 
-  /* Create thread functions that start executing, 
-  Example: osThreadNew(app_main, NULL, NULL); */
-  Init_RF_RX();
+  /* Create thread functions that start executing */
+  Init_AllAppThreads();
   /* Start thread execution */
   osKernelStart();
 #endif

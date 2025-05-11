@@ -66,6 +66,8 @@ uint8_t dataIn[nRF_DATA_LENGTH] = {0};
 TM_NRF24L01_Transmit_Status_t transmissionStatus;
 TM_NRF24L01_IRQ_t NRF_IRQ;
 
+nRF_data_received_t nRF_data_received;
+
 void thread__test_transmissor_RF_TX(void *argument) 
 {
 	uint8_t printed = 0;
@@ -110,9 +112,6 @@ void thread__test_transmissor_RF_TX(void *argument)
         
 		/* Transmit data, goes automatically to TX mode */
         TM_NRF24L01_Transmit(dataOut, sizeof(dataOut));
-		
-		/* Turn on led to indicate sending */
-		LED_Grun = true;
 		
 		/* Set NRF state to sending */
 		transmissionStatus = TM_NRF24L01_Transmit_Status_Sending;
@@ -232,16 +231,18 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin)
 			/* Get data from RX FIFO NRF24L01+ */
 			TM_NRF24L01_GetData(dataIn, sizeof(dataIn));
             printf ("Data received: [0]: %x [1] %x [2] %x\n", dataIn[0], dataIn[1], dataIn[2]);
+            
             #ifndef TEST_RF
             
-            //Siempre van a ser datos de distancia - por si acaso, comprobamos
-            if (GET_NRF_COMMAND(dataIn) == nRF_CMD__ASK_CONSUMPTION)
-            {
-                //Mandamos consumo a FLASH
-                //revisarNAK
-                //Mandamos consumo a Web
-                //revisarNAK revisarMSP
-            }
+                //Siempre van a ser datos de distancia - por si acaso, comprobamos
+                if (GET_NRF_COMMAND(dataIn) == nRF_CMD__ASK_DISTANCE)
+                {
+                    //Obtenemos el dato de distancia
+                    nRF_data_received.distancia = (GET_NRF_AUX_DATA_HIGH(dataIn) << 8) | (GET_NRF_AUX_DATA_LOW(dataIn));
+                    
+                    //Mandamos flag a app_main de que la distancia fue actualizada
+                    osThreadFlagsSet(id_thread__app_main, FLAG__MOSTRAR_DISTANCIA);
+                }
             
             #endif
             

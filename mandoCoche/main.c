@@ -40,10 +40,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os2.h"                  // ::CMSIS:RTOS2a
-#include "nRF24L01_TX.h"
-#include "lcd.h"
-#include "adc.h"
-#include "rtc.h"
 #include "app_main.h"
 
 #ifdef RTE_CMSIS_RTOS2_RTX5
@@ -135,7 +131,6 @@ int main(void)
 
   /* Create application main thread */
   Init_AllAppThreads();
-  osThreadNew(app_main, NULL, &app_main_attr);
     //Init_temp_sensor();
     //initModTemp();
     //tid_Thread_sensor = osThreadNew(thread__temp, NULL, NULL);

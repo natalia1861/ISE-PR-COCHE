@@ -337,7 +337,7 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>HSE_VALUE=8000000, TEST_RF</Define>
+              <Define>HSE_VALUE=8000000</Define>
               <Undefine></Undefine>
               <IncludePath>..\Common</IncludePath>
             </VariousControls>
@@ -627,6 +627,21 @@
               <FileName>leds_control.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Common\leds_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>direction_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\direction_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>velocity_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\velocity_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>ask_distance_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\ask_distance_control.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1291,6 +1306,21 @@
               <FileName>leds_control.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Common\leds_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>direction_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\direction_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>velocity_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\velocity_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>ask_distance_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\ask_distance_control.c</FilePath>
             </File>
           </Files>
         </Group>

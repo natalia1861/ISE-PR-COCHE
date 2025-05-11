@@ -10,7 +10,13 @@ typedef struct
     uint16_t auxiliar_data;
 } nRF_data_t;
 
+typedef struct
+{
+    uint16_t distancia;
+} nRF_data_received_t;
+
 extern osMessageQueueId_t id_queue__nRF_TX_Data;
+extern nRF_data_received_t nRF_data_received;
 
 void Init_RF_TX(void);
 void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin);

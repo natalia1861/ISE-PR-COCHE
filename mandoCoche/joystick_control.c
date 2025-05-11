@@ -37,7 +37,6 @@ void thread__Joystick_control (void *no_argument)
 				switch (joy_pin_pulsado.pin) 
                 {
 					case GPIO_PIN_10: //UP
-                        //Cambiamos de modo: NORMAL, MARCHA_ATRAS, BAJO_CONSUMO
                         osThreadFlagsSet(id_thread__app_main, FLAG__PRESS_UP);
 					break;                                                  
 					case GPIO_PIN_11: //RIGHT                               
