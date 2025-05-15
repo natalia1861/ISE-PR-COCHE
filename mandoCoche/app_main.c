@@ -8,6 +8,7 @@
 #include "leds_control.h"
 #include "RTC.h"
 #include "ask_distance_control.h"
+#include "ask_consumption_control.h"
 
 #define NUM_MAX_MUESTRA_CONSUMO     10      //Buffer circular de consumo (memoria flash)
 #define MAX_DISTANCE                4096    //Definir el maximo valor para la distancia revisarMSP
@@ -22,6 +23,7 @@ app_state_t app_state = FIRST_APP_STAGE;
 //Funciones locales
 lineas_distancia_t calcularLineasDistancia (uint16_t distancia);
 
+//Funcion principal - control del automata y el LCD
 void thread__app_main_control (void *no_argument)
 {
     uint32_t flags;
@@ -30,6 +32,7 @@ void thread__app_main_control (void *no_argument)
     uint8_t numero_muestra = 0;
     uint8_t state_enter = true;
     uint8_t state_error = false;
+    
     
     while(1)
     {
@@ -42,15 +45,18 @@ void thread__app_main_control (void *no_argument)
         
         if (flags & FLAG__ERROR) //Flag de error
         {
+            state_error = true;
             LCD_write(LCD_LINE__ONE, "ERROR...");
             LCD_write(LCD_LINE__TWO, "DETAIL"); //revisarNAK añadir detalle de error
         }
         
-        if (flags & FLAG__PRESS_CENTER) //Se sale del estado de error tras presionar el boton central
+        if (flags & FLAG__PRESS_CENTER) //Se sale del estado de error tras presionar el boton central - se vuelve al inicio
         {
             if (state_error)
             {
                 state_error = false;
+                app_state = FIRST_APP_STAGE;
+                state_enter = true;
             }
         }
         
@@ -63,9 +69,13 @@ void thread__app_main_control (void *no_argument)
         {
             switch (app_state)
             {
-                case APP_STATE__NORMAL:
+                case APP_STATE__NORMAL:               
                     if (state_enter)
                     {
+                        //Desactivamos todos los controles de otros estados
+                        Stop_askDistanceControl();
+                        Stop_askConsumptionControl();
+                        
                         //Mostramos estado inicial de LEDs
                         leds_activate_mask |= GET_MASK_LED(LED_GREEN);
                         leds_activate_mask &= ~GET_MASK_LED(LED_BLUE);
@@ -84,9 +94,13 @@ void thread__app_main_control (void *no_argument)
                     //En caso de error, se muestra en LCD
                     break;
                     
-                case APP_STAGE__LOW_POWER:
+                case APP_STAGE__LOW_POWER:               
                     if (state_enter)
                     {
+                        //Desactivamos todos los controles de otros estados
+                        Stop_askDistanceControl();
+                        Stop_askConsumptionControl();
+                        
                         //Mostramos estado inicial de LEDs
                         leds_activate_mask &= ~GET_MASK_LED(LED_GREEN);
                         leds_activate_mask |= GET_MASK_LED(LED_BLUE);
@@ -99,7 +113,7 @@ void thread__app_main_control (void *no_argument)
                 
                     if (flags & FLAG__MOSTRAR_HORA)
                     {
-                        //Mostramos la hora en el LCD
+                        //Mostramos la hora en el LCD - linea 2
                         LCD_write (LCD_LINE__TWO, rtc_date_time[RTC_HOUR]);
                     }
                     break;
@@ -107,6 +121,10 @@ void thread__app_main_control (void *no_argument)
                 case APP_STAGE__BACK_GEAR:
                     if (state_enter)
                     {
+                        //Desactivamos todos los controles de otros estados
+                        Stop_askDistanceControl();
+                        Stop_askConsumptionControl();
+                        
                         //Mostramos estado inicial de LEDs
                         leds_activate_mask &= ~GET_MASK_LED(LED_GREEN);
                         leds_activate_mask &= ~GET_MASK_LED(LED_BLUE);
@@ -131,7 +149,7 @@ void thread__app_main_control (void *no_argument)
                 case APP_STAGE__MOSTRAR_CONSUMO:
                     if (state_enter)
                     {
-                        //Desactivamos el control anterior
+                        //Desactivamos todos los controles de otros estados
                         Stop_askDistanceControl();
                         
                         //Mostramos estado inicial de LEDs
@@ -146,7 +164,7 @@ void thread__app_main_control (void *no_argument)
                     if (flags & FLAG__PRESS_RIGHT) //Mostramos el consumo de la flash en el LCD
                     {
                         //actualizamos el numero de la muestra que mostramos
-                        numero_muestra = (numero_muestra == NUM_MAX_MUESTRA_CONSUMO) ? 0 : numero_muestra + 1;
+                        numero_muestra = (numero_muestra == NUM_MAX_MUESTRA_CONSUMO - 1) ? 0 : numero_muestra + 1; //revisar variables de puntero
                         medidas_consumo_ptr = medidas_consumo + numero_muestra;
                         
                         //Mostramos por el LCD la muestra indicada
@@ -161,6 +179,7 @@ void thread__app_main_control (void *no_argument)
 void Init_AllAppThreads(void)
 {
     /* Init all threads here*/
+    id_thread__app_main = osThreadNew(thread__app_main_control, NULL, NULL);
     //Init_RTC_Update();
     //Init_JoystickControl();
     //Init_thread_GetConsumption();
@@ -168,7 +187,7 @@ void Init_AllAppThreads(void)
     Init_RF_TX();
     //osThreadNew(app_main, NULL, &app_main_attr);
     netInitialize();
-    //id_thread__app_main = osThreadNew(thread__app_main_control, NULL, NULL);
+    Init_askDistanceControl();
 }
 
 lineas_distancia_t calcularLineasDistancia (uint16_t distancia)

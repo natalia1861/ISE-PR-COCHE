@@ -23,10 +23,15 @@ void thread__askDistanceControl (void *no_argument)
 
 void Init_askDistanceControl (void)
 {
-    id_thread__askDistanceControl = osThreadNew(thread__askDistanceControl, NULL, NULL);
+    if (id_thread__askDistanceControl == NULL)
+        id_thread__askDistanceControl = osThreadNew(thread__askDistanceControl, NULL, NULL);
 }
 
 void Stop_askDistanceControl (void)
 {
-    osThreadTerminate(id_thread__askDistanceControl);
+    if (id_thread__askDistanceControl != NULL)
+    {
+        osThreadTerminate(id_thread__askDistanceControl);
+        id_thread__askDistanceControl = NULL;
+    }
 }
