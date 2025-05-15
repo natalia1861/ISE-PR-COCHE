@@ -448,6 +448,11 @@
               <FileType>1</FileType>
               <FilePath>.\VL53L0X.c</FilePath>
             </File>
+            <File>
+              <FileName>servomotor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\servomotor.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

@@ -643,6 +643,11 @@
               <FileType>1</FileType>
               <FilePath>.\ask_distance_control.c</FilePath>
             </File>
+            <File>
+              <FileName>ask_consumption_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\ask_consumption_control.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1321,6 +1326,11 @@
               <FileName>ask_distance_control.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\ask_distance_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>ask_consumption_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\ask_consumption_control.c</FilePath>
             </File>
           </Files>
         </Group>
