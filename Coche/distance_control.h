@@ -5,4 +5,6 @@
 
 extern uint16_t distancia;
 
+void Init_DistanceControl (void);
+
 #endif
