@@ -97,9 +97,9 @@ void thread__test_transmissor_RF_RX(void *argument)
     
     printf("STATUS register: 0x%02X\n\n", TM_NRF24L01_GetStatus());         //Status: 0x0E
     
-    printf("FEATURE register: 0x%02X\n\n", TM_NRF24L01_ReadRegister(0x1D)); //Feature: 0x
+    printf("FEATURE register: 0x%02X\n\n", TM_NRF24L01_ReadRegister(0x1D)); //Feature: 0x06
     
-    printf("DYNPD register: 0x%02X\n\n", TM_NRF24L01_ReadRegister(0x1C));   //DYNDP: 
+    printf("DYNPD register: 0x%02X\n\n", TM_NRF24L01_ReadRegister(0x1C));   //DYNDP: 0x3F
 }
 
 /* Interrupt handler */
@@ -136,7 +136,7 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin) {
                     //Se añaden datos al ACK PAYLOAD
                     dataOut[nRF_DATA__COMMAND] = nRF_CMD__ASK_DISTANCE;             //Se añade el comando de recibir consumo como respuesta
                     dataOut[nRF_DATA__AUX_DATA_LOW] = (uint8_t) distancia;          //Se añade el valor de distancia (low byte)
-                    dataOut[nRF_DATA__AUX_DATA_HIGH] = (uint8_t) distancia >> 8;    //Se añade el valor de distancia (high byte)
+                    dataOut[nRF_DATA__AUX_DATA_HIGH] = (uint8_t) (distancia >> 8);    //Se añade el valor de distancia (high byte)
                     TM_NRF24L01_WriteAckPayload(NRF_IRQ.F.RX_P_NO, dataOut, sizeof(dataOut));
                     break;
                 case nRF_CMD__RECEIVE_DISTANCE:
