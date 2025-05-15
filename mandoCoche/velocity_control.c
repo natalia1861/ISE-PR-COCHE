@@ -8,7 +8,7 @@
 #define VELOCITY_THRESHOLD                  100  //revisarMSP revisarNAK ajustar segun sensbilidad real
 void thread__VelocityControl (void)
 {
-    nRF_data_t nRF_data;
+    nRF_data_transmitted_t nRF_data;
     uint16_t velocidad_prev = 0;
     uint16_t velocidad = 0;
 

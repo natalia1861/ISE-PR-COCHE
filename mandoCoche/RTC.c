@@ -50,7 +50,10 @@ void init_RTC(void) {     //inicializa el RTC y configura una hora por defecto
   
    //Iniciamos el timer para volver a actualizar la hora con el servidor SNTP
     tim_id_3min = osTimerNew((osTimerFunc_t)&Timer_Callback_3min, osTimerPeriodic, NULL, NULL);
-	osTimerStart(tim_id_3min, 180000);
+	if (osTimerStart(tim_id_3min, 180000) != osOK)
+    {
+        printf("error Timer");
+    }
 }
 
 //Añade una hora que se le especifica

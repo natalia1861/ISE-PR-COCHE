@@ -3,17 +3,22 @@
 #include "tm_stm32_nrf24l01.h"
 #include "app_main.h"
 
-#define GET_DISTANCE_TIME           200
+#define GET_DISTANCE_TIME           500
 
 osThreadId_t id_thread__askDistanceControl = NULL;
 
 void thread__askDistanceControl (void *no_argument)
 {
-    nRF_data_t nRF_data;
+    nRF_data_transmitted_t nRF_data;
     while (1)
     {
         nRF_data.command = nRF_CMD__ASK_DISTANCE;
-        if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, osWaitForever) != osOK)
+        if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, 1000) != osOK)
+        {
+            osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
+        }
+        nRF_data.command = nRF_CMD__RECEIVE_DISTANCE;
+        if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, 1000) != osOK)
         {
             osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
         }

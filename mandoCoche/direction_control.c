@@ -9,7 +9,7 @@
 
 void thread__direction_control(void *no_argument)
 {
-    nRF_data_t nRF_data;
+    nRF_data_transmitted_t nRF_data;
     uint16_t direction_prev = 0;
     uint16_t direction = 0;
 

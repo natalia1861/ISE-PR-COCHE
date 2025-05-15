@@ -33,6 +33,12 @@ void delay(uint32_t n_microsegundos);
 void LCD_wr_data(unsigned char data);
 void LCD_wr_cmd(unsigned char cmd);
 
+void vaciarLCD_L1(void);
+void vaciarLCD_L2(void);
+void vaciarLCD_L3(void);
+void vaciarLCD_L4(void);
+
+
 void LCD_start(void) {
   LCD_reset();
   LCD_init();
@@ -233,6 +239,17 @@ static void symbolToLocalBuffer(uint8_t line, uint8_t symbol){
 
 void LCD_write(uint8_t line, char a[]){
   static int n;
+    
+  if (line == LCD_LINE__ONE)
+  {
+      vaciarLCD_L1();
+      vaciarLCD_L2();
+  }
+  else  //LCD_LINE__TWO
+  {
+      vaciarLCD_L3();
+      vaciarLCD_L4();
+  }
   for(n = 0; n < strlen(a); n++){
     symbolToLocalBuffer(line, a[n]);
   }
@@ -327,13 +344,13 @@ void vaciarLCD_L1(void){
 }
 
 void vaciarLCD_L2(void){
-	for(int i= 144; i<240; i++){
+	for(int i= 128; i<256; i++){
     buffer[i] = 0x00;
   }
 	LCD_update_L2();
 }
 void vaciarLCD_L3(void){
-	for(int i= 280; i<360; i++){
+	for(int i= 256; i<384; i++){
     buffer[i] = 0x00;
   }
 	LCD_update_L3();

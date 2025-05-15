@@ -16,6 +16,7 @@
 
 //Variables globales
 osThreadId_t id_thread__app_main;
+char detalleError[20] = {0};
 
 //Variables locales
 app_state_t app_state = FIRST_APP_STAGE;
@@ -33,21 +34,54 @@ void thread__app_main_control (void *no_argument)
     uint8_t state_enter = true;
     uint8_t state_error = false;
     
+    //Inicializamos el LCD
+    LCD_start();
+    
+    //ESTADO INICIAL
+    //Inicializamos controles iniciales
+    Init_askConsumptionControl();
+    
+    //Mostramos estado inicial de LEDs
+    leds_activate_mask |= GET_MASK_LED(LED_GREEN);
+    leds_activate_mask &= ~GET_MASK_LED(LED_BLUE);
+    leds_activate_mask &= ~GET_MASK_LED(LED_RED);
+    
+    //Mostramos por el LCD que estamos en modo normal de funcionamiento
+    LCD_write (LCD_LINE__ONE, "State: Normal");
+    state_enter = false;
     
     while(1)
     {
-        osThreadFlagsWait(FLAG__MAIN_CONTROL, osFlagsWaitAny, osWaitForever);
+        flags = osThreadFlagsWait(FLAG__MAIN_CONTROL, osFlagsWaitAny, osWaitForever);
+        
+/************Flags comunes a todos los estados*************************************************/
+        
         if (flags & FLAG__PRESS_UP) //Pulsación arriba joystick
         {
+            LCD_clean();
             app_state = (app_state == MAX_APP_STATE) ? FIRST_APP_STAGE : (app_state_t) (app_state + 1);
             state_enter = true;
         }
         
+        if (flags & FLAG__CONSUMO_EN_FLASH)
+        {
+            //revisarNAK guardar consumo en memoria flash
+            //nRF_data_received.consumo;
+        }
+        
         if (flags & FLAG__ERROR) //Flag de error
         {
+            //Paramos todos los controles
+            Stop_askConsumptionControl();
+            Stop_askDistanceControl();
+            
+            leds_activate_mask |= GET_MASK_LED(LED_GREEN);
+            leds_activate_mask |= GET_MASK_LED(LED_BLUE);
+            leds_activate_mask |= GET_MASK_LED(LED_RED);
+
             state_error = true;
             LCD_write(LCD_LINE__ONE, "ERROR...");
-            LCD_write(LCD_LINE__TWO, "DETAIL"); //revisarNAK añadir detalle de error
+            LCD_write(LCD_LINE__TWO, detalleError); //revisarNAK añadir detalle de error
         }
         
         if (flags & FLAG__PRESS_CENTER) //Se sale del estado de error tras presionar el boton central - se vuelve al inicio
@@ -56,7 +90,19 @@ void thread__app_main_control (void *no_argument)
             {
                 state_error = false;
                 app_state = FIRST_APP_STAGE;
-                state_enter = true;
+                
+                //ESTADO INICIAL
+                //Inicializamos controles iniciales
+                Init_askConsumptionControl();
+                
+                //Mostramos estado inicial de LEDs
+                leds_activate_mask |= GET_MASK_LED(LED_GREEN);
+                leds_activate_mask &= ~GET_MASK_LED(LED_BLUE);
+                leds_activate_mask &= ~GET_MASK_LED(LED_RED);
+                
+                //Mostramos por el LCD que estamos en modo normal de funcionamiento
+                LCD_write (LCD_LINE__ONE, "State: Normal");
+                state_enter = false;
             }
         }
         
@@ -65,6 +111,9 @@ void thread__app_main_control (void *no_argument)
             app_state = (app_state == APP_STAGE__LOW_POWER) ? APP_STATE__NORMAL : APP_STAGE__LOW_POWER;
         }
          
+/*****************************************************************************************************************************/
+        
+/************Comienzo de control de los estados*******************************************************************************/
         if (!state_error)
         {
             switch (app_state)
@@ -74,7 +123,6 @@ void thread__app_main_control (void *no_argument)
                     {
                         //Desactivamos todos los controles de otros estados
                         Stop_askDistanceControl();
-                        Stop_askConsumptionControl();
                         
                         //Mostramos estado inicial de LEDs
                         leds_activate_mask |= GET_MASK_LED(LED_GREEN);
@@ -99,7 +147,6 @@ void thread__app_main_control (void *no_argument)
                     {
                         //Desactivamos todos los controles de otros estados
                         Stop_askDistanceControl();
-                        Stop_askConsumptionControl();
                         
                         //Mostramos estado inicial de LEDs
                         leds_activate_mask &= ~GET_MASK_LED(LED_GREEN);
@@ -120,11 +167,7 @@ void thread__app_main_control (void *no_argument)
                     
                 case APP_STAGE__BACK_GEAR:
                     if (state_enter)
-                    {
-                        //Desactivamos todos los controles de otros estados
-                        Stop_askDistanceControl();
-                        Stop_askConsumptionControl();
-                        
+                    {                        
                         //Mostramos estado inicial de LEDs
                         leds_activate_mask &= ~GET_MASK_LED(LED_GREEN);
                         leds_activate_mask &= ~GET_MASK_LED(LED_BLUE);
@@ -132,13 +175,14 @@ void thread__app_main_control (void *no_argument)
                         
                         //Mostramos por el LCD que estamos en modo de bajo consumo
                         LCD_write (1, "State: Back Gear");
-                        state_enter = false;
                         
                         //Creamos el hilo de solicitud de distancia cada x tiempo que mandará comando de solicitud de distancia revisarNAK revisarMSP
                         Init_askDistanceControl();
+                        
+                        state_enter = false;
                     }
                     
-                    osDelay (2000); //Espera 2 segundos para visualizar que se entró al estado de marcha atrás
+                    osDelay (1000); //Espera 2 segundos para visualizar que se entró al estado de marcha atrás
                     if (flags & FLAG__MOSTRAR_DISTANCIA) //Flag enviado desde nRF TX tras recibir la distancia
                     {
                         //Se muestra la distancia por el LCD
@@ -154,17 +198,36 @@ void thread__app_main_control (void *no_argument)
                         
                         //Mostramos estado inicial de LEDs
                         leds_activate_mask |= GET_MASK_LED(LED_GREEN);
-                        leds_activate_mask |= GET_MASK_LED(LED_BLUE);
-                        leds_activate_mask |= GET_MASK_LED(LED_RED);
+                        leds_activate_mask &= ~GET_MASK_LED(LED_BLUE);
+                        leds_activate_mask &= ~GET_MASK_LED(LED_RED);
                         
                         //Mostramos en la línea 1 del LCD que estamos en el modo de mostrar consumo
                         LCD_write (LCD_LINE__ONE, "State: Consumpion");
+                        
+                        //Reiniciamos la muestra
+                        numero_muestra = 0;
+                        medidas_consumo_ptr = medidas_consumo;
+                        
+                        //Mostramos por el LCD la muestra indicada
+                        LCD_mostrarConsumo(numero_muestra, *medidas_consumo_ptr);
+                        
+                        state_enter = false;
                     }
                     
                     if (flags & FLAG__PRESS_RIGHT) //Mostramos el consumo de la flash en el LCD
                     {
                         //actualizamos el numero de la muestra que mostramos
                         numero_muestra = (numero_muestra == NUM_MAX_MUESTRA_CONSUMO - 1) ? 0 : numero_muestra + 1; //revisar variables de puntero
+                        medidas_consumo_ptr = medidas_consumo + numero_muestra;
+                        
+                        //Mostramos por el LCD la muestra indicada
+                        LCD_mostrarConsumo(numero_muestra, *medidas_consumo_ptr);
+                    }
+                    
+                    if (flags & FLAG__PRESS_LEFT) //Mostramos el consumo de la flash en el LCD
+                    {
+                        //actualizamos el numero de la muestra que mostramos
+                        numero_muestra = (numero_muestra == 0) ? (NUM_MAX_MUESTRA_CONSUMO - 1) : numero_muestra - 1; //revisar variables de puntero
                         medidas_consumo_ptr = medidas_consumo + numero_muestra;
                         
                         //Mostramos por el LCD la muestra indicada
@@ -180,29 +243,29 @@ void Init_AllAppThreads(void)
 {
     /* Init all threads here*/
     id_thread__app_main = osThreadNew(thread__app_main_control, NULL, NULL);
-    //Init_RTC_Update();
-    //Init_JoystickControl();
-    //Init_thread_GetConsumption();
-    //Init_LedsControl();
+    Init_LedsControl();
+    Init_RTC_Update();
+    Init_JoystickControl();
     Init_RF_TX();
-    //osThreadNew(app_main, NULL, &app_main_attr);
-    netInitialize();
-    Init_askDistanceControl();
+    //Init_thread_GetConsumption();
+
+    //osThreadNew(app_main, NULL, &app_main_attr); WEB
+    //netInitialize(); WEB
 }
 
-lineas_distancia_t calcularLineasDistancia (uint16_t distancia)
+lineas_distancia_t calcularLineasDistancia(uint16_t distancia)
 {
-    uint32_t lines;
     if (distancia <= MIN_DISTANCE)
-    {
-        distancia = MIN_DISTANCE;
-    }
-    else if (distancia >= MAX_DISTANCE)
-    {
-        distancia = MAX_DISTANCE;
-    }
+        return LCD_LINE__NO_LINE;
 
-    lines = ((distancia* (LCD_MAX_LINES - LCD_MIN_LINES))/(MAX_DISTANCE - MIN_DISTANCE));
+    if (distancia >= MAX_DISTANCE)
+        return LCD_MAX_LINES;
 
-    return (lineas_distancia_t) lines;
+    // Dividimos el rango [1, 4095] en 4 tramos iguales
+    uint32_t tramo = (MAX_DISTANCE - 1) / (LCD_MAX_LINES - LCD_MIN_LINES);
+
+    //Se calcula el bloque al que pertenece (numero de lineas)
+    uint32_t lines = (distancia - 1) / tramo + 1;
+
+    return (lineas_distancia_t)lines;
 }
