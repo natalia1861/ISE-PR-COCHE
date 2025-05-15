@@ -1562,10 +1562,10 @@
 
 // <e> SPI4 (Serial Peripheral Interface 4) [Driver_SPI4]
 // <i> Configuration settings for Driver_SPI4 in component ::CMSIS Driver:SPI
-#define RTE_SPI4                        0
+#define RTE_SPI4                        1
 
 //   <o> SPI4_MISO Pin <0=>Not Used <1=>PA11 <2=>PE5 <3=>PE13
-#define RTE_SPI4_MISO_PORT_ID           0
+#define RTE_SPI4_MISO_PORT_ID           3
 #if    (RTE_SPI4_MISO_PORT_ID == 0)
 #define RTE_SPI4_MISO                   0
 #elif  (RTE_SPI4_MISO_PORT_ID == 1)
@@ -1585,7 +1585,7 @@
 #endif
 
 //   <o> SPI4_MOSI Pin <0=>Not Used <1=>PA1 <2=>PE6 <3=>PE14
-#define RTE_SPI4_MOSI_PORT_ID           0
+#define RTE_SPI4_MOSI_PORT_ID           3
 #if    (RTE_SPI4_MOSI_PORT_ID == 0)
 #define RTE_SPI4_MOSI                   0
 #elif  (RTE_SPI4_MOSI_PORT_ID == 1)
@@ -1605,7 +1605,7 @@
 #endif
 
 //   <o> SPI4_SCK Pin <0=>PB13 <1=>PE2 <2=>PE12
-#define RTE_SPI4_SCL_PORT_ID            0
+#define RTE_SPI4_SCL_PORT_ID            2
 #if    (RTE_SPI4_SCL_PORT_ID == 0)
 #define RTE_SPI4_SCL_PORT               GPIOB
 #define RTE_SPI4_SCL_BIT                13

@@ -158,7 +158,7 @@ void thread__test_transmissor_RF_TX(void *argument)
         #else
         
         //Esperamos a recibir un comando
-        if (osMessageQueueGet(id_queue__nRF_TX_Data, &nRF_data, NULL, osWaitForever) != osOK)
+        if (osMessageQueueGet(id_queue__nRF_TX_Data, &nRF_data, NULL, osWaitForever) == osOK)
         {
             /* Display on DEBUG */
             printf("\nPinging at %d: \n", started_time);
@@ -214,7 +214,7 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin)
 			
             /* Mandamos flag de ERROR */
             #ifndef TEST_RF
-            osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
+            osThreadFlagsSet(id_thread__app_main, FLAG__ERROR); //revisarNAK error permanente. Por mucho que lo aceptes, se volverá a generar (hasta que la conexion vuelva).
             #endif
 		}
 		

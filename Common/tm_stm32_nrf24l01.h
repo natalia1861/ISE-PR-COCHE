@@ -210,6 +210,8 @@ typedef enum
 {
     nRF_CMD__DIRECTION = 0,
     nRF_CMD__VELOCITY,
+    nRF_CMD__ASK_CONSUMPTION,
+    nRF_CMD__RECIEVE_CONSUMPTION,
     nRF_CMD__ASK_DISTANCE,
     nRF_CMD__RECEIVE_DISTANCE
 } nRF_commands_t;
@@ -226,7 +228,8 @@ typedef enum
 #define GET_NRF_AUX_DATA_LOW(dataIn)        ((dataIn)[nRF_DATA__AUX_DATA_LOW])
 #define GET_NRF_AUX_DATA_HIGH(dataIn)       ((dataIn)[nRF_DATA__AUX_DATA_HIGH])
 
-#define nRF_DATA_LENGTH                     3   //bytes
+#define nRF_DATA_LENGTH                     3
+
 /****************************************************************************/
 /**
  * @}
@@ -459,4 +462,3 @@ void TM_NRF24L01_WriteRegister(uint8_t reg, uint8_t value);
 #endif
 
 #endif
-

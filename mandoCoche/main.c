@@ -131,13 +131,6 @@ int main(void)
 
   /* Create application main thread */
   Init_AllAppThreads();
-    //Init_temp_sensor();
-    //initModTemp();
-    //tid_Thread_sensor = osThreadNew(thread__temp, NULL, NULL);
-   //Init_RF_TX();
-    //Init_sensor();
-        //Init_sensor();
-    //Init_Thread();
   /* Start thread execution */
   osKernelStart();
 #endif
