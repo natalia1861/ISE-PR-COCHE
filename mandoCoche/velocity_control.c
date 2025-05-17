@@ -1,11 +1,19 @@
+#include <stdio.h>
 #include "velocity_control.h"
 #include <stdlib.h>
 #include "cmsis_os2.h"                  // ::CMSIS:RTOS2
 #include "nRF24L01_TX.h"
 #include "tm_stm32_nrf24l01.h"
 #include "app_main.h"
+#include "adc.h"
 
 #define VELOCITY_THRESHOLD                  100  //revisarMSP revisarNAK ajustar segun sensbilidad real
+
+
+float corriente_Consumo =0; 
+float voltios_Pedal =0; 
+uint8_t marcha=0;
+
 void thread__VelocityControl (void)
 {
     nRF_data_transmitted_t nRF_data;
@@ -13,6 +21,10 @@ void thread__VelocityControl (void)
     uint16_t velocidad = 0;
 
     nRF_data.command = nRF_CMD__VELOCITY;   //Se añade el comando de velocidad
+	
+	    ADC1_pins_F429ZI_config();
+      ADC_Init_Single_Conversion(&adchandle,ADC1);
+	
     while(1)
     {
         #ifdef VELOCITY_TEST
@@ -32,3 +44,4 @@ void thread__VelocityControl (void)
         }
     }
 }
+

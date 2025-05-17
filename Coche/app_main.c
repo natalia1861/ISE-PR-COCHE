@@ -2,6 +2,7 @@
 #include "nRF24L01_RX.h"
 #include "leds_control.h"
 #include "nak_led.h"
+#include <stdio.h>
 
 void thread__app_main (void *no_argument)
 {
@@ -9,7 +10,7 @@ void thread__app_main (void *no_argument)
     leds_activate_mask |= GET_MASK_LED(LED_GREEN);
     for(;;)
     {
-        
+			osDelay(500);			
     }
 }
 

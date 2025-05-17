@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "stm32f4xx_hal.h"
 #include "adc.h"
 
@@ -13,6 +14,31 @@
 float corriente_Consumo =0; 
 float voltios_Pedal =0; 
 uint8_t marcha=0;
+ADC_HandleTypeDef adchandle;
+
+/* Read analog inputs */
+uint16_t AD_in (uint32_t ch) {
+  int32_t val = 0;
+
+  if (ch == 0) {
+
+    val = 1243* ADC_getVoltage(&adchandle, 10);
+  }
+  return ((uint16_t)val);
+}
+/* Read analog inputs */
+uint16_t ADC_in (uint32_t channel) {
+  int32_t valor = 0;
+
+  if (channel == 1) {
+
+    valor = 1243* ADC_getVoltage(&adchandle, 13);
+	}
+  return ((uint16_t)valor);
+}
+
+
+
 
 void ADC1_pins_F429ZI_config(){
 	  GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -130,18 +156,25 @@ void voltage_ADC(uint16_t adc_valor){
 }
 
 void voltage_pedales(uint16_t adc_valor){
-	//2.5V tenemos 150mA
-	  //adc_valor es x 
-	voltios_Pedal = adc_valor*0.15/2.5;
 
+	  //adc_valor es x 
+	voltios_Pedal =  adc_valor*3.3/3000;
+  printf("\nVoltios Pedales:%.2f ", voltios_Pedal);
+	
 	  if (voltios_Pedal < 1.1f) {
        marcha = 1;
 			printf("\nTension:%.2f    Marcha:%d\n", voltios_Pedal,marcha);
-    } else if (voltios_Pedal< 2.2f) {
+			//sprintf(marcha_S, "%d",marcha);
+    } else if (voltios_Pedal< 2.6f) {
        marcha = 2;
-			printf("\nTension:%.2f    Marcha:%d\n", voltios_Pedal,marcha);			
-    } else {
-       marcha = 3;
-			printf("\nTension:%.2f    Marcha:%d\n", voltios_Pedal,marcha);
-    }
+			printf("\nTension:%.2f    Marcha:%d\n", voltios_Pedal,marcha);	
+			//sprintf(marcha_S, "%d",marcha);		
+   } 
+//		else {
+//       marcha = 3;
+//			printf("\nTension:%.2f    Marcha:%d\n", voltios_Pedal,marcha);
+//		  //sprintf(marcha_S, "%d",marcha);
+//    }
+	 
 }
+
