@@ -67,7 +67,7 @@ uint8_t dataIn[nRF_DATA_LENGTH] = {0};
 TM_NRF24L01_Transmit_Status_t transmissionStatus;
 TM_NRF24L01_IRQ_t NRF_IRQ;
 
-nRF_data_received_t nRF_data_received;
+nRF_data_received_t nRF_data_received; //revisar cambiar nombre estructura con tx
 
 void thread__test_transmissor_RF_TX(void *argument) 
 {

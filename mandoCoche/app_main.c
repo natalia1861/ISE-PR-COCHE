@@ -217,7 +217,7 @@ void thread__app_main_control (void *no_argument)
                     if (flags & FLAG__PRESS_RIGHT) //Mostramos el consumo de la flash en el LCD
                     {
                         //actualizamos el numero de la muestra que mostramos
-                        numero_muestra = (numero_muestra == NUM_MAX_MUESTRA_CONSUMO - 1) ? 0 : numero_muestra + 1; //revisar variables de puntero
+                        numero_muestra = (numero_muestra == NUM_MAX_MUESTRA_CONSUMO - 1) ? 0 : numero_muestra + 1;
                         medidas_consumo_ptr = medidas_consumo + numero_muestra;
                         
                         //Mostramos por el LCD la muestra indicada
@@ -227,7 +227,7 @@ void thread__app_main_control (void *no_argument)
                     if (flags & FLAG__PRESS_LEFT) //Mostramos el consumo de la flash en el LCD
                     {
                         //actualizamos el numero de la muestra que mostramos
-                        numero_muestra = (numero_muestra == 0) ? (NUM_MAX_MUESTRA_CONSUMO - 1) : numero_muestra - 1; //revisar variables de puntero
+                        numero_muestra = (numero_muestra == 0) ? (NUM_MAX_MUESTRA_CONSUMO - 1) : numero_muestra - 1;
                         medidas_consumo_ptr = medidas_consumo + numero_muestra;
                         
                         //Mostramos por el LCD la muestra indicada

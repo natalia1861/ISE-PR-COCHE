@@ -64,6 +64,9 @@ uint8_t dataOut[nRF_DATA_LENGTH] = {0};
 TM_NRF24L01_Transmit_Status_t transmissionStatus;
 TM_NRF24L01_IRQ_t NRF_IRQ;
 
+//nRF Data
+nRF_data_received_rx_t nRF_data_received_rx;
+
 //DEBUG variables
 HAL_EXTI_Result_t status_IRQ = HAL_EXTI_Result_Not_Defined;
 
@@ -126,6 +129,7 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin) {
             {
                 case nRF_CMD__DIRECTION:
                     //Se manda comando de dirección a los servos
+                    //nRF_data_received_rx.velocidad = GET_NRF_AUX_DATA_LOW(dataIn) << //revisar
                     //revisar
                     break;
                 case nRF_CMD__VELOCITY:

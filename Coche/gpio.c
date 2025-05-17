@@ -28,8 +28,7 @@ void init_nRF_IRQ (void)
 }
 
 void EXTI15_10_IRQHandler(void) {
-	HAL_GPIO_EXTI_Callback(GPIO_PIN_13);
-    //revisar_NAK quizas habria que poner HAL_GPIO_EXTI_IRQHandler
+	  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_13);
 }
 
 void EXTI3_IRQHandler(void) {
@@ -44,7 +43,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
   }
   if (GPIO_Pin == GPIO_PIN_3) 
   {
-    HAL_GPIO_EXTI_Callback_NRF(GPIO_Pin);  // o copia aqu� todo lo que ya tienes
+    HAL_GPIO_EXTI_Callback_NRF(GPIO_Pin);  //revisarNAK FUTURO: cambiar a una flag para que un hilo de alta prioridad que gestione todo eso
   }
 }
 

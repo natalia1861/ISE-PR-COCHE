@@ -2,6 +2,7 @@
 #include "nRF24L01_RX.h"
 #include "leds_control.h"
 #include "nak_led.h"
+#include "distance_control.h"
 #include <stdio.h>
 
 void thread__app_main (void *no_argument)
