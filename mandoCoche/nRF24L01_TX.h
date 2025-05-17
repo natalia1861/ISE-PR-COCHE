@@ -8,11 +8,12 @@ typedef struct
 {
     uint8_t command;
     uint16_t auxiliar_data;
-} nRF_data_t;
+} nRF_data_transmitted_t;
 
 typedef struct
 {
     uint16_t distancia;
+    uint16_t consumo;
 } nRF_data_received_t;
 
 extern osMessageQueueId_t id_queue__nRF_TX_Data;

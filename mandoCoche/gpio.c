@@ -41,6 +41,9 @@ void init_Joystick(void)
     
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOE_CLK_ENABLE();
+  __HAL_RCC_GPIOG_CLK_ENABLE();
+  __HAL_RCC_GPIOF_CLK_ENABLE();
+    
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
     //UP 
@@ -59,13 +62,13 @@ void init_Joystick(void)
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   GPIO_InitStruct.Pin = GPIO_PIN_12;
-  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct); 
+  HAL_GPIO_Init(GPIOF, &GPIO_InitStruct); 
   
     //LEFT
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   GPIO_InitStruct.Pin = GPIO_PIN_14;
-  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
   
     //CENTER
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;

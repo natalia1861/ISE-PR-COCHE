@@ -23,6 +23,7 @@
 #include <stdbool.h>
 #include "lcd.h"
 #include "app_main.h"
+#include <string.h>
 
 //control de leds
 extern bool LED_Rrun;	//referenciado a HTTP_Server.c
@@ -71,10 +72,9 @@ nRF_data_received_t nRF_data_received;
 void thread__test_transmissor_RF_TX(void *argument) 
 {
 	uint8_t printed = 0;
-    nRF_data_t nRF_data;
+    nRF_data_transmitted_t nRF_data;
 
     printf("Initializing...\n");
-    LCD_write(1, "initializing...");
     
 	/* Initialize NRF24L01+ on channel 15 and 32bytes of payload */
 	/* By default 2Mbps data rate and 0dBm output power */
@@ -92,6 +92,13 @@ void thread__test_transmissor_RF_TX(void *argument)
 	
 	/* Attach interrupt for NRF IRQ pin */
     init_nRF_IRQ();
+    
+    //Status right
+    if (TM_NRF24L01_GetStatus() != 0x0E)
+    {
+        strncpy(detalleError, "RF Error. Restart!", sizeof(detalleError) - 1);
+        osThreadFlagsSet(id_thread__app_main, FLAG__ERROR); //revisarNAK error permanente. Por mucho que lo aceptes, se volverá a generar (hasta que la conexion vuelva).
+    }
     
     //Debug status
     printf("nRF initialized\n\n");
@@ -161,7 +168,9 @@ void thread__test_transmissor_RF_TX(void *argument)
         if (osMessageQueueGet(id_queue__nRF_TX_Data, &nRF_data, NULL, osWaitForever) == osOK)
         {
             /* Display on DEBUG */
-            printf("\nPinging at %d: \n", started_time);
+            printf("\nPinging at %d: \n", HAL_GetTick());
+            printf("Command: %d\n", nRF_data.command);
+            printf("Auxiliar data: %d\n", nRF_data.auxiliar_data);
             
             dataOut[nRF_DATA__COMMAND]        = (uint8_t) (nRF_data.command);
             dataOut[nRF_DATA__AUX_DATA_LOW]   = (uint8_t) (nRF_data.auxiliar_data);         // Byte bajo
@@ -176,7 +185,7 @@ void thread__test_transmissor_RF_TX(void *argument)
 }
 
 void Init_RF_TX(void) {
-    id_queue__nRF_TX_Data = osMessageQueueNew(MAX_RF_MESS_QUEUE, sizeof(nRF_data_t), NULL);
+    id_queue__nRF_TX_Data = osMessageQueueNew(MAX_RF_MESS_QUEUE, sizeof(nRF_data_transmitted_t), NULL);
     id_thread__RF_TX = osThreadNew (thread__test_transmissor_RF_TX, NULL, NULL);
 }
 
@@ -214,6 +223,7 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin)
 			
             /* Mandamos flag de ERROR */
             #ifndef TEST_RF
+            strncpy(detalleError, "RF Lost max ACK", sizeof(detalleError) - 1);
             osThreadFlagsSet(id_thread__app_main, FLAG__ERROR); //revisarNAK error permanente. Por mucho que lo aceptes, se volverá a generar (hasta que la conexion vuelva).
             #endif
 		}
@@ -234,7 +244,6 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin)
             
             #ifndef TEST_RF
             
-                //Siempre van a ser datos de distancia - por si acaso, comprobamos
                 if (GET_NRF_COMMAND(dataIn) == nRF_CMD__ASK_DISTANCE)
                 {
                     //Obtenemos el dato de distancia
@@ -242,6 +251,15 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin)
                     
                     //Mandamos flag a app_main de que la distancia fue actualizada
                     osThreadFlagsSet(id_thread__app_main, FLAG__MOSTRAR_DISTANCIA);
+                }
+                
+                if (GET_NRF_COMMAND(dataIn) == nRF_CMD__ASK_CONSUMPTION)
+                {
+                    //Obtenemos el dato de distancia
+                    nRF_data_received.consumo = (GET_NRF_AUX_DATA_HIGH(dataIn) << 8) | (GET_NRF_AUX_DATA_LOW(dataIn));
+                    
+                    //Mandamos flag a app_main de que la distancia fue actualizada
+                    osThreadFlagsSet(id_thread__app_main, FLAG__CONSUMO_EN_FLASH);
                 }
             
             #endif

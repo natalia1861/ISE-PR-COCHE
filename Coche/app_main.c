@@ -17,5 +17,6 @@ void Init_AllAppThreads (void)
 {
     Init_LedsControl();
     Init_RF_RX();
+    Init_DistanceControl();
     osThreadNew(thread__app_main, NULL, NULL);
 }
