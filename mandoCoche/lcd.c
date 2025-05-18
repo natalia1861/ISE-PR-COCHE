@@ -370,27 +370,21 @@ void LCD_mostrarLineasDistancia (lineas_distancia_t lineas)
             vaciarLCD_L1();
             vaciarLCD_L2();
             vaciarLCD_L3();
-            vaciarLCD_L4();
+            rellenarLCD_L4();
             break;
         case LCD_LINE__ONE:
             rellenarLCD_L1();
             vaciarLCD_L2();
             vaciarLCD_L3();
-            vaciarLCD_L4();
+            rellenarLCD_L4();
             break;
         case LCD_LINE__TWO:
             rellenarLCD_L1();
             rellenarLCD_L2();
             vaciarLCD_L3();
-            vaciarLCD_L4();
+            rellenarLCD_L4();
             break;
         case LCD_LINE__THREE:
-            rellenarLCD_L1();
-            rellenarLCD_L2();
-            rellenarLCD_L3();
-            vaciarLCD_L4();
-            break;
-        case LCD_LINE__FOUR:
             rellenarLCD_L1();
             rellenarLCD_L2();
             rellenarLCD_L3();

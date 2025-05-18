@@ -4,7 +4,7 @@
 #include "tm_stm32_nrf24l01.h"
 #include "app_main.h"
 
-#define GET_DISTANCE_TIME           500
+#define GET_DISTANCE_TIME           100
 
 osThreadId_t id_thread__askDistanceControl = NULL;
 

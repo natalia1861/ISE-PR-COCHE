@@ -8,6 +8,7 @@
 #include "sensor_AS5600.h"
 
 #define DIRECTION_THRESHOLD                         0.1  //revisarPAR revisarNAK ajustar segun sensibilidad real 
+#define DIRECTION_REFRESH                           100
 
 osThreadId_t id_thread__DirectionControl = NULL;
 void thread__direction_control(void *no_argument)
@@ -52,7 +53,7 @@ void thread__direction_control(void *no_argument)
             }
         }
         #endif
-        osDelay(100);
+        osDelay(DIRECTION_REFRESH);
     }
 }
 

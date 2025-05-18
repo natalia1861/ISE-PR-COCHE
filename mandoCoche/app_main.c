@@ -15,8 +15,9 @@
 #include "direction_control.h"
 
 #define NUM_MAX_MUESTRA_CONSUMO     10      //Buffer circular de consumo (memoria flash)
-#define MAX_DISTANCE                4096    //Definir el maximo valor para la distancia revisarMSP
-#define MIN_DISTANCE                0       //Definir el minimo valor para la distancia revisarMSP
+#define MIN_DISTANCE                500    //Definir el maximo valor para la distancia
+#define MAX_DISTANCE                0       //Definir el minimo valor para la distancia
+#define DISTANCE_SENSIBILITY        25
 
 //Variables globales
 osThreadId_t id_thread__app_main;
@@ -260,6 +261,7 @@ void thread__app_main_control (void *no_argument)
 
 void Init_AllAppThreads(void)
 {
+    
     /* Init all threads here*/
     id_thread__app_main = osThreadNew(thread__app_main_control, NULL, NULL);
     Init_RF_TX();
@@ -267,7 +269,6 @@ void Init_AllAppThreads(void)
     Init_RTC_Update();
     Init_JoystickControl();
     Init_VelocityCointrol();
-    //Init_AS5600_Thread();
     Init_DirectionControl();
     //osThreadNew(app_main, NULL, &app_main_attr); WEB
     //netInitialize(); WEB
@@ -275,20 +276,29 @@ void Init_AllAppThreads(void)
 
 lineas_distancia_t calcularLineasDistancia(uint16_t distancia)
 {
-    if (distancia <= MIN_DISTANCE)
+    float tramo;
+    uint32_t lineas;
+    
+    // Si está muy cerca, sin líneas
+    if (distancia >= (MIN_DISTANCE - DISTANCE_SENSIBILITY))
         return LCD_LINE__NO_LINE;
 
-    if (distancia >= MAX_DISTANCE)
+    // Si está muy lejos, todas las líneas
+    if (distancia <= (MAX_DISTANCE + DISTANCE_SENSIBILITY))
         return LCD_MAX_LINES;
 
-    // Dividimos el rango [1, 4095] en 4 tramos iguales
-    uint32_t tramo = (MAX_DISTANCE - 1) / (LCD_MAX_LINES - LCD_MIN_LINES);
+    //Calculamos el tramo
+    tramo = (MIN_DISTANCE - MAX_DISTANCE) / (LCD_MAX_LINES - LCD_MIN_LINES);
+    
+    //Calculamos las lineas
+    lineas = ((distancia - MAX_DISTANCE) / tramo);
 
-    //Se calcula el bloque al que pertenece (numero de lineas)
-    uint32_t lines = (distancia - 1) / tramo + 1;
-
-    return (lineas_distancia_t)lines;
+    //Se invierte
+    lineas = (LCD_MAX_LINES - lineas);
+    
+    return (lineas_distancia_t)lineas;
 }
+
 
 //Utilizado para habilitar y deshabilitar controles en el coche (distancia)
 void Send_CMD_StateChange (app_state_t app_state)

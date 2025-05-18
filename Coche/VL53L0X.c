@@ -1063,9 +1063,3 @@ void InitVL53(VL53L0X* sensor1){
   osDelay(5200);
 }
 
-void Init_DistanceSensor(VL53L0X* sensor1)
-{
-    MX_I2C2_Init();
-    HAL_I2C_MspInit(&hi2c2);
-    InitVL53(sensor1);
-}
