@@ -608,6 +608,11 @@
               <FileType>1</FileType>
               <FilePath>..\Common\adc.c</FilePath>
             </File>
+            <File>
+              <FileName>flash.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\flash.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1276,6 +1281,11 @@
               <FileName>adc.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Common\adc.c</FilePath>
+            </File>
+            <File>
+              <FileName>flash.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\flash.c</FilePath>
             </File>
           </Files>
         </Group>

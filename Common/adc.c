@@ -22,6 +22,9 @@
 ADC_HandleTypeDef adchandle1;
 ADC_HandleTypeDef adchandle2;
 
+char consumo_S [80];
+char marcha_S[80];
+
 //Funciones internas
 float ADC_getVoltage(ADC_HandleTypeDef *hadc, uint32_t Channel);
 
@@ -195,13 +198,13 @@ marchas_t getPedal(void)
     if (voltios_Pedal >= (MAX_VOLTIOS_ADC - SENSIBILITY))
         return ADC_MARCHA_0;  // 3.3V
 
-    // Dividimos el rango útil en tramos
+    // Dividimos el rango ï¿½til en tramos
     tramo = (MAX_VOLTIOS_ADC - MIN_VOLTIOS_ADC) / (float)(NUM_MAX_MARCHAS - NUM_MIN_MARCHAS);
 
     // Normalizamos el voltaje al rango de tramos
     marcha_calculada = (uint32_t)(((voltios_Pedal - MIN_VOLTIOS_ADC) / tramo) + 0.5f);
 
-    // Invertimos el índice de la marcha
+    // Invertimos el ï¿½ndice de la marcha
     marcha = (marchas_t)((NUM_MAX_MARCHAS) - marcha_calculada);
 
     return marcha;
