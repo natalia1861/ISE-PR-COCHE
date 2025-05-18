@@ -25,6 +25,5 @@ void LCD_write(uint8_t line, char a[]);
 
 //Funciones de lineas distancia
 void LCD_mostrarLineasDistancia (lineas_distancia_t lineas); //Muesta las lineas correspondientes
-void LCD_mostrarConsumo(uint8_t muestra, uint16_t consumo);  //Muestra el consumo en la linea 2 del LCD
-
+void LCD_mostrarConsumo(uint8_t muestra, float consumo);
 #endif /* _LCD_H */

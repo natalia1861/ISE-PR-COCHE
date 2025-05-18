@@ -13,6 +13,7 @@
 #include "tm_stm32_nrf24l01.h"
 #include "sensor_AS5600.h"
 #include "direction_control.h"
+#include "flash.h"
 
 #define NUM_MAX_MUESTRA_CONSUMO     10      //Buffer circular de consumo (memoria flash)
 #define MIN_DISTANCE                500    //Definir el maximo valor para la distancia
@@ -23,10 +24,12 @@
 osThreadId_t id_thread__app_main;
 char detalleError[20] = {0};
 app_state_t app_state = FIRST_APP_STAGE;
+nRF_data_transmitted_t nRF_data = {0};
+MSGQUEUE_FLASH_t flash_msg_data = {0};
 
 //Funciones locales
 lineas_distancia_t calcularLineasDistancia (uint16_t distancia);
-nRF_data_transmitted_t nRF_data = {0};
+
 
 //Funciones locales
 void Send_CMD_StateChange (app_state_t app_state);
@@ -35,10 +38,12 @@ void Send_CMD_LowPower(void);
 //Funcion principal - control del automata y el LCD
 void thread__app_main_control (void *no_argument)
 {
+    float consumo_rx;
     uint32_t flags;
-    uint8_t medidas_consumo[NUM_MAX_MUESTRA_CONSUMO];
-    uint8_t *medidas_consumo_ptr = medidas_consumo;
+    float medidas_consumo[NUM_MAX_MUESTRA_CONSUMO];
+    float *medidas_consumo_ptr = medidas_consumo;
     uint8_t numero_muestra = 0;
+    
     uint8_t state_enter = true;
     uint8_t state_error = false;
     
@@ -58,6 +63,7 @@ void thread__app_main_control (void *no_argument)
     LCD_write (LCD_LINE__ONE, "State: Normal");
     state_enter = false;
     
+    osDelay(6000);
     while(1)
     {
         flags = osThreadFlagsWait(FLAG__MAIN_CONTROL, osFlagsWaitAny, osWaitForever);
@@ -74,9 +80,22 @@ void thread__app_main_control (void *no_argument)
         if (flags & FLAG__CONSUMO_EN_FLASH)
         {
             //revisarNAK guardar consumo en memoria flash
-            //nRF_data_received.consumo;
+            consumo_rx = (float) ((float) nRF_data_received.consumo / 1000);
+            flash_msg_data.command = FLASH_CMD__ADD_CONSUMPTION;
+            flash_msg_data.consumption = &consumo_rx;
+                        
+            //Cargar los datos de la flash
+            if (osMessageQueuePut(id_flash_commands_queue, &flash_msg_data, NULL, 500) != osOK)
+            {
+                strncpy(detalleError, "MSG QUEUE ERROR FLASH", sizeof(detalleError) - 1);
+                osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
+            }
         }
         
+        if (flags & FLAG__CONSUMO_READY_FLASH)
+        {
+            osThreadFlagsSet(id_thread__app_main, FLAG__PRESS_RIGHT);
+        }
         if (flags & FLAG__ERROR) //Flag de error
         {
             //Paramos todos los controles
@@ -117,6 +136,7 @@ void thread__app_main_control (void *no_argument)
         if (flags & FLAG__ENTER_LOW_POWER)
         {
             app_state = (app_state == APP_STAGE__LOW_POWER) ? APP_STATE__NORMAL : APP_STAGE__LOW_POWER;
+            Send_CMD_StateChange(app_state);
         }
          
 /*****************************************************************************************************************************/
@@ -212,6 +232,16 @@ void thread__app_main_control (void *no_argument)
                 case APP_STAGE__MOSTRAR_CONSUMO:
                     if (state_enter)
                     {
+                        flash_msg_data.command = FLASH_CMD__GET_ALL_CONSUMPTION;
+                        flash_msg_data.consumption = medidas_consumo_ptr;
+                        
+                        //Cargar los datos de la flash
+                        if (osMessageQueuePut(id_flash_commands_queue, &flash_msg_data, NULL, 500) != osOK)
+                        {
+                            strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
+                            osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
+                        }
+                        
                         //Desactivamos todos los controles de otros estados
                         Stop_askDistanceControl();
                         
@@ -272,6 +302,7 @@ void Init_AllAppThreads(void)
     Init_JoystickControl();
     Init_VelocityCointrol();
     Init_DirectionControl();
+    Init_FlashControl();
     //osThreadNew(app_main, NULL, &app_main_attr); WEB
     //netInitialize(); WEB
 }
@@ -308,6 +339,10 @@ void Send_CMD_StateChange (app_state_t app_state)
     if (app_state == APP_STAGE__BACK_GEAR)
     {
         nRF_data.command = nRF_CMD__BACK_GEAR_MODE;
+    }
+    else if (app_state == APP_STAGE__LOW_POWER)
+    {
+        nRF_data.command = nRF_CMD__LOW_POWER;
     }
     else
     {

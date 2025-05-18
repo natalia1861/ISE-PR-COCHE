@@ -14,7 +14,8 @@
 #define FLAG__MOSTRAR_DISTANCIA     0x0080
 #define FLAG__ENTER_LOW_POWER       0x0100
 #define FLAG__CONSUMO_EN_FLASH      0x0200
-#define FLAG__ERROR                 0x0400
+#define FLAG__CONSUMO_READY_FLASH   0x0400
+#define FLAG__ERROR                 0x0800
 
 #define FLAG__MAIN_CONTROL  (FLAG__PRESS_UP             | \
                              FLAG__PRESS_DOWN           | \
@@ -26,6 +27,7 @@
                              FLAG__MOSTRAR_DISTANCIA    | \
                              FLAG__ENTER_LOW_POWER      | \
                              FLAG__CONSUMO_EN_FLASH     | \
+                             FLAG__CONSUMO_READY_FLASH  | \
                              FLAG__ERROR                )
 
 typedef enum

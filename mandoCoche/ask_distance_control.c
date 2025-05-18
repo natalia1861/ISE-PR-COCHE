@@ -4,7 +4,7 @@
 #include "tm_stm32_nrf24l01.h"
 #include "app_main.h"
 
-#define GET_DISTANCE_TIME           100
+#define GET_DISTANCE_TIME           200
 
 osThreadId_t id_thread__askDistanceControl = NULL;
 
@@ -33,6 +33,11 @@ void Init_askDistanceControl (void)
 {
     if (id_thread__askDistanceControl == NULL)
         id_thread__askDistanceControl = osThreadNew(thread__askDistanceControl, NULL, NULL);
+    if (id_thread__askDistanceControl == NULL)
+    {
+        strncpy(detalleError, "THREAD DISTANCE ERROR", sizeof(detalleError) - 1);
+        osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
+    }
 }
 
 void Stop_askDistanceControl (void)

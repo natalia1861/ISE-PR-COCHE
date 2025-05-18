@@ -396,11 +396,11 @@ void LCD_mostrarLineasDistancia (lineas_distancia_t lineas)
     }
 }
 
-void LCD_mostrarConsumo(uint8_t muestra, uint16_t consumo)
+void LCD_mostrarConsumo(uint8_t muestra, float consumo)
 {
     char linea2[20];
     
-    snprintf(linea2, sizeof(linea2), "M:%u, C:%u", muestra, consumo);
+    snprintf(linea2, sizeof(linea2), "M:%u, C:%0.2f", muestra, consumo);
     
     LCD_write(2, linea2);
 }
