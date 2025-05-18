@@ -39,7 +39,7 @@ const osThreadAttr_t app_main_attr = {
 //extern GLCD_FONT GLCD_Font_6x8;
 //extern GLCD_FONT GLCD_Font_16x24;
 
-extern uint16_t AD_in          (uint32_t ch);
+//extern uint16_t AD_in          (uint32_t ch);
 extern uint8_t  get_button     (void);
 extern void     netDHCP_Notify (uint32_t if_num, uint8_t option, const uint8_t *val, uint32_t len);
 
@@ -68,16 +68,16 @@ osThreadId_t TID_RTC;
 __NO_RETURN void app_main (void *arg);
 
 /* Read analog inputs */
-uint16_t AD_in (uint32_t ch) {
-  int32_t val = 0;
+//uint16_t AD_in (uint32_t ch) {
+//  int32_t val = 0;
 
-  if (ch == 0) {
-    ADC_StartConversion();
-    while (ADC_ConversionDone () < 0);
-    val = ADC_GetValue();
-  }
-  return ((uint16_t)val);
-}
+//  if (ch == 0) {
+//    ADC_StartConversion();
+//    while (ADC_ConversionDone () < 0);
+//    val = ADC_GetValue();
+//  }
+//  return ((uint16_t)val);
+//}
 
 /* Read digital inputs */
 //uint8_t get_button (void) {

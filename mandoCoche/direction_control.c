@@ -1,5 +1,6 @@
 #include "direction_control.h"
 #include <stdlib.h>
+#include <string.h>
 #include "nRF24L01_TX.h"
 #include "cmsis_os2.h"                  // ::CMSIS:RTOS2
 #include "tm_stm32_nrf24l01.h"
@@ -28,6 +29,7 @@ void thread__direction_control(void *no_argument)
             direction_prev = direction;
             if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, osWaitForever) != osOK)   //Se añade a la cola de envio de RF
             {
+                strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
                 osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
             }
         }

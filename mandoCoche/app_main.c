@@ -1,14 +1,16 @@
 #include "app_main.h"
+#include <string.h>
 #include "lcd.h"
 #include "RTC.h"
 #include "nRF24L01_TX.h"
 #include "joystick_control.h"
-#include "consumption.h"
 #include "nak_led.h"
 #include "leds_control.h"
 #include "RTC.h"
 #include "ask_distance_control.h"
 #include "ask_consumption_control.h"
+#include "velocity_control.h"
+#include "tm_stm32_nrf24l01.h"
 
 #define NUM_MAX_MUESTRA_CONSUMO     10      //Buffer circular de consumo (memoria flash)
 #define MAX_DISTANCE                4096    //Definir el maximo valor para la distancia revisarMSP
@@ -17,12 +19,14 @@
 //Variables globales
 osThreadId_t id_thread__app_main;
 char detalleError[20] = {0};
-
-//Variables locales
 app_state_t app_state = FIRST_APP_STAGE;
 
 //Funciones locales
 lineas_distancia_t calcularLineasDistancia (uint16_t distancia);
+nRF_data_transmitted_t nRF_data = {0};
+
+//Funciones locales
+void Send_CMD_StateChange (app_state_t app_state);
 
 //Funcion principal - control del automata y el LCD
 void thread__app_main_control (void *no_argument)
@@ -124,6 +128,9 @@ void thread__app_main_control (void *no_argument)
                         //Desactivamos todos los controles de otros estados
                         Stop_askDistanceControl();
                         
+                        //Enviamos el estado al coche para habilitar/deshabilitar controles
+                        Send_CMD_StateChange(app_state);
+                        
                         //Mostramos estado inicial de LEDs
                         leds_activate_mask |= GET_MASK_LED(LED_GREEN);
                         leds_activate_mask &= ~GET_MASK_LED(LED_BLUE);
@@ -132,6 +139,7 @@ void thread__app_main_control (void *no_argument)
                         //Mostramos por el LCD que estamos en modo normal de funcionamiento
                         LCD_write (LCD_LINE__ONE, "State: Normal");
                         state_enter = false;
+                        
                     }
                 
                     if (flags & FLAG__MOSTRAR_HORA)
@@ -147,6 +155,9 @@ void thread__app_main_control (void *no_argument)
                     {
                         //Desactivamos todos los controles de otros estados
                         Stop_askDistanceControl();
+                        
+                        //Enviamos el estado al coche para habilitar/deshabilitar controles
+                        Send_CMD_StateChange(app_state);
                         
                         //Mostramos estado inicial de LEDs
                         leds_activate_mask &= ~GET_MASK_LED(LED_GREEN);
@@ -167,7 +178,10 @@ void thread__app_main_control (void *no_argument)
                     
                 case APP_STAGE__BACK_GEAR:
                     if (state_enter)
-                    {                        
+                    {   
+                        //Enviamos el estado al coche para habilitar/deshabilitar controles
+                        Send_CMD_StateChange(app_state);
+                        
                         //Mostramos estado inicial de LEDs
                         leds_activate_mask &= ~GET_MASK_LED(LED_GREEN);
                         leds_activate_mask &= ~GET_MASK_LED(LED_BLUE);
@@ -195,6 +209,9 @@ void thread__app_main_control (void *no_argument)
                     {
                         //Desactivamos todos los controles de otros estados
                         Stop_askDistanceControl();
+                        
+                        //Enviamos el estado al coche para habilitar/deshabilitar controles
+                        Send_CMD_StateChange(app_state);
                         
                         //Mostramos estado inicial de LEDs
                         leds_activate_mask |= GET_MASK_LED(LED_GREEN);
@@ -243,11 +260,11 @@ void Init_AllAppThreads(void)
 {
     /* Init all threads here*/
     id_thread__app_main = osThreadNew(thread__app_main_control, NULL, NULL);
+    Init_RF_TX();
     Init_LedsControl();
     Init_RTC_Update();
     Init_JoystickControl();
-    Init_RF_TX();
-    //Init_thread_GetConsumption();
+    Init_VelocityCointrol();
 
     //osThreadNew(app_main, NULL, &app_main_attr); WEB
     //netInitialize(); WEB
@@ -268,4 +285,22 @@ lineas_distancia_t calcularLineasDistancia(uint16_t distancia)
     uint32_t lines = (distancia - 1) / tramo + 1;
 
     return (lineas_distancia_t)lines;
+}
+
+//Utilizado para habilitar y deshabilitar controles en el coche (distancia)
+void Send_CMD_StateChange (app_state_t app_state)
+{
+    if (app_state == APP_STAGE__BACK_GEAR)
+    {
+        nRF_data.command = nRF_CMD__BACK_GEAR_MODE;
+    }
+    else
+    {
+        nRF_data.command = nRF_CMD__NORMAL_MODE;
+    }
+    if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, 1000) != osOK)
+    {
+        strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
+        osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
+    }
 }

@@ -41,6 +41,7 @@ typedef enum
 
 extern osThreadId_t id_thread__app_main;
 extern char detalleError[20];
+extern app_state_t app_state;
 
 void Init_AllAppThreads(void);
 
