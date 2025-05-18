@@ -1,0 +1,27 @@
+t <form>
+t <text>
+t <id>Distancia</id>
+c x<value>%s</value>
+t </text>
+t <text>
+t <id>Consumo</id>
+c h<value>%s</value>
+t </text>
+t <text>
+t <id>Marcha</id>
+c k<value>%s</value>
+t </text>
+t <text>
+t <id>Direccion</id>
+c m<value>%s</value>
+t </text>
+t <text>
+t <id>RTC_HORA</id>
+c y<value>%s</value>
+t </text>
+t <text>
+t <id>RTC_FECHA</id>
+c w<value>%s</value>
+t </text>
+t </form>
+.

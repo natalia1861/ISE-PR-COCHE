@@ -22,6 +22,14 @@
 #pragma  clang diagnostic ignored "-Wformat-nonliteral"
 #endif
 
+//SERVIDOR
+extern char hora[80];
+extern char fecha[80];
+extern char marcha_S[80];
+extern char distancia_S[80];
+extern char direccion_S[80];
+extern char consumo_S [80];
+
 // http_server.c
 extern uint16_t AD_in (uint32_t ch);
 extern uint8_t  get_button (void);
@@ -352,23 +360,49 @@ uint32_t netCGI_Script (const char *env, char *buf, uint32_t buflen, uint32_t *p
       }
       break;
 
-    case 'g':
-      // AD Input from 'ad.cgi'
+     case 'g':
+      // AD Input from 'control.cgi'
       switch (env[2]) {
         case '1':
-          adv = AD_in (0);
-          len = (uint32_t)sprintf (buf, &env[4], adv);
+          len = (uint32_t)sprintf (buf, &env[4], consumo_S );
           break;
         case '2':
-          len = (uint32_t)sprintf (buf, &env[4], (double)((float)adv*3.3f)/4096);
+          len = (uint32_t)sprintf (buf, &env[4], direccion_S );
           break;
-        case '3':
-          adv = (adv * 100) / 4096;
-          len = (uint32_t)sprintf (buf, &env[4], adv);
+				case '3':
+          len = (uint32_t)sprintf (buf, &env[4], marcha_S);
           break;
+        case '4':
+          len = (uint32_t)sprintf (buf, &env[4], distancia_S);
+          break;
+        case '5':
+          len = (uint32_t)sprintf (buf, &env[4], hora);
+          break;
+        case '6':
+          len = (uint32_t)sprintf (buf, &env[4], fecha);
+          break;				
       }
       break;
-      
+
+       case 'x':
+      len = (uint32_t)sprintf (buf, &env[1], distancia_S);
+      break;
+		case 'h':
+      len = (uint32_t)sprintf (buf, &env[1], consumo_S);
+      break;
+    case 'k':  
+			len = (uint32_t)sprintf (buf, &env[1], marcha_S);		
+      break;			
+		case 'm':  
+			len = (uint32_t)sprintf (buf, &env[1], direccion_S);
+      break;
+    case 'y':
+			len = sprintf(buf, &env[1], hora);
+			break;				
+		case 'w':
+			len = sprintf(buf, &env[1], fecha);
+			break;
+
     case 'h':
        // RTC Input from 'rtc.cgi'
     switch (env[2]) {
