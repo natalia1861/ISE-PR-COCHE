@@ -3,6 +3,8 @@
 
 uint16_t distancia = 0;
 
+osThreadId_t id_thread__DistanceControl = NULL;
+
 void thread__distance_control (void *no_argument)
 {
     
@@ -20,5 +22,17 @@ void thread__distance_control (void *no_argument)
 
 void Init_DistanceControl (void)
 {
-    osThreadNew(thread__distance_control, NULL, NULL);
+    if (id_thread__DistanceControl == NULL)
+    {
+       id_thread__DistanceControl = osThreadNew(thread__distance_control, NULL, NULL);
+    }
+}
+
+void Stop_DistanceControl (void)
+{
+    if (id_thread__DistanceControl != NULL)
+    {
+        osThreadTerminate(id_thread__DistanceControl);
+        id_thread__DistanceControl = NULL;
+    }
 }
