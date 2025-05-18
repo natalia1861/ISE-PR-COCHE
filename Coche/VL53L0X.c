@@ -5,6 +5,7 @@
 
 #include "VL53L0X.h"
 #include "I2CDev.h"
+#include "i2c.h"
 #include "stm32f4xx_hal.h"
 #include <stdbool.h>
 #include <stdlib.h>
