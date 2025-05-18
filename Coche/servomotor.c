@@ -83,7 +83,7 @@ static void initPinPE9(void){ //Pin salida PE9 TIM1
 }
 
 // Función para establecer el ángulo del servomotor
-void setServoAngle(uint8_t angle) {
+void setServoAngle(float angle) {
   // Asegurarse de que el ángulo esté dentro del rango permitido
   if (angle < MIN_ANGLE) angle = MIN_ANGLE;
   if (angle > MAX_ANGLE) angle = MAX_ANGLE;

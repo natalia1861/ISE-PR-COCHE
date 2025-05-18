@@ -133,13 +133,14 @@ void thread__transmissor_RF_RX(void *argument)
                     case nRF_CMD__BACK_GEAR_MODE:
                         osThreadFlagsSet(id_thread__app_main, FLAG_STATE_BACK_GEAR);
                     case nRF_CMD__VELOCITY:
-                        setMotorSpeed(GET_NRF_AUX_DATA_LOW(dataIn)); //Manda tambien el estado, quizas irrelevante, pero asi aprovechamos los 16 bits
+                        nRF_data_received_rx.velocidad = GET_NRF_AUX_DATA(dataIn); //Marchas. 0-2
+                        setMotorSpeed((speed_marchas_t) nRF_data_received_rx.velocidad);
                         printf("Comando velocidad\n");
                         break;
                     case nRF_CMD__DIRECTION:
-                        //Se manda comando de dirección a los servos
-                        //nRF_data_received_rx.velocidad = GET_NRF_AUX_DATA_LOW(dataIn) << //revisar
-                        //revisar
+                        //El valor de obtiene como un float representado por uint16_t
+                        nRF_data_received_rx.direccion = GET_NRF_AUX_DATA(dataIn);
+                        setServoAngle((float) ((float) nRF_data_received_rx.direccion / 100));
                         printf("Comando direccion\n");
                         break;
 
