@@ -11,6 +11,8 @@
 #define DIRECTION_REFRESH                           100
 
 osThreadId_t id_thread__DirectionControl = NULL;
+char direccion_S[80];
+
 void thread__direction_control(void *no_argument)
 {
     float direction = 0;

@@ -25,6 +25,8 @@ char rtc_date_time[RTC_MAX][LCD_MAX_CHARACTERS+1];	//maximo de caracteres + EOS
 static osTimerId_t tim_id_3min;	//timer sincronizacion cada 3 min
 
 static void Timer_Callback_3min (void);
+char hora[80];
+char fecha[80];
 
 void init_RTC(void) {     //inicializa el RTC y configura una hora por defecto
     hrtc.Instance = RTC; 

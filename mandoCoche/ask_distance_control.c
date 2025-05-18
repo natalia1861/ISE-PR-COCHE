@@ -7,6 +7,7 @@
 #define GET_DISTANCE_TIME           200
 
 osThreadId_t id_thread__askDistanceControl = NULL;
+char distancia_S[80];
 
 void thread__askDistanceControl (void *no_argument)
 {
