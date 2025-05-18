@@ -11,6 +11,8 @@
 #include "ask_consumption_control.h"
 #include "velocity_control.h"
 #include "tm_stm32_nrf24l01.h"
+#include "sensor_AS5600.h"
+#include "direction_control.h"
 
 #define NUM_MAX_MUESTRA_CONSUMO     10      //Buffer circular de consumo (memoria flash)
 #define MAX_DISTANCE                4096    //Definir el maximo valor para la distancia revisarMSP
@@ -265,7 +267,8 @@ void Init_AllAppThreads(void)
     Init_RTC_Update();
     Init_JoystickControl();
     Init_VelocityCointrol();
-
+    //Init_AS5600_Thread();
+    Init_DirectionControl();
     //osThreadNew(app_main, NULL, &app_main_attr); WEB
     //netInitialize(); WEB
 }

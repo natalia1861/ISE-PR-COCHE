@@ -16,7 +16,7 @@
 
 #define MIN_VOLTIOS_ADC     0.0
 #define MAX_VOLTIOS_ADC     3.3
-#define SENSIBILITY         0.2
+#define SENSIBILITY         0.3
 
 //Variables internas	
 ADC_HandleTypeDef adchandle1;
