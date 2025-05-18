@@ -16,9 +16,6 @@ osThreadId_t id_thread__DistanceControl = NULL;
 
 void thread__distance_control (void *no_argument)
 {
-    MX_I2C2_Init();
-    HAL_I2C_MspInit(&hi2c2);
-    InitVL53(&sensor1);
     startContinuous(&sensor1,0); //Second parameter: x ms wait
 	osDelay(2000);
     
@@ -28,9 +25,9 @@ void thread__distance_control (void *no_argument)
         #ifdef DISTANCIA_TEST
         distancia = (distancia == 5000) ? 0 : distancia + 50;
         #else
-        distancia = (int16_t)(readRangeContinuousMillimeters(&sensor1)*myscale)-myoffset;
+        distancia = (uint16_t)(readRangeContinuousMillimeters(&sensor1)*myscale)-myoffset;
         #endif
-        osDelay(500);
+        osDelay(100);
     }
 }
 
@@ -44,6 +41,7 @@ void Init_DistanceControl (void)
 
 void Stop_DistanceControl (void)
 {
+    stopContinuous(&sensor1);
     if (id_thread__DistanceControl != NULL)
     {
         osThreadTerminate(id_thread__DistanceControl);
@@ -51,3 +49,9 @@ void Stop_DistanceControl (void)
     }
 }
 
+void Init_SensorDistancia(void)
+{
+    MX_I2C2_Init();
+    HAL_I2C_MspInit(&hi2c2);
+    InitVL53(&sensor1);
+}
