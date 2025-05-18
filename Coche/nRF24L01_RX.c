@@ -31,6 +31,7 @@
 #include "distance_control.h"
 #include "app_main.h"
 #include "servomotor.h"
+#include "consumo_control.h"
 
 
 /* Receiver address */
@@ -153,8 +154,16 @@ void thread__transmissor_RF_RX(void *argument)
                         printf("Comando: ask Distancia\n");
                         break;
                     case nRF_CMD__RECEIVE_DISTANCE:
+                    case nRF_CMD__RECIEVE_CONSUMPTION:
                     //No se realiza ninguna accion. Comando utilizado para mandar el ack previamente cargado
-                    break;
+                        break;
+                    case nRF_CMD__ASK_CONSUMPTION:
+                        dataOut[nRF_DATA__COMMAND] = nRF_CMD__ASK_CONSUMPTION;
+                        dataOut[nRF_DATA__AUX_DATA_LOW] = (uint8_t) consumption;          //Se añade el valor de distancia (low byte)
+                        dataOut[nRF_DATA__AUX_DATA_HIGH] = (uint8_t) (consumption >> 8);    //Se añade el valor de distancia (high byte)
+                        TM_NRF24L01_WriteAckPayload(NRF_IRQ.F.RX_P_NO, dataOut, sizeof(dataOut));
+                        printf("Comando: ask Distancia\n");
+                        break;
                 }
                 
                 printf("Data received: [0]: %x [1]: %x [2]: %x\n", dataIn[0], dataIn[1], dataIn[2]);

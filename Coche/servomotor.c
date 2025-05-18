@@ -19,8 +19,8 @@ Izquierda - 2ms (180º) Centro - 1.5ms (90º) Izquierda 1ms (0º)
 #define MAX_ANGLE                       180
 
 //Valores que significa cada max y min de PWM respecto a la velocidad - 2 marchas posibles. 0 - no velocidad
-#define MIN_VELOCITY                    MARCHA_0
-#define MAX_VELOCITY                    MARCHA_2
+#define MIN_VELOCITY                    SM_MARCHA_0
+#define MAX_VELOCITY                    SM_MARCHA_2
 
 //PWM
 static TIM_HandleTypeDef htim1;             // Estructura para el TIM1 en modo PWM

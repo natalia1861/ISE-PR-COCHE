@@ -5,6 +5,7 @@
 #include "distance_control.h"
 #include <stdio.h>
 #include "servomotor.h"
+#include "consumo_control.h"
 
 //Variables globales
 app_coche_state_t app_coche_state;
@@ -21,6 +22,7 @@ void thread__app_main (void *no_argument)
     
     //Inicializamos controles
     Init_Servomotors();
+    Init_GetConsumption();
 
     for(;;)
     {

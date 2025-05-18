@@ -11,8 +11,8 @@
   * @retval None
   */
  
-#define NUM_MIN_MARCHAS     MARCHA_0
-#define NUM_MAX_MARCHAS     MARCHA_2
+#define NUM_MIN_MARCHAS     ADC_MARCHA_0
+#define NUM_MAX_MARCHAS     ADC_MARCHA_2
 
 #define MIN_VOLTIOS_ADC     0.0
 #define MAX_VOLTIOS_ADC     3.3
@@ -166,14 +166,15 @@ void Init_ADC1_presion(void)
 }
 
 //Funcion que devuelve directamente el consumo en mA
-void getConsumo(uint16_t adc_valor)
+float getConsumo(void)
 {
     float corriente_Consumo =0; 
 
     //2.5V tenemos 150mA
-	//adc_valor es x 	
-	corriente_Consumo = adc_valor*0.15/2.5;
-	printf("Corriente: %.2f\n", corriente_Consumo);
+	//adc_valor es x
+    corriente_Consumo = ADC_in(CH0_CONSUMO)*0.15/2.5;
+ 	return corriente_Consumo;
+	//printf("Corriente: %.2f\n", corriente_Consumo);
 }
 
 //Funcion que devuelve el pedal al que accedemos segun la presion
@@ -189,10 +190,10 @@ marchas_t getPedal(void)
     //printf("\nVoltios Pedales: %.2f ", voltios_Pedal);
 
     if (voltios_Pedal <= (MIN_VOLTIOS_ADC + SENSIBILITY))
-        return MARCHA_2;  // 0 V
+        return ADC_MARCHA_2;  // 0 V
 
     if (voltios_Pedal >= (MAX_VOLTIOS_ADC - SENSIBILITY))
-        return MARCHA_0;  // 3.3V
+        return ADC_MARCHA_0;  // 3.3V
 
     // Dividimos el rango útil en tramos
     tramo = (MAX_VOLTIOS_ADC - MIN_VOLTIOS_ADC) / (float)(NUM_MAX_MARCHAS - NUM_MIN_MARCHAS);
