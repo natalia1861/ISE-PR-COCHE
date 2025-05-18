@@ -1,12 +1,26 @@
 #include "distance_control.h"
 #include "cmsis_os2.h"                  // ::CMSIS:RTOS2
+#include "VL53L0X.h"
+#include "i2c.h"
+
+#define myoffset        10
+#define myscale         1.05
 
 uint16_t distancia = 0;
+VL53L0X sensor1;
+
+//from I2C.c
+extern I2C_HandleTypeDef hi2c2;
 
 osThreadId_t id_thread__DistanceControl = NULL;
 
 void thread__distance_control (void *no_argument)
 {
+    MX_I2C2_Init();
+    HAL_I2C_MspInit(&hi2c2);
+    InitVL53(&sensor1);
+    startContinuous(&sensor1,0); //Second parameter: x ms wait
+	osDelay(2000);
     
     for(;;)
     {
@@ -14,9 +28,9 @@ void thread__distance_control (void *no_argument)
         #ifdef DISTANCIA_TEST
         distancia = (distancia == 5000) ? 0 : distancia + 50;
         #else
-        //distancia = getDistancia(); //revisarMSP
+        distancia = (int16_t)(readRangeContinuousMillimeters(&sensor1)*myscale)-myoffset;
         #endif
-        osDelay(100);
+        osDelay(500);
     }
 }
 
@@ -36,3 +50,4 @@ void Stop_DistanceControl (void)
         id_thread__DistanceControl = NULL;
     }
 }
+

@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include "cmsis_os2.h"                  // ::CMSIS:RTOS2
+
 
 //#define I2C &hi2c2
 extern I2C_HandleTypeDef hi2c2;
@@ -1045,4 +1047,25 @@ uint8_t encodeVcselPeriod(uint8_t period_pclks)
 uint32_t calcMacroPeriod(uint8_t vcsel_period_pclks)
 {
 	return ((((uint32_t)2304 * (vcsel_period_pclks) * 1655) + 500) / 1000);
+}
+
+void InitVL53(VL53L0X* sensor1){
+  setAddress(sensor1,0x29);//Default
+  osDelay(200);//Wait sensor startup
+  if(!init(sensor1,true)) //Returns 0 if fail, 1 if success.
+    {
+//	snprintf(msg,sizeof(msg),"Failed to initialize\r\n");
+//	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), 0xFFFF);
+    }
+  setVcselPulsePeriod (sensor1, VcselPeriodPreRange, 16);
+  setTimeout(sensor1,500); //Max time before timeout.
+  setAddress(sensor1,0x04); //New addr
+  osDelay(5200);
+}
+
+void Init_DistanceSensor(VL53L0X* sensor1)
+{
+    MX_I2C2_Init();
+    HAL_I2C_MspInit(&hi2c2);
+    InitVL53(sensor1);
 }
