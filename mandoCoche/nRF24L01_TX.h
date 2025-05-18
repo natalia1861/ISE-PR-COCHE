@@ -4,6 +4,9 @@
 #include "stm32f4xx_hal.h"
 #include "cmsis_os2.h"
 
+//Flags to thread__GetData_RF_TX
+#define nRF_DATA_READY              0x0001
+
 typedef struct
 {
     uint8_t command;

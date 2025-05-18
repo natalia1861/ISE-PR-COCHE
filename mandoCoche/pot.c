@@ -33,7 +33,6 @@
  *----------------------------------------------------------------------------*/
 
 #include "stm32f4xx_hal.h"
-#include "nak_led.h"
 
 #define ADC_RESOLUTION        12        /* Number of A/D converter bits       */
 
@@ -56,7 +55,7 @@ int32_t ADC_Initialize (void) {
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
 
-  /* ADC3 GPIO Configuration: PF9 -> ADC3_IN7 */
+  /* ADC1 GPIO Configuration: PC0*/
     GPIO_InitStruct.Pin = GPIO_PIN_0;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;

@@ -1,44 +1,70 @@
 #include <stdio.h>
+#include <string.h>
 #include "velocity_control.h"
 #include <stdlib.h>
-#include "cmsis_os2.h"                  // ::CMSIS:RTOS2
 #include "nRF24L01_TX.h"
 #include "tm_stm32_nrf24l01.h"
 #include "app_main.h"
 #include "adc.h"
 
-#define VELOCITY_THRESHOLD                  100  //revisarMSP revisarNAK ajustar segun sensbilidad real
+#define VELOCITY_REFRESH                    100
 
-extern ADC_HandleTypeDef adchandle;
+osThreadId_t id_thread__velocityControl;
 
-void thread__VelocityControl (void)
+void thread__VelocityControl (void *no_argument)
 {
+    uint32_t flags;
     nRF_data_transmitted_t nRF_data;
-    uint16_t velocidad_prev = 0;
-    uint16_t velocidad = 0;
-
+    marchas_t marcha_prev;
+    marchas_t marcha;
+    
+	Init_ADC1_presion();
+    
+    //Primera iteraccion
     nRF_data.command = nRF_CMD__VELOCITY;   //Se añade el comando de velocidad
-	
-	    ADC1_pins_F429ZI_config();
-      ADC_Init_Single_Conversion(&adchandle,ADC1);
+    marcha_prev = getPedal();
+    nRF_data.auxiliar_data = marcha_prev;
+    if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, osWaitForever) != osOK)   //Se añade a la cola de envio de RF
+    {
+        strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
+        osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
+    }
 	
     while(1)
     {
         #ifdef VELOCITY_TEST
         velocidad = velocidad + 1;
-        #else
-        //Implementar funcion de getVelocidad con un THRESHOLD - circuito de presion revisarMSP
-        //velocidad = getVelocidad();
-        #endif
-        if (abs(velocidad_prev - velocidad) >= VELOCITY_THRESHOLD)
+        if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, osWaitForever) != osOK)   //Se añade a la cola de envio de RF
         {
-            nRF_data.auxiliar_data = velocidad;
-            velocidad_prev = velocidad;
+            strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
+            osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
+        }
+        #else
+        marcha = getPedal();
+        if (marcha != marcha_prev)
+        {
+            nRF_data.command = nRF_CMD__VELOCITY;
+            nRF_data.auxiliar_data = (marcha) ;
+            marcha_prev = marcha;
+            
+            //printf("Marcha: %d\n", marcha);
             if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, osWaitForever) != osOK)   //Se añade a la cola de envio de RF
             {
+                strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
                 osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
             }
         }
+        osDelay(VELOCITY_REFRESH);
+        #endif
+    }
+}
+
+void Init_VelocityCointrol (void)
+{
+    if ((id_thread__velocityControl = osThreadNew(thread__VelocityControl, NULL, NULL)) == NULL)
+    {
+        strncpy(detalleError, "THREAD ERROR Velocidad", sizeof(detalleError) - 1);
+        osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
     }
 }
 

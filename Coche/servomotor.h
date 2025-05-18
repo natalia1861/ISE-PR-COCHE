@@ -1,19 +1,17 @@
-#ifndef __THSERVO_H
-#define __THSERVO_H
-
-/* Includes ------------------------------------------------------------------*/
+#ifndef __SERVOMOTORS_H
+#define __SERVOMOTORS_H
+#include <stdbool.h>
 #include "stm32f4xx_hal.h"
-#include "cmsis_os2.h"
 
-#define CLOSE_FLAG    0x01
-#define OPEN_FLAG     0x02
-#define STOP_FLAG			0x04
+typedef enum
+{
+    SM_MARCHA_0 = 0,
+    SM_MARCHA_1 = 1,
+    SM_MARCHA_2
+} speed_marchas_t;
 
-/* Exported types ------------------------------------------------------------*/
-/* Exported constants --------------------------------------------------------*/
-/* Exported macro ------------------------------------------------------------*/
-/* Exported functions ------------------------------------------------------- */
-osThreadId_t Init_ThServo (void);
-  /* Exported thread functions,  
-  Example: extern void app_main (void *arg); */
-#endif /* __MAIN_H */
+void Init_Servomotors (void);
+void setMotorSpeed(speed_marchas_t speed);
+void setServoAngle(float angle);
+
+#endif

@@ -31,7 +31,7 @@ extern char direccion_S[80];
 extern char consumo_S [80];
 
 // http_server.c
-extern uint16_t AD_in (uint32_t ch);
+//extern uint16_t AD_in (uint32_t ch);
 extern uint8_t  get_button (void);
 
 extern bool LEDrun;

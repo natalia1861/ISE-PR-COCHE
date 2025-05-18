@@ -47,7 +47,8 @@ uint8_t TxAddress[] = {
 };
 
 //Hilos y timers
-osThreadId_t id_thread__RF_TX = NULL;
+osThreadId_t id_thread__SendData_RF_TX = NULL;
+osThreadId_t id_thread__GetData_RF_TX = NULL;
 
 //Queue
 #define MAX_RF_MESS_QUEUE           5
@@ -67,9 +68,9 @@ uint8_t dataIn[nRF_DATA_LENGTH] = {0};
 TM_NRF24L01_Transmit_Status_t transmissionStatus;
 TM_NRF24L01_IRQ_t NRF_IRQ;
 
-nRF_data_received_t nRF_data_received;
+nRF_data_received_t nRF_data_received; //revisar cambiar nombre estructura con tx
 
-void thread__test_transmissor_RF_TX(void *argument) 
+void thread__SendData_RF_TX(void *argument) 
 {
 	uint8_t printed = 0;
     nRF_data_transmitted_t nRF_data;
@@ -184,9 +185,96 @@ void thread__test_transmissor_RF_TX(void *argument)
 	}
 }
 
+void thread__GetData_RF_TX (void *no_argument)
+{
+    uint32_t flags;
+    while (1)
+    {
+        flags = osThreadFlagsWait(nRF_DATA_READY, osFlagsWaitAny, osWaitForever);
+        if (flags & nRF_DATA_READY)
+        {
+            #ifdef TEST_RF
+                dataOut[0] = dataOut[0] + 1;
+            #endif
+            
+            /* Read interrupts */
+            TM_NRF24L01_Read_Interrupts(&NRF_IRQ);
+		
+            /* Check if transmitted OK (received ack)*/
+            if (NRF_IRQ.F.DataSent) 
+            { 		
+                printf("IRQ: ACK Received\n");		
+                /* Save transmission status */
+                transmissionStatus = TM_NRF24L01_Transmit_Status_Ok;
+                
+                //printf("STATUS FIFO in Data Sent %d\n", TM_NRF24L01_GetFIFOStatus());
+            }
+            
+            /* Check if max retransmission reached and last transmission failed */
+            if (NRF_IRQ.F.MaxRT) 
+            {
+                printf("IRQ: Max RT IRQ\n");
+    
+                /* Save transmission status */
+                transmissionStatus = TM_NRF24L01_Transmit_Status_Lost;
+                
+                /* Mandamos flag de ERROR */
+                #ifndef TEST_RF
+                strncpy(detalleError, "RF Lost max ACK", sizeof(detalleError) - 1);
+                osThreadFlagsSet(id_thread__app_main, FLAG__ERROR); //revisarNAK error permanente. Por mucho que lo aceptes, se volverá a generar (hasta que la conexion vuelva).
+                #endif
+            }
+            
+            /* If data is ready on NRF24L01+*/
+                //Si en modo RX: se activara si envia correctamente el ACK
+                //Si en modo TX: se activara si recibe ACK Payload.
+            if (NRF_IRQ.F.DataReady) 
+            { //una vez se fue a RX, si recibe datos
+                printf("IRQ: Data Ready IRQ\n");
+                //printf("STATUS FIFO before read %d\n", TM_NRF24L01_GetFIFOStatus());
+                //printf("FIFO RX before read: %d\n", TM_NRF24L01_RxFifoEmpty());
+
+
+                /* Get data from RX FIFO NRF24L01+ */
+                TM_NRF24L01_GetData(dataIn, sizeof(dataIn));
+                printf ("Data received: [0]: %x [1] %x [2] %x\n", dataIn[0], dataIn[1], dataIn[2]);
+                
+                #ifndef TEST_RF
+                
+                    if (GET_NRF_COMMAND(dataIn) == nRF_CMD__ASK_DISTANCE)
+                    {
+                        //Obtenemos el dato de distancia
+                        nRF_data_received.distancia = (GET_NRF_AUX_DATA_HIGH(dataIn) << 8) | (GET_NRF_AUX_DATA_LOW(dataIn));
+                        
+                        //Mandamos flag a app_main de que la distancia fue actualizada
+                        osThreadFlagsSet(id_thread__app_main, FLAG__MOSTRAR_DISTANCIA);
+                    }
+                    
+                    if (GET_NRF_COMMAND(dataIn) == nRF_CMD__ASK_CONSUMPTION)
+                    {
+                        //Obtenemos el dato de distancia
+                        nRF_data_received.consumo = (GET_NRF_AUX_DATA_HIGH(dataIn) << 8) | (GET_NRF_AUX_DATA_LOW(dataIn));
+                        
+                        //Mandamos flag a app_main de que la distancia fue actualizada
+                        osThreadFlagsSet(id_thread__app_main, FLAG__CONSUMO_EN_FLASH);
+                    }
+                
+                #endif
+                
+                //printf("STATUS FIFO after read %d\n", TM_NRF24L01_GetFIFOStatus());
+                //printf("FIFO RX after read: %d\n", TM_NRF24L01_RxFifoEmpty());
+            }
+        
+            /* Go back to RX mode because of lower consumption*/
+            TM_NRF24L01_PowerUpRx();
+        }
+    }
+}
+
 void Init_RF_TX(void) {
     id_queue__nRF_TX_Data = osMessageQueueNew(MAX_RF_MESS_QUEUE, sizeof(nRF_data_transmitted_t), NULL);
-    id_thread__RF_TX = osThreadNew (thread__test_transmissor_RF_TX, NULL, NULL);
+    id_thread__SendData_RF_TX = osThreadNew (thread__SendData_RF_TX, NULL, NULL);             //Envio de datos
+    id_thread__GetData_RF_TX = osThreadNew (thread__GetData_RF_TX, NULL, NULL);
 }
 
 
@@ -196,80 +284,8 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin)
 	/* Check for proper interrupt pin */
 	if (GPIO_Pin == IRQ_PIN) 
     {
-        printf("Note: Interrupcion PG3\n");
-        #ifdef TEST_RF
-        dataOut[0] = dataOut[0] + 1;
-        #endif
-		/* Read interrupts */
-		TM_NRF24L01_Read_Interrupts(&NRF_IRQ);
-		
-		/* Check if transmitted OK (received ack)*/
-		if (NRF_IRQ.F.DataSent) 
-        { 		
-			printf("IRQ: ACK Received\n");		
-			/* Save transmission status */
-			transmissionStatus = TM_NRF24L01_Transmit_Status_Ok;
-			
-            printf("STATUS FIFO in Data Sent %d\n", TM_NRF24L01_GetFIFOStatus());
-		}
-		
-		/* Check if max retransmission reached and last transmission failed */
-		if (NRF_IRQ.F.MaxRT) 
-        {
-			printf("IRQ: Max RT IRQ\n");
-
-			/* Save transmission status */
-			transmissionStatus = TM_NRF24L01_Transmit_Status_Lost;
-			
-            /* Mandamos flag de ERROR */
-            #ifndef TEST_RF
-            strncpy(detalleError, "RF Lost max ACK", sizeof(detalleError) - 1);
-            osThreadFlagsSet(id_thread__app_main, FLAG__ERROR); //revisarNAK error permanente. Por mucho que lo aceptes, se volverá a generar (hasta que la conexion vuelva).
-            #endif
-		}
-		
-		/* If data is ready on NRF24L01+*/
-            //Si en modo RX: se activara si envia correctamente el ACK
-            //Si en modo TX: se activara si recibe ACK Payload.
-		if (NRF_IRQ.F.DataReady) 
-        { //una vez se fue a RX, si recibe datos
-			printf("IRQ: Data Ready IRQ\n");
-            printf("STATUS FIFO before read %d\n", TM_NRF24L01_GetFIFOStatus());
-            printf("FIFO RX before read: %d\n", TM_NRF24L01_RxFifoEmpty());
-
-
-			/* Get data from RX FIFO NRF24L01+ */
-			TM_NRF24L01_GetData(dataIn, sizeof(dataIn));
-            printf ("Data received: [0]: %x [1] %x [2] %x\n", dataIn[0], dataIn[1], dataIn[2]);
-            
-            #ifndef TEST_RF
-            
-                if (GET_NRF_COMMAND(dataIn) == nRF_CMD__ASK_DISTANCE)
-                {
-                    //Obtenemos el dato de distancia
-                    nRF_data_received.distancia = (GET_NRF_AUX_DATA_HIGH(dataIn) << 8) | (GET_NRF_AUX_DATA_LOW(dataIn));
-                    
-                    //Mandamos flag a app_main de que la distancia fue actualizada
-                    osThreadFlagsSet(id_thread__app_main, FLAG__MOSTRAR_DISTANCIA);
-                }
-                
-                if (GET_NRF_COMMAND(dataIn) == nRF_CMD__ASK_CONSUMPTION)
-                {
-                    //Obtenemos el dato de distancia
-                    nRF_data_received.consumo = (GET_NRF_AUX_DATA_HIGH(dataIn) << 8) | (GET_NRF_AUX_DATA_LOW(dataIn));
-                    
-                    //Mandamos flag a app_main de que la distancia fue actualizada
-                    osThreadFlagsSet(id_thread__app_main, FLAG__CONSUMO_EN_FLASH);
-                }
-            
-            #endif
-            
-            printf("STATUS FIFO after read %d\n", TM_NRF24L01_GetFIFOStatus());
-            printf("FIFO RX after read: %d\n", TM_NRF24L01_RxFifoEmpty());
-		}
-        
-        /* Go back to RX mode because of lower consumption*/
-		TM_NRF24L01_PowerUpRx();
-	}
+        //printf("Note: Interrupcion PG3\n");
+        osThreadFlagsSet(id_thread__GetData_RF_TX, nRF_DATA_READY);
+    }
 }
 

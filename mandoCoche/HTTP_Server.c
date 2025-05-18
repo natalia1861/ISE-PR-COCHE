@@ -39,7 +39,7 @@ const osThreadAttr_t app_main_attr = {
 //extern GLCD_FONT GLCD_Font_6x8;
 //extern GLCD_FONT GLCD_Font_16x24;
 
-extern uint16_t AD_in          (uint32_t ch);
+//extern uint16_t AD_in          (uint32_t ch);
 extern uint8_t  get_button     (void);
 extern void     netDHCP_Notify (uint32_t if_num, uint8_t option, const uint8_t *val, uint32_t len);
 
