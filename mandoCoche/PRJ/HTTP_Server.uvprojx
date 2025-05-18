@@ -598,6 +598,16 @@
               <FileType>1</FileType>
               <FilePath>..\Common\tm_stm32_spi.c</FilePath>
             </File>
+            <File>
+              <FileName>sensor_AS5600.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\sensor_AS5600.c</FilePath>
+            </File>
+            <File>
+              <FileName>adc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Common\adc.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -612,11 +622,6 @@
               <FileName>nRF24L01_TX.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\nRF24L01_TX.c</FilePath>
-            </File>
-            <File>
-              <FileName>Consumption.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Consumption.c</FilePath>
             </File>
             <File>
               <FileName>app_main.c</FileName>
@@ -1262,6 +1267,16 @@
               <FileType>1</FileType>
               <FilePath>..\Common\tm_stm32_spi.c</FilePath>
             </File>
+            <File>
+              <FileName>sensor_AS5600.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\sensor_AS5600.c</FilePath>
+            </File>
+            <File>
+              <FileName>adc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Common\adc.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1276,11 +1291,6 @@
               <FileName>nRF24L01_TX.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\nRF24L01_TX.c</FilePath>
-            </File>
-            <File>
-              <FileName>Consumption.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Consumption.c</FilePath>
             </File>
             <File>
               <FileName>app_main.c</FileName>

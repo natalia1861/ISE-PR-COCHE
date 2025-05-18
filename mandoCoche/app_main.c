@@ -30,6 +30,7 @@ nRF_data_transmitted_t nRF_data = {0};
 
 //Funciones locales
 void Send_CMD_StateChange (app_state_t app_state);
+void Send_CMD_LowPower(void);
 
 //Funcion principal - control del automata y el LCD
 void thread__app_main_control (void *no_argument)
@@ -63,7 +64,7 @@ void thread__app_main_control (void *no_argument)
         
 /************Flags comunes a todos los estados*************************************************/
         
-        if (flags & FLAG__PRESS_UP) //Pulsación arriba joystick
+        if (flags & FLAG__PRESS_UP) //Pulsaciï¿½n arriba joystick
         {
             LCD_clean();
             app_state = (app_state == MAX_APP_STATE) ? FIRST_APP_STAGE : (app_state_t) (app_state + 1);
@@ -88,7 +89,7 @@ void thread__app_main_control (void *no_argument)
 
             state_error = true;
             LCD_write(LCD_LINE__ONE, "ERROR...");
-            LCD_write(LCD_LINE__TWO, detalleError); //revisarNAK añadir detalle de error
+            LCD_write(LCD_LINE__TWO, detalleError); //revisarNAK aï¿½adir detalle de error
         }
         
         if (flags & FLAG__PRESS_CENTER) //Se sale del estado de error tras presionar el boton central - se vuelve al inicio
@@ -161,7 +162,8 @@ void thread__app_main_control (void *no_argument)
                         
                         //Enviamos el estado al coche para habilitar/deshabilitar controles
                         Send_CMD_StateChange(app_state);
-                        
+                        Send_CMD_LowPower();
+
                         //Mostramos estado inicial de LEDs
                         leds_activate_mask &= ~GET_MASK_LED(LED_GREEN);
                         leds_activate_mask |= GET_MASK_LED(LED_BLUE);
@@ -193,13 +195,13 @@ void thread__app_main_control (void *no_argument)
                         //Mostramos por el LCD que estamos en modo de bajo consumo
                         LCD_write (1, "State: Back Gear");
                         
-                        //Creamos el hilo de solicitud de distancia cada x tiempo que mandará comando de solicitud de distancia revisarNAK revisarMSP
+                        //Creamos el hilo de solicitud de distancia cada x tiempo que mandarï¿½ comando de solicitud de distancia revisarNAK revisarMSP
                         Init_askDistanceControl();
                         
                         state_enter = false;
                     }
                     
-                    osDelay (1000); //Espera 2 segundos para visualizar que se entró al estado de marcha atrás
+                    osDelay (1000); //Espera 2 segundos para visualizar que se entrï¿½ al estado de marcha atrï¿½s
                     if (flags & FLAG__MOSTRAR_DISTANCIA) //Flag enviado desde nRF TX tras recibir la distancia
                     {
                         //Se muestra la distancia por el LCD
@@ -221,7 +223,7 @@ void thread__app_main_control (void *no_argument)
                         leds_activate_mask &= ~GET_MASK_LED(LED_BLUE);
                         leds_activate_mask &= ~GET_MASK_LED(LED_RED);
                         
-                        //Mostramos en la línea 1 del LCD que estamos en el modo de mostrar consumo
+                        //Mostramos en la lï¿½nea 1 del LCD que estamos en el modo de mostrar consumo
                         LCD_write (LCD_LINE__ONE, "State: Consumpion");
                         
                         //Reiniciamos la muestra
@@ -279,11 +281,11 @@ lineas_distancia_t calcularLineasDistancia(uint16_t distancia)
     float tramo;
     uint32_t lineas;
     
-    // Si está muy cerca, sin líneas
+    // Si estï¿½ muy cerca, sin lï¿½neas
     if (distancia >= (MIN_DISTANCE - DISTANCE_SENSIBILITY))
         return LCD_LINE__NO_LINE;
 
-    // Si está muy lejos, todas las líneas
+    // Si estï¿½ muy lejos, todas las lï¿½neas
     if (distancia <= (MAX_DISTANCE + DISTANCE_SENSIBILITY))
         return LCD_MAX_LINES;
 
@@ -311,6 +313,16 @@ void Send_CMD_StateChange (app_state_t app_state)
     {
         nRF_data.command = nRF_CMD__NORMAL_MODE;
     }
+    if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, 1000) != osOK)
+    {
+        strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
+        osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
+    }
+}
+
+void Send_CMD_LowPower(void)
+{
+    nRF_data.command = nRF_CMD__LOW_POWER;
     if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, 1000) != osOK)
     {
         strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);

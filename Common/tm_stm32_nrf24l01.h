@@ -215,7 +215,8 @@ typedef enum
     nRF_CMD__ASK_DISTANCE,
     nRF_CMD__RECEIVE_DISTANCE,
     nRF_CMD__BACK_GEAR_MODE,
-    nRF_CMD__NORMAL_MODE
+    nRF_CMD__NORMAL_MODE,
+    nRF_CMD__LOW_POWER
 } nRF_commands_t;               //uinr8_t max 255
 
 typedef enum
