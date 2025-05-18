@@ -403,40 +403,40 @@ uint32_t netCGI_Script (const char *env, char *buf, uint32_t buflen, uint32_t *p
 			len = sprintf(buf, &env[1], fecha);
 			break;
 
-    case 'h':
-       // RTC Input from 'rtc.cgi'
-    switch (env[2]) {
-      case '1':
-        len = (uint32_t)sprintf (buf, &env[4], rtc_date_time[0]);
-      break;
-      case '2':
-        len = (uint32_t)sprintf (buf, &env[4], rtc_date_time[1]);
-      break;
-    }
+//    case 'h':
+//       // RTC Input from 'rtc.cgi'
+//    switch (env[2]) {
+//      case '1':
+//        len = (uint32_t)sprintf (buf, &env[4], rtc_date_time[0]);
+//      break;
+//      case '2':
+//        len = (uint32_t)sprintf (buf, &env[4], rtc_date_time[1]);
+//      break;
+//    }
 		
-			case 'i':
-				//RTC Input from 'rtc.cgx'
-			switch (env[2]) {
-				case '1':
-					len = (uint32_t)sprintf (buf, &env[4], rtc_date_time[0]);
-				break;
-				case '2':
-					len = (uint32_t)sprintf (buf, &env[4], rtc_date_time[1]);
-      break;
-    }
-			break;
+//			case 'i':
+//				//RTC Input from 'rtc.cgx'
+//			switch (env[2]) {
+//				case '1':
+//					len = (uint32_t)sprintf (buf, &env[4], rtc_date_time[0]);
+//				break;
+//				case '2':
+//					len = (uint32_t)sprintf (buf, &env[4], rtc_date_time[1]);
+//      break;
+//    }
+//			break;
 			
-    case 'x':
-      // AD Input from 'ad.cgx'
-      adv = AD_in (0);
-      len = (uint32_t)sprintf (buf, &env[1], adv);
-      break;
+//    case 'x':
+//      // AD Input from 'ad.cgx'
+//      adv = AD_in (0);
+//      len = (uint32_t)sprintf (buf, &env[1], adv);
+//      break;
 
-    case 'y':
-      // Button state from 'button.cgx'
-      //len = (uint32_t)sprintf (buf, "<checkbox><id>button%c</id><on>%s</on></checkbox>",
-      //                         env[1], (get_button () & (1 << (env[1]-'0'))) ? "true" : "false");
-      break;
+//    case 'y':
+//      // Button state from 'button.cgx'
+//      //len = (uint32_t)sprintf (buf, "<checkbox><id>button%c</id><on>%s</on></checkbox>",
+//      //                         env[1], (get_button () & (1 << (env[1]-'0'))) ? "true" : "false");
+//      break;
   }
   return (len);
 }

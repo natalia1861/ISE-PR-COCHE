@@ -68,16 +68,16 @@ osThreadId_t TID_RTC;
 __NO_RETURN void app_main (void *arg);
 
 /* Read analog inputs */
-uint16_t AD_in (uint32_t ch) {
-  int32_t val = 0;
+//uint16_t AD_in (uint32_t ch) {
+//  int32_t val = 0;
 
-  if (ch == 0) {
-    ADC_StartConversion();
-    while (ADC_ConversionDone () < 0);
-    val = ADC_GetValue();
-  }
-  return ((uint16_t)val);
-}
+//  if (ch == 0) {
+//    ADC_StartConversion();
+//    while (ADC_ConversionDone () < 0);
+//    val = ADC_GetValue();
+//  }
+//  return ((uint16_t)val);
+//}
 
 /* Read digital inputs */
 //uint8_t get_button (void) {

@@ -9,10 +9,7 @@
 
 #define VELOCITY_THRESHOLD                  100  //revisarMSP revisarNAK ajustar segun sensbilidad real
 
-
-float corriente_Consumo =0; 
-float voltios_Pedal =0; 
-uint8_t marcha=0;
+extern ADC_HandleTypeDef adchandle;
 
 void thread__VelocityControl (void)
 {

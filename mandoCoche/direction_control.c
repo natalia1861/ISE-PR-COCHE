@@ -6,7 +6,8 @@
 #include "app_main.h"
 
 #define DIRECTION_THRESHOLD                         50  //revisarPAR revisarNAK ajustar segun sensibilidad real 
-
+char direccion_S[80];
+ 
 void thread__direction_control(void *no_argument)
 {
     nRF_data_transmitted_t nRF_data;

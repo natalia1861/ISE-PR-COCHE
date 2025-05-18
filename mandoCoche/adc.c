@@ -15,6 +15,8 @@ float corriente_Consumo =0;
 float voltios_Pedal =0; 
 uint8_t marcha=0;
 ADC_HandleTypeDef adchandle;
+char consumo_S [80];
+char marcha_S[80];
 
 /* Read analog inputs */
 uint16_t AD_in (uint32_t ch) {
@@ -152,7 +154,7 @@ void voltage_ADC(uint16_t adc_valor){
 	  //adc_valor es x 	
 	  corriente_Consumo = adc_valor*0.15/2.5;
 	  printf("Corriente: %.2f\n", corriente_Consumo);
-
+    
 }
 
 void voltage_pedales(uint16_t adc_valor){
