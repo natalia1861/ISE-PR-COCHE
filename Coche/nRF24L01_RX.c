@@ -29,6 +29,8 @@
 #include "gpio.h"
 #include "nak_led.h"
 #include "distance_control.h"
+#include "app_main.h"
+#include "servomotor.h"
 
 
 /* Receiver address */
@@ -70,9 +72,9 @@ nRF_data_received_rx_t nRF_data_received_rx;
 //DEBUG variables
 HAL_EXTI_Result_t status_IRQ = HAL_EXTI_Result_Not_Defined;
 
-void thread__test_transmissor_RF_RX(void *argument) 
+void thread__transmissor_RF_RX(void *argument) 
 {
-    
+    uint32_t flags;
     dataOut[1] = 0x02;
     dataOut[2] = 0x03;
     
@@ -103,6 +105,104 @@ void thread__test_transmissor_RF_RX(void *argument)
     printf("FEATURE register: 0x%02X\n\n", TM_NRF24L01_ReadRegister(0x1D)); //Feature: 0x06
     
     printf("DYNPD register: 0x%02X\n\n", TM_NRF24L01_ReadRegister(0x1C));   //DYNDP: 0x3F
+    
+    while(1)
+    {
+        flags = osThreadFlagsWait(nRF_DATA_READY, osFlagsWaitAny, osWaitForever);
+        
+        if (flags & nRF_DATA_READY)
+        {
+            /* Read interrupts - read Status register*/
+            TM_NRF24L01_Read_Interrupts(&NRF_IRQ);
+		
+            /* If data is ready on NRF24L01+*/
+            //Si en modo RX: se activará si recibe datos normales. 
+            //Si en modo TX: se activará si recibe ACK Payload .
+            if (NRF_IRQ.F.DataReady) 
+            {
+                printf("\nIRQ: Data Ready IRQ\n");
+
+                /* Get data from NRF24L01+ */
+                TM_NRF24L01_GetData(dataIn, sizeof(dataIn));
+                #ifndef TEST_RF
+                switch (GET_NRF_COMMAND(dataIn))
+                {
+                    case nRF_CMD__NORMAL_MODE:
+                        osThreadFlagsSet(id_thread__app_main, FLAG_STATE_NORMAL);
+                        break;
+                    case nRF_CMD__BACK_GEAR_MODE:
+                        osThreadFlagsSet(id_thread__app_main, FLAG_STATE_BACK_GEAR);
+                    case nRF_CMD__VELOCITY:
+                        setMotorSpeed(GET_NRF_AUX_DATA_LOW(dataIn)); //Manda tambien el estado, quizas irrelevante, pero asi aprovechamos los 16 bits
+                        printf("Comando velocidad\n");
+                        break;
+                    case nRF_CMD__DIRECTION:
+                        //Se manda comando de dirección a los servos
+                        //nRF_data_received_rx.velocidad = GET_NRF_AUX_DATA_LOW(dataIn) << //revisar
+                        //revisar
+                        printf("Comando direccion\n");
+                        break;
+
+                    case nRF_CMD__ASK_DISTANCE:
+                        //Se añaden datos al ACK PAYLOAD
+                        dataOut[nRF_DATA__COMMAND] = nRF_CMD__ASK_DISTANCE;             //Se añade el comando de recibir consumo como respuesta
+                        dataOut[nRF_DATA__AUX_DATA_LOW] = (uint8_t) distancia;          //Se añade el valor de distancia (low byte)
+                        dataOut[nRF_DATA__AUX_DATA_HIGH] = (uint8_t) (distancia >> 8);    //Se añade el valor de distancia (high byte)
+                        TM_NRF24L01_WriteAckPayload(NRF_IRQ.F.RX_P_NO, dataOut, sizeof(dataOut));
+                        printf("Comando: ask Distancia\n");
+                        break;
+                    case nRF_CMD__RECEIVE_DISTANCE:
+                    //No se realiza ninguna accion. Comando utilizado para mandar el ack previamente cargado
+                    break;
+                }
+                
+                printf("Data received: [0]: %x [1]: %x [2]: %x\n", dataIn[0], dataIn[1], dataIn[2]);
+
+                #else
+                /* Write ACK Payload into TX FIFO */
+                dataOut[0] = dataOut[0] +1; //Se añaden datos de payload (numero ascendente)
+                printf("TX FIFO before: 0x%02X\n", TM_NRF24L01_TxFifoEmpty());
+                TM_NRF24L01_WriteAckPayload(NRF_IRQ.F.RX_P_NO, dataOut, sizeof(dataOut));
+    
+//			    /* Send it back, NRF goes automatically to TX mode */
+//			    TM_NRF24L01_Transmit(dataIn);
+//			    
+//			    /* Wait for data to be sent */
+//			    do {
+//			    	/* Wait till sending */
+//			    	transmissionStatus = TM_NRF24L01_GetTransmissionStatus();
+//			    } while (transmissionStatus == TM_NRF24L01_Transmit_Status_Sending);
+                
+                //Miramos si la cola esta llena o vacia
+                printf("TX FIFO: 0x%02X\n", TM_NRF24L01_TxFifoEmpty());
+                printf("After Transmission status: 0x%02X\n", TM_NRF24L01_GetStatus());
+                #endif
+            }
+        
+            /* If data is ready on NRF24L01+*/
+                //Si en modo RX: se activara si envia correctamente el ACK
+                //Si en modo TX: se activara si recibe ACK Payload.
+            if (NRF_IRQ.F.DataSent) //He enviado correctamente un ack con payload
+            {
+                printf("IRQ: Data Sent: ACK with payload sent correctly\n");
+            }
+            
+            if (NRF_IRQ.F.MaxRT)
+            {
+                printf("IRQ: Max RT\n");
+                
+            }
+            
+            //printf("AAAAA Status reg: 0x%02X\n", TM_NRF24L01_GetStatus());
+            //printf("TX FIFO: 0x%02X\n", TM_NRF24L01_TxFifoEmpty());
+            /* Clear interrupts */
+            TM_NRF24L01_Clear_Interrupts();
+            /* Clear RX FIFO*/
+            TM_NRF24L01_Clear_RX_FIFO();
+            /* Go back to RX mode */
+            //TM_NRF24L01_PowerUpRx();	//No hace falta: como ya estamos en RX unicamente haria falta limpiar las interrupciones y limpiar RX FIFO
+        }
+    }
 }
 
 /* Interrupt handler */
@@ -110,91 +210,12 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin) {
 	/* Check for proper interrupt pin */
 	if (GPIO_Pin == IRQ_PIN) 
     {
-        printf("\nNote: Interrupcion PG3 at: %d\n", HAL_GetTick());
-        
-		/* Read interrupts - read Status register*/
-		TM_NRF24L01_Read_Interrupts(&NRF_IRQ);
-		
-        /* If data is ready on NRF24L01+*/
-            //Si en modo RX: se activará si recibe datos normales. 
-            //Si en modo TX: se activará si recibe ACK Payload .
-		if (NRF_IRQ.F.DataReady) {
-			printf("IRQ: Data Ready IRQ\n");
-
-			/* Get data from NRF24L01+ */
-			TM_NRF24L01_GetData(dataIn, sizeof(dataIn));
-			printf("Data received: [0]: %x [1]: %x [2]: %x\n", dataIn[0], dataIn[1], dataIn[2]);
-            #ifndef TEST_RF
-            switch (GET_NRF_COMMAND(dataIn))
-            {
-                case nRF_CMD__DIRECTION:
-                    //Se manda comando de dirección a los servos
-                    //nRF_data_received_rx.velocidad = GET_NRF_AUX_DATA_LOW(dataIn) << //revisar
-                    //revisar
-                    break;
-                case nRF_CMD__VELOCITY:
-                    //Se manda comando de velocidad a los servos
-                    //revisar
-                    break;
-                case nRF_CMD__ASK_DISTANCE:
-                    //Se añaden datos al ACK PAYLOAD
-                    dataOut[nRF_DATA__COMMAND] = nRF_CMD__ASK_DISTANCE;             //Se añade el comando de recibir consumo como respuesta
-                    dataOut[nRF_DATA__AUX_DATA_LOW] = (uint8_t) distancia;          //Se añade el valor de distancia (low byte)
-                    dataOut[nRF_DATA__AUX_DATA_HIGH] = (uint8_t) (distancia >> 8);    //Se añade el valor de distancia (high byte)
-                    TM_NRF24L01_WriteAckPayload(NRF_IRQ.F.RX_P_NO, dataOut, sizeof(dataOut));
-                    break;
-                case nRF_CMD__RECEIVE_DISTANCE:
-                    //No se realiza ninguna accion. Comando utilizado para mandar el ack previamente cargado
-                    break;
-            }
-
-            #else
-			/* Write ACK Payload into TX FIFO */
-            dataOut[0] = dataOut[0] +1; //Se añaden datos de payload (numero ascendente)
-            printf("TX FIFO before: 0x%02X\n", TM_NRF24L01_TxFifoEmpty());
-            TM_NRF24L01_WriteAckPayload(NRF_IRQ.F.RX_P_NO, dataOut, sizeof(dataOut));
-
-//			/* Send it back, NRF goes automatically to TX mode */
-//			TM_NRF24L01_Transmit(dataIn);
-//			
-//			/* Wait for data to be sent */
-//			do {
-//				/* Wait till sending */
-//				transmissionStatus = TM_NRF24L01_GetTransmissionStatus();
-//			} while (transmissionStatus == TM_NRF24L01_Transmit_Status_Sending);
-			
-			//Miramos si la cola esta llena o vacia
-			printf("TX FIFO: 0x%02X\n", TM_NRF24L01_TxFifoEmpty());
-			printf("After Transmission status: 0x%02X\n", TM_NRF24L01_GetStatus());
-            #endif
-		}
-        
-		/* If data is ready on NRF24L01+*/
-            //Si en modo RX: se activara si envia correctamente el ACK
-            //Si en modo TX: se activara si recibe ACK Payload.
-        if (NRF_IRQ.F.DataSent) //He enviado correctamente un ack con payload
-        {
-            printf("IRQ: Data Sent: ACK with payload sent correctly\n");
-        }
-        
-        if (NRF_IRQ.F.MaxRT)
-        {
-            printf("IRQ: Max RT\n");
-            
-        }
-		
-        printf("AAAAA Status reg: 0x%02X\n", TM_NRF24L01_GetStatus());
-        printf("TX FIFO: 0x%02X\n", TM_NRF24L01_TxFifoEmpty());
-		/* Clear interrupts */
-		TM_NRF24L01_Clear_Interrupts();
-		/* Clear RX FIFO*/
-		TM_NRF24L01_Clear_RX_FIFO();
-		/* Go back to RX mode */
-		//TM_NRF24L01_PowerUpRx();	//No hace falta: como ya estamos en RX unicamente haria falta limpiar las interrupciones y limpiar RX FIFO
-	}
+        //printf("\nNote: Interrupcion PG3 at: %d\n", HAL_GetTick());
+        osThreadFlagsSet(id_thread__RF_RX, nRF_DATA_READY);
+    }
 }
 
 void Init_RF_RX(void) {
     INITIALIZE_LEDS();
-    id_thread__RF_RX = osThreadNew (thread__test_transmissor_RF_RX, NULL, NULL);
+    id_thread__RF_RX = osThreadNew (thread__transmissor_RF_RX, NULL, NULL);
 }

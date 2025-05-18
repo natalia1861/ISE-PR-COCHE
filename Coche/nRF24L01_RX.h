@@ -3,6 +3,9 @@
 
 #include "stm32f4xx_hal.h"
 
+//Flags to id_thread__RF_RX
+#define nRF_DATA_READY              0x0001
+
 typedef struct
 {
     uint16_t direccion;
