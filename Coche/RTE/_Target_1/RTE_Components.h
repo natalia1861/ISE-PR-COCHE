@@ -25,6 +25,10 @@
 /* Keil.ARM Compiler::Compiler:I/O:STDOUT:ITM:1.2.0 */
 #define RTE_Compiler_IO_STDOUT          /* Compiler I/O: STDOUT */
           #define RTE_Compiler_IO_STDOUT_ITM      /* Compiler I/O: STDOUT ITM */
+/* Keil::CMSIS Driver:Ethernet MAC:2.10 */
+#define RTE_Drivers_ETH_MAC0            /* Driver ETH_MAC0 */
+/* Keil::CMSIS Driver:Ethernet PHY:LAN8742A:1.3.0 */
+#define RTE_Drivers_PHY_LAN8742A        /* Driver PHY LAN8742A */
 /* Keil::CMSIS Driver:I2C:2.12 */
 #define RTE_Drivers_I2C1                /* Driver I2C1 */
         #define RTE_Drivers_I2C2                /* Driver I2C2 */
@@ -65,6 +69,8 @@
 #define RTE_DEVICE_HAL_PWR
 /* Keil::Device:STM32Cube HAL:RCC:1.8.1 */
 #define RTE_DEVICE_HAL_RCC
+/* Keil::Device:STM32Cube HAL:RTC:1.8.1 */
+#define RTE_DEVICE_HAL_RTC
 /* Keil::Device:STM32Cube HAL:SPI:1.8.1 */
 #define RTE_DEVICE_HAL_SPI
 /* Keil::Device:STM32Cube HAL:SRAM:1.8.1 */
