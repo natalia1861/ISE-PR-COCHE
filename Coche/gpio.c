@@ -39,8 +39,12 @@ void EXTI3_IRQHandler(void) {
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
   if(GPIO_Pin==GPIO_PIN_13)
   {
-     /*Despertamos el microcontrolador del modo bajo consumo*/
-    //RTC_set_Time(1,1,0,0,0,0);
+    //Despertamos el micro por si acaso
+    if(__HAL_PWR_GET_FLAG(PWR_FLAG_SB) != RESET)
+    {
+        __HAL_PWR_CLEAR_FLAG(PWR_FLAG_SB);
+    }
+    ETH_PhyExitFromPowerDownMode();
   }
   if (GPIO_Pin == GPIO_PIN_3) 
   {

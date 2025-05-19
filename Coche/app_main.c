@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include "servomotor.h"
 #include "consumo_control.h"
+#include "gpio.h"
+#include "modo_sleep.h"
 
 //Variables globales
 app_coche_state_t app_coche_state;
@@ -33,6 +35,12 @@ void thread__app_main (void *no_argument)
             
             //Paramos el control de distancia
             Stop_DistanceControl();
+            
+            if(__HAL_PWR_GET_FLAG(PWR_FLAG_SB) != RESET)
+            {
+            __HAL_PWR_CLEAR_FLAG(PWR_FLAG_SB);
+            }
+            ETH_PhyExitFromPowerDownMode();
         }
         
         if (flags & FLAG_STATE_BACK_GEAR)
@@ -42,11 +50,21 @@ void thread__app_main (void *no_argument)
             //Inicializamos control de distancia
             Init_DistanceControl();
         }
+        if (flags & FLAG_STATE__LOW_POWER)
+        {
+            //Modo bajo consumo
+            SleepMode_Measure();
+            ETH_PhyEnterPowerDownMode();
+        }
     }
 }
 
 void Init_AllAppThreads (void)
 {
+    //Inicializamos modo bajo consumo
+    __HAL_RCC_PWR_CLK_ENABLE();
+    
+    init_pulsador();
     Init_LedsControl();
     Init_SensorDistancia();
     Init_RF_RX();
