@@ -10,6 +10,7 @@
 #define VELOCITY_REFRESH                    100
 
 osThreadId_t id_thread__velocityControl;
+char marcha_S[80];
 
 void thread__VelocityControl (void *no_argument)
 {
@@ -53,6 +54,9 @@ void thread__VelocityControl (void *no_argument)
                 strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
                 osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
             }
+
+            //Se actualiza la informacion de Web
+            sprintf(marcha_S,"%02d", marcha);
         }
         osDelay(VELOCITY_REFRESH);
         #endif

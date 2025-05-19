@@ -53,6 +53,9 @@ void thread__direction_control(void *no_argument)
                 strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
                 osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
             }
+
+            //Se pasa a Web
+            sprintf(direccion_S, "%.2f", direction);
         }
         #endif
         osDelay(DIRECTION_REFRESH);

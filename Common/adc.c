@@ -22,9 +22,6 @@
 ADC_HandleTypeDef adchandle1;
 ADC_HandleTypeDef adchandle2;
 
-char consumo_S [80];
-char marcha_S[80];
-
 //Funciones internas
 float ADC_getVoltage(ADC_HandleTypeDef *hadc, uint32_t Channel);
 

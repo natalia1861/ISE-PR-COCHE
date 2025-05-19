@@ -24,12 +24,19 @@
 osThreadId_t id_thread__app_main;
 char detalleError[20] = {0};
 app_state_t app_state = FIRST_APP_STAGE;
+
+//Message to nRF queue
 nRF_data_transmitted_t nRF_data = {0};
+
+//Message to flash queue
 MSGQUEUE_FLASH_t flash_msg_data = {0};
+
+//Comunicacion con Web
+char consumo_S [80];
+char distancia_S[80];
 
 //Funciones locales
 lineas_distancia_t calcularLineasDistancia (uint16_t distancia);
-
 
 //Funciones locales
 void Send_CMD_StateChange (app_state_t app_state);
@@ -43,7 +50,11 @@ void thread__app_main_control (void *no_argument)
     float medidas_consumo[NUM_MAX_MUESTRA_CONSUMO];
     float *medidas_consumo_ptr = medidas_consumo;
     uint8_t numero_muestra = 0;
-    
+
+    lineas_distancia_t lineas_prev = LCD_LINE__NO_LINE;
+    lineas_distancia_t lineas_actuales = LCD_LINE__NO_LINE;
+
+    //Flags internas para el automata
     uint8_t state_enter = true;
     uint8_t state_error = false;
     
@@ -81,10 +92,14 @@ void thread__app_main_control (void *no_argument)
         {
             //revisarNAK guardar consumo en memoria flash
             consumo_rx = (float) ((float) nRF_data_received.consumo / 1000);
+                 
+            //Actualizamos Web
+            sprintf(consumo_S, "%.2f", consumo_rx);
+
+            //Añadimos en flash el consumo
             flash_msg_data.command = FLASH_CMD__ADD_CONSUMPTION;
             flash_msg_data.consumption = &consumo_rx;
-                        
-            //Cargar los datos de la flash
+            
             if (osMessageQueuePut(id_flash_commands_queue, &flash_msg_data, NULL, 500) != osOK)
             {
                 strncpy(detalleError, "MSG QUEUE ERROR FLASH", sizeof(detalleError) - 1);
@@ -225,7 +240,14 @@ void thread__app_main_control (void *no_argument)
                     if (flags & FLAG__MOSTRAR_DISTANCIA) //Flag enviado desde nRF TX tras recibir la distancia
                     {
                         //Se muestra la distancia por el LCD
-                        LCD_mostrarLineasDistancia(calcularLineasDistancia(nRF_data_received.distancia));
+                        if (lineas_prev != (lineas_actuales = calcularLineasDistancia(nRF_data_received.distancia)))
+                        {
+                            LCD_mostrarLineasDistancia(lineas_actuales);
+                            lineas_prev = lineas_actuales;
+                        }
+                        //Se pasa distancia por Web
+                        sprintf(distancia_S,"%02d", nRF_data_received.distancia);
+
                     }
                     break;
                     
