@@ -370,27 +370,21 @@ void LCD_mostrarLineasDistancia (lineas_distancia_t lineas)
             vaciarLCD_L1();
             vaciarLCD_L2();
             vaciarLCD_L3();
-            vaciarLCD_L4();
+            rellenarLCD_L4();
             break;
         case LCD_LINE__ONE:
             rellenarLCD_L1();
             vaciarLCD_L2();
             vaciarLCD_L3();
-            vaciarLCD_L4();
+            rellenarLCD_L4();
             break;
         case LCD_LINE__TWO:
             rellenarLCD_L1();
             rellenarLCD_L2();
             vaciarLCD_L3();
-            vaciarLCD_L4();
+            rellenarLCD_L4();
             break;
         case LCD_LINE__THREE:
-            rellenarLCD_L1();
-            rellenarLCD_L2();
-            rellenarLCD_L3();
-            vaciarLCD_L4();
-            break;
-        case LCD_LINE__FOUR:
             rellenarLCD_L1();
             rellenarLCD_L2();
             rellenarLCD_L3();
@@ -402,11 +396,11 @@ void LCD_mostrarLineasDistancia (lineas_distancia_t lineas)
     }
 }
 
-void LCD_mostrarConsumo(uint8_t muestra, uint16_t consumo)
+void LCD_mostrarConsumo(uint8_t muestra, float consumo)
 {
     char linea2[20];
     
-    snprintf(linea2, sizeof(linea2), "M:%u, C:%u", muestra, consumo);
+    snprintf(linea2, sizeof(linea2), "M:%u, C:%0.2f", muestra, consumo);
     
     LCD_write(2, linea2);
 }

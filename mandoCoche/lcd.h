@@ -10,13 +10,12 @@ typedef enum
     LCD_LINE__NO_LINE = 0, 
     LCD_LINE__ONE,
     LCD_LINE__TWO,
-    LCD_LINE__THREE, 
-    LCD_LINE__FOUR,     //LCD_MAX_LINES
+    LCD_LINE__THREE,  //LCD_MAX_LINES    
     
     LCD_LINE__MAX
 } lineas_distancia_t;
 
-#define LCD_MAX_LINES       LCD_LINE__FOUR
+#define LCD_MAX_LINES       LCD_LINE__THREE
 #define LCD_MIN_LINES       LCD_LINE__NO_LINE
 
 //Funciones básicas
@@ -26,6 +25,5 @@ void LCD_write(uint8_t line, char a[]);
 
 //Funciones de lineas distancia
 void LCD_mostrarLineasDistancia (lineas_distancia_t lineas); //Muesta las lineas correspondientes
-void LCD_mostrarConsumo(uint8_t muestra, uint16_t consumo);  //Muestra el consumo en la linea 2 del LCD
-
+void LCD_mostrarConsumo(uint8_t muestra, float consumo);
 #endif /* _LCD_H */

@@ -105,72 +105,76 @@ typedef struct __VL53L0X
 
 } VL53L0X;
 
-	typedef enum { VcselPeriodPreRange, VcselPeriodFinalRange } vcselPeriodType;
+typedef enum { VcselPeriodPreRange, VcselPeriodFinalRange } vcselPeriodType;
 
-	typedef struct __SequenceStepEnables
-    {
-      bool tcc, msrc, dss, pre_range, final_range;
-    } SequenceStepEnables;
+typedef struct __SequenceStepEnables
+{
+  bool tcc, msrc, dss, pre_range, final_range;
+} SequenceStepEnables;
 
-    typedef struct __SequenceStepTimeouts
-    {
-      uint16_t pre_range_vcsel_period_pclks, final_range_vcsel_period_pclks;
+typedef struct __SequenceStepTimeouts
+{
+  uint16_t pre_range_vcsel_period_pclks, final_range_vcsel_period_pclks;
 
-      uint16_t msrc_dss_tcc_mclks, pre_range_mclks, final_range_mclks;
-      uint32_t msrc_dss_tcc_us,    pre_range_us,    final_range_us;
-    } SequenceStepTimeouts;
+  uint16_t msrc_dss_tcc_mclks, pre_range_mclks, final_range_mclks;
+  uint32_t msrc_dss_tcc_us,    pre_range_us,    final_range_us;
+} SequenceStepTimeouts;
 
-	void setup_VL53L0X(VL53L0X * lidar);
-	void setAddress(VL53L0X * lidar,uint8_t new_addr);
-    uint8_t getAddress(VL53L0X * lidar);
-    uint8_t getWhoAmI(VL53L0X * lidar);
+//Funciones
+void setup_VL53L0X(VL53L0X * lidar);
+void setAddress(VL53L0X * lidar,uint8_t new_addr);
+uint8_t getAddress(VL53L0X * lidar);
+uint8_t getWhoAmI(VL53L0X * lidar);
 
-    bool init(VL53L0X * lidar, bool io_2v8); ////////////////////////////////////////////////bool io_2v8 = true
+bool init(VL53L0X * lidar, bool io_2v8); ////////////////////////////////////////////////bool io_2v8 = true
 
-    void writeReg(VL53L0X * lidar,uint8_t reg, uint8_t value);
-    void writeReg16Bit(VL53L0X * lidar,uint8_t reg, uint16_t value);
-    void writeReg32Bit(VL53L0X * lidar,uint8_t reg, uint32_t value);
-    uint8_t readReg(VL53L0X * lidar,uint8_t reg);
-    uint16_t readReg16Bit(VL53L0X * lidar,uint8_t reg);
-    uint32_t readReg32Bit(VL53L0X * lidar,uint8_t reg);
+void writeReg(VL53L0X * lidar,uint8_t reg, uint8_t value);
+void writeReg16Bit(VL53L0X * lidar,uint8_t reg, uint16_t value);
+void writeReg32Bit(VL53L0X * lidar,uint8_t reg, uint32_t value);
+uint8_t readReg(VL53L0X * lidar,uint8_t reg);
+uint16_t readReg16Bit(VL53L0X * lidar,uint8_t reg);
+uint32_t readReg32Bit(VL53L0X * lidar,uint8_t reg);
 
-    void writeMulti(VL53L0X * lidar,uint8_t reg, uint8_t * src, uint8_t count);
-    void readMulti(VL53L0X * lidar,uint8_t reg, uint8_t * dst, uint8_t count);
+void writeMulti(VL53L0X * lidar,uint8_t reg, uint8_t * src, uint8_t count);
+void readMulti(VL53L0X * lidar,uint8_t reg, uint8_t * dst, uint8_t count);
 
-    bool setSignalRateLimit(VL53L0X * lidar,float limit_Mcps);
-    float getSignalRateLimit(VL53L0X * lidar);
+bool setSignalRateLimit(VL53L0X * lidar,float limit_Mcps);
+float getSignalRateLimit(VL53L0X * lidar);
 
-    bool setMeasurementTimingBudget(VL53L0X * lidar,uint32_t budget_us);
-    uint32_t getMeasurementTimingBudget(VL53L0X * lidar);
+bool setMeasurementTimingBudget(VL53L0X * lidar,uint32_t budget_us);
+uint32_t getMeasurementTimingBudget(VL53L0X * lidar);
 
-    bool setVcselPulsePeriod(VL53L0X * lidar,vcselPeriodType type, uint8_t period_pclks);
-    uint8_t getVcselPulsePeriod(VL53L0X * lidar,vcselPeriodType type);
+bool setVcselPulsePeriod(VL53L0X * lidar,vcselPeriodType type, uint8_t period_pclks);
+uint8_t getVcselPulsePeriod(VL53L0X * lidar,vcselPeriodType type);
 
-    void startContinuous(VL53L0X * lidar, uint32_t period_ms); ////////////////////////////uint32_t period_ms = 0
-    void stopContinuous(VL53L0X * lidar);
-    uint16_t readRangeContinuousMillimeters(VL53L0X * lidar);
-    uint16_t readRangeSingleMillimeters(VL53L0X * lidar);
+void startContinuous(VL53L0X * lidar, uint32_t period_ms); ////////////////////////////uint32_t period_ms = 0
+void stopContinuous(VL53L0X * lidar);
+uint16_t readRangeContinuousMillimeters(VL53L0X * lidar);
+uint16_t readRangeSingleMillimeters(VL53L0X * lidar);
 
-    void setTimeout(VL53L0X * lidar,uint16_t timeout);
-    uint16_t getTimeout(VL53L0X * lidar);
-    bool timeoutOccurred(VL53L0X * lidar);
-	bool getSpadInfo(VL53L0X * lidar,uint8_t * count, bool * type_is_aperture);
+void setTimeout(VL53L0X * lidar,uint16_t timeout);
+uint16_t getTimeout(VL53L0X * lidar);
+bool timeoutOccurred(VL53L0X * lidar);
+bool getSpadInfo(VL53L0X * lidar,uint8_t * count, bool * type_is_aperture);
 
-	void getSequenceStepEnables(VL53L0X * lidar,SequenceStepEnables * enables);
-	void getSequenceStepTimeouts(VL53L0X * lidar,SequenceStepEnables const * enables, SequenceStepTimeouts * timeouts);
+void getSequenceStepEnables(VL53L0X * lidar,SequenceStepEnables * enables);
+void getSequenceStepTimeouts(VL53L0X * lidar,SequenceStepEnables const * enables, SequenceStepTimeouts * timeouts);
 
-	bool performSingleRefCalibration(VL53L0X * lidar,uint8_t vhv_init_byte);
+bool performSingleRefCalibration(VL53L0X * lidar,uint8_t vhv_init_byte);
 
-	uint16_t decodeTimeout(uint16_t value);
-	uint16_t encodeTimeout(uint16_t timeout_mclks);
-	uint32_t timeoutMclksToMicroseconds(uint16_t timeout_period_mclks, uint8_t vcsel_period_pclks);
-	uint32_t timeoutMicrosecondsToMclks(uint32_t timeout_period_us, uint8_t vcsel_period_pclks);
+uint16_t decodeTimeout(uint16_t value);
+uint16_t encodeTimeout(uint16_t timeout_mclks);
+uint32_t timeoutMclksToMicroseconds(uint16_t timeout_period_mclks, uint8_t vcsel_period_pclks);
+uint32_t timeoutMicrosecondsToMclks(uint32_t timeout_period_us, uint8_t vcsel_period_pclks);
 
-	void startTimeout(VL53L0X * lidar);
-	bool checkTimeoutExpired(VL53L0X * lidar);
-	uint8_t decodeVcselPeriod(uint8_t reg_val);
-	uint8_t encodeVcselPeriod(uint8_t period_pclks);
-	uint32_t calcMacroPeriod(uint8_t vcsel_period_pclks);
+void startTimeout(VL53L0X * lidar);
+bool checkTimeoutExpired(VL53L0X * lidar);
+uint8_t decodeVcselPeriod(uint8_t reg_val);
+uint8_t encodeVcselPeriod(uint8_t period_pclks);
+uint32_t calcMacroPeriod(uint8_t vcsel_period_pclks);
+
+/*Application*/
+void InitVL53(VL53L0X* sensor1);
 
 #endif
 

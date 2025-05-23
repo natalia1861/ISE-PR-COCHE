@@ -4,14 +4,7 @@ t <script language=JavaScript type="text/javascript">
 # Define URL and refresh timeout
 t var formUpdate = new periodicObj("adc.cgx",1000);
 t function plotADGraph_1() {
-t  adVal = document.getElementById("ad_value_1").value;
-t  numVal = parseInt(adVal, 16);
-t  voltsVal = (3.3*numVal)/4096;
-t  document.getElementById("ad_volts").value = (voltsVal.toFixed(3) + ' V');
-t  adVal_2 = document.getElementById("ad_value_2").value;
-t  numVal_2 = parseInt(adVal_2, 16);
-t  voltsVal_2 = (3.3*numVal_2)/4096;
-t  document.getElementById("ad_volts_2").value = (voltsVal_2.toFixed(3) + ' V');
+t  adVal = document.getElementById("ad_value_1").value;z
 t }
 t function periodicUpdateAdc() {
 t  if(document.getElementById("adcChkBox").checked == true) {

@@ -25,6 +25,8 @@ char rtc_date_time[RTC_MAX][LCD_MAX_CHARACTERS+1];	//maximo de caracteres + EOS
 static osTimerId_t tim_id_3min;	//timer sincronizacion cada 3 min
 
 static void Timer_Callback_3min (void);
+char hora[80];
+char fecha[80];
 
 void init_RTC(void) {     //inicializa el RTC y configura una hora por defecto
     hrtc.Instance = RTC; 
@@ -79,9 +81,14 @@ void RTC_getTime_Date(void) {
   HAL_RTC_GetTime(&hrtc,&stimestructureget,RTC_FORMAT_BIN);
   HAL_RTC_GetDate(&hrtc,&sdatestructureget,RTC_FORMAT_BIN);
   
-  sprintf(rtc_date_time[0],"%.2d:%.2d:%.2d",stimestructureget.Hours, stimestructureget.Minutes,stimestructureget.Seconds);
-  sprintf(rtc_date_time[1],"%.2d/%.2d/%.2d",sdatestructureget.Date, sdatestructureget.Month,2000+sdatestructureget.Year);
+  //Se actualiza hora y fecha en lcd
+  sprintf(rtc_date_time[0],"%02d:%02d:%02d",stimestructureget.Hours, stimestructureget.Minutes,stimestructureget.Seconds);
+  sprintf(rtc_date_time[1],"%02d/%02d/%02d",sdatestructureget.Date, sdatestructureget.Month,2000+sdatestructureget.Year);
   osThreadFlagsSet (id_thread__app_main, FLAG__MOSTRAR_HORA);
+
+  //Se actualiza hora y fecha en web
+  sprintf(hora,"%02d:%02d:%02d",stimestructureget.Hours, stimestructureget.Minutes,stimestructureget.Seconds);
+  sprintf(fecha,"%02d/%02d/%02d",sdatestructureget.Date, sdatestructureget.Month,2000+sdatestructureget.Year);
 }
 
 void HAL_RTC_MspInit(RTC_HandleTypeDef *hrtc) {

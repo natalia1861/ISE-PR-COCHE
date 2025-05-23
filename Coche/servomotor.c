@@ -1,9 +1,7 @@
 #include "servomotor.h"
+#include "cmsis_os2.h"
+#include "app_main.h"
 
-/*----------------------------------------------------------------------------
- *      Thread 'Servomotor.c': Sample thread
- *---------------------------------------------------------------------------*/
- 
  /*
  Datos tecnicos:
  - El servomor funciona con una frecuencia de 50Hz
@@ -14,15 +12,15 @@ Izquierda - 2ms (180º) Centro - 1.5ms (90º) Izquierda 1ms (0º)
 //valores minimos y maximos que debera tener el duty segun el period configurado en PWM
 #define MIN_DIRECTION_PWM               1000
 #define MAX_DIRECTION_PWM               2000
+#define MIDDLE_DIRECTION_PWM            ((MIN_DIRECTION_PWM + MAX_DIRECTION_PWM)/2)
 
 //valores que significa cada max y min de PWM respecto al angulo
 #define MIN_ANGLE                       0
 #define MAX_ANGLE                       180
 
-//Valores que significa cada max y min de PWM respecto a la velocidad
-#define MIN_VELOCITY                    0
-#define MAX_VELOCITY                    6
-#define NO_VELOCITY                     ((MAX_VELOCITY - MIN_VELOCITY) / 2)
+//Valores que significa cada max y min de PWM respecto a la velocidad - 2 marchas posibles. 0 - no velocidad
+#define MIN_VELOCITY                    SM_MARCHA_0
+#define MAX_VELOCITY                    SM_MARCHA_2
 
 //PWM
 static TIM_HandleTypeDef htim1;             // Estructura para el TIM1 en modo PWM
@@ -67,7 +65,7 @@ static void initTim1PWM(void) {
   //                1.5 ms, pulse tendra que valer 1.5m/1us = 1500
   //                2 ms, pulse tendra que valer 2m/1us = 2000					- derecha
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = (MAX_DIRECTION_PWM - MIN_DIRECTION_PWM)/2;  //empezamos en la mitad
+  sConfigOC.Pulse = MIDDLE_DIRECTION_PWM;   //empezamos en la mitad del angulo
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
   HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_1);
@@ -85,7 +83,7 @@ static void initPinPE9(void){ //Pin salida PE9 TIM1
 }
 
 // Función para establecer el ángulo del servomotor
-void setServoAngle(uint8_t angle) {
+void setServoAngle(float angle) {
   // Asegurarse de que el ángulo esté dentro del rango permitido
   if (angle < MIN_ANGLE) angle = MIN_ANGLE;
   if (angle > MAX_ANGLE) angle = MAX_ANGLE;
@@ -112,7 +110,7 @@ static void initTim3PWM(void) {
   
   // Configuración del PWM
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = (MAX_DIRECTION_PWM - MIN_DIRECTION_PWM) / 2;  // Empezamos en la mitad (parada)
+  sConfigOC.Pulse = MIDDLE_DIRECTION_PWM;  // Empezamos en la mitad (parada)
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
   HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1);
@@ -130,20 +128,41 @@ static void initPinPA6(void){ // Pin salida PA6 TIM3
 }
 
 // Función para establecer la velocidad del motor (usando PWM de 1000 a 2000)
-void setMotorSpeed(uint8_t speed) {
-  // Asegurarse de que la velocidad esté dentro del rango permitido (0 - 6)
-  if (speed < MIN_VELOCITY) speed = MIN_VELOCITY;
-  if (speed > MAX_VELOCITY) speed = MAX_VELOCITY;
+/*| `speed` | `back_gear` | `pulse` |
+| ------- | ----------- | ------- |
+| 0       | false       | 1500    |
+| 1       | false       | 1750    |
+| 2       | false       | 2000    |
+| 0       | true        | 1500    |
+| 1       | true        | 1250    |
+| 2       | true        | 1000    |
+*/
 
-  // Calcular el valor del pulso PWM correspondiente a la velocidad
-  // 0 -> 1000us (máxima reversa)
-  // 3 -> 1500us (parada/neutra)
-  // 6 -> 2000us (máxima velocidad)
-  uint16_t pulse = MIN_DIRECTION_PWM + ((uint32_t)speed * (MAX_DIRECTION_PWM - MIN_DIRECTION_PWM)) / MAX_VELOCITY;
+void setMotorSpeed(speed_marchas_t speed) {
+    // Asegurar que la velocidad esté dentro del rango permitido
+    if (speed < MIN_VELOCITY) speed = MIN_VELOCITY;
+    if (speed > MAX_VELOCITY) speed = MAX_VELOCITY;
 
-  // Establecer el valor de comparación (pulso) en el timer
-  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulse);
+    uint16_t pulse = MIDDLE_DIRECTION_PWM;
+
+    if (speed == MIN_VELOCITY) 
+    {
+        // Vehículo parado
+        pulse = MIDDLE_DIRECTION_PWM;
+    } else {
+        // Cálculo lineal de PWM entre MIDDLE y MAX o MIN según el modo
+        if (app_coche_state == STATE__BACK_GEAR) { //BACK_GEAR REVISAR
+            // Reversa: MIDDLE → MIN
+            pulse = MIDDLE_DIRECTION_PWM - ((MIDDLE_DIRECTION_PWM - MIN_DIRECTION_PWM) * speed) / MAX_VELOCITY;
+        } else {
+            // Avance: MIDDLE → MAX
+            pulse = MIDDLE_DIRECTION_PWM + ((MAX_DIRECTION_PWM - MIDDLE_DIRECTION_PWM) * speed) / MAX_VELOCITY;
+        }
+    }
+
+    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulse);
 }
+
 
 // Función para detener el motor (parada)
 void stop_motor(void) {

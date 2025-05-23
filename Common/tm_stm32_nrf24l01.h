@@ -213,8 +213,11 @@ typedef enum
     nRF_CMD__ASK_CONSUMPTION,
     nRF_CMD__RECIEVE_CONSUMPTION,
     nRF_CMD__ASK_DISTANCE,
-    nRF_CMD__RECEIVE_DISTANCE
-} nRF_commands_t;
+    nRF_CMD__RECEIVE_DISTANCE,
+    nRF_CMD__BACK_GEAR_MODE,
+    nRF_CMD__NORMAL_MODE,
+    nRF_CMD__LOW_POWER
+} nRF_commands_t;               //uinr8_t max 255
 
 typedef enum
 {
@@ -227,6 +230,7 @@ typedef enum
 #define GET_NRF_COMMAND(dataIn)             ((dataIn)[nRF_DATA__COMMAND])
 #define GET_NRF_AUX_DATA_LOW(dataIn)        ((dataIn)[nRF_DATA__AUX_DATA_LOW])
 #define GET_NRF_AUX_DATA_HIGH(dataIn)       ((dataIn)[nRF_DATA__AUX_DATA_HIGH])
+#define GET_NRF_AUX_DATA(dataIn)            ((GET_NRF_AUX_DATA_HIGH(dataIn) << 8) | (GET_NRF_AUX_DATA_LOW(dataIn)))
 
 #define nRF_DATA_LENGTH                     3
 
