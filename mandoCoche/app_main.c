@@ -326,7 +326,7 @@ void Init_AllAppThreads(void)
     Init_DirectionControl();
     Init_FlashControl();
     //osThreadNew(app_main, NULL, &app_main_attr); WEB
-    //netInitialize(); WEB
+    netInitialize();
 }
 
 lineas_distancia_t calcularLineasDistancia(uint16_t distancia)

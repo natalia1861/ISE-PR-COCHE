@@ -16,7 +16,6 @@ Objects/
 *.crf
 *.bak
 *.dep
-*.htm
 *.sct
 *.inp
 *.scvd

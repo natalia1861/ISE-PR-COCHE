@@ -38,12 +38,10 @@ t  <th width=55%>Bargraph</th></tr>
 t <tr><td><img src="pabb.gif">POT1:</td>
 t   <td align="center">
 t <input type="text" readonly style="background-color: transparent; border: 0px"
-c g 1  size="10" id="ad_value" value="0x%03X"></td>
+c e 1  size="10" id="ad_value" value="%d"></td>
 t <td align="center"><input type="text" readonly style="background-color: transparent; border: 0px"
-c g 2  size="10" id="ad_volts" value="%5.3f V"></td>
+c e 2  size="10" id="ad_volts" value="%5.3f V"></td>
 t <td height=50><table bgcolor="#FFFFFF" border="2" cellpadding="0" cellspacing="0" width="100%"><tr>
-c g 3 <td><table id="ad_table" style="width: %d%%" border="0" cellpadding="0" cellspacing="0">
-t <tr><td bgcolor="#0000FF">&nbsp;</td></tr></table></td></tr></table></td></tr>
 t </font></table>
 t <p align=center>
 t <input type=button value="Refresh" onclick="updateMultiple(formUpdate,plotADGraph)">
