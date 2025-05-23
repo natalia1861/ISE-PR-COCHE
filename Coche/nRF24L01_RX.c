@@ -133,6 +133,9 @@ void thread__transmissor_RF_RX(void *argument)
                         break;
                     case nRF_CMD__BACK_GEAR_MODE:
                         osThreadFlagsSet(id_thread__app_main, FLAG_STATE_BACK_GEAR);
+                    case nRF_CMD__LOW_POWER:
+                        osThreadFlagsSet(id_thread__app_main, FLAG_STATE__LOW_POWER);
+                        break;
                     case nRF_CMD__VELOCITY:
                         nRF_data_received_rx.velocidad = GET_NRF_AUX_DATA(dataIn); //Marchas. 0-2
                         setMotorSpeed((speed_marchas_t) nRF_data_received_rx.velocidad);
