@@ -38,7 +38,7 @@ void Init_Servomotors (void)
 {
     //Init servomotor de direccion
     initTim1PWM();
-	initPinPE9();
+	  initPinPE9();
 
     //Init servomotor de velocidad
     initTim3PWM();
@@ -143,24 +143,33 @@ void setMotorSpeed(speed_marchas_t speed) {
     if (speed < MIN_VELOCITY) speed = MIN_VELOCITY;
     if (speed > MAX_VELOCITY) speed = MAX_VELOCITY;
 
-    uint16_t pulse = MIDDLE_DIRECTION_PWM;
-
+    uint16_t pulse_left = MIDDLE_DIRECTION_PWM;
+    uint16_t pulse_right = MIDDLE_DIRECTION_PWM;
+    
     if (speed == MIN_VELOCITY) 
     {
         // Vehículo parado
         pulse = MIDDLE_DIRECTION_PWM;
     } else {
-        // Cálculo lineal de PWM entre MIDDLE y MAX o MIN según el modo
-        if (app_coche_state == STATE__BACK_GEAR) { //BACK_GEAR REVISAR
-            // Reversa: MIDDLE → MIN
-            pulse = MIDDLE_DIRECTION_PWM - ((MIDDLE_DIRECTION_PWM - MIN_DIRECTION_PWM) * speed) / MAX_VELOCITY;
-        } else {
-            // Avance: MIDDLE → MAX
-            pulse = MIDDLE_DIRECTION_PWM + ((MAX_DIRECTION_PWM - MIDDLE_DIRECTION_PWM) * speed) / MAX_VELOCITY;
+        // Calculo lineal de PWM entre MIDDLE y MAX o MIN segun el modo
+        if (app_coche_state == STATE__BACK_GEAR)  //BACK GEAR Mode
+        { 
+            // Reversa izquierda: MIDDLE a MIN
+            // Avance derecha: MIDDLE a MAX
+            pulse_left = MIDDLE_DIRECTION_PWM - ((MIDDLE_DIRECTION_PWM - MIN_DIRECTION_PWM) * speed) / (MAX_VELOCITY-MIN_VELOCITY);
+            pulse_right = MIDDLE_DIRECTION_PWM + ((MAX_DIRECTION_PWM - MIDDLE_DIRECTION_PWM) * speed) / (MAX_VELOCITY-MIN_VELOCITY);
+        } 
+        else 
+        {
+            // Avance izquierda: MIDDLE a MAX
+            // Reversa derecha: MIDDLE a MIN
+            pulse_left = MIDDLE_DIRECTION_PWM + ((MAX_DIRECTION_PWM - MIDDLE_DIRECTION_PWM) * speed) / (MAX_VELOCITY-MIN_VELOCITY);
+            pulse_right = MIDDLE_DIRECTION_PWM - ((MIDDLE_DIRECTION_PWM - MIN_DIRECTION_PWM) * speed) / (MAX_VELOCITY-MIN_VELOCITY);
         }
     }
 
-    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulse);
+    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulse_left);
+    __HAL_TIM_SET_COMPARE(&htim)
 }
 
 
