@@ -2,6 +2,13 @@
 #include "stm32f4xx_hal.h"
 #include "adc.h"
 
+/*Fichero comun para controlar los ADC del mando y del coche
+ * En el mando se encuentra el ADC de presión (asociado a la galga). Utilizamos el ADC1 canal 13 pin PC0
+ * En el coche se encuentra el ADC de consumo. Utilizamos el ADC1 canal 10 pin PC3.
+
+ Se podria haber decidido usar el mismo ADC, canal y pin para ambos, pero se decidió así para poder distinguir bien cada cosa.
+*/
+
 #define RESOLUTION_12B 4096U
 #define VREF 3.3f
 
@@ -166,7 +173,7 @@ void Init_ADC1_presion(void)
 }
 
 //Funcion que devuelve directamente el consumo en mA
-float getConsumo(void)
+float getConsumo(void) //revisarNAK
 {
     float corriente_Consumo =0; 
 
@@ -178,7 +185,7 @@ float getConsumo(void)
 }
 
 //Funcion que devuelve el pedal al que accedemos segun la presion
-//3.3V es marcha 0, y 0 v es marcha 2
+//IMPORTANTE: 3.3V es marcha 0, y 0V es marcha 2
 marchas_t getPedal(void)
 {
     float voltios_Pedal = 0; 
@@ -186,8 +193,8 @@ marchas_t getPedal(void)
     uint32_t marcha_calculada;
     marchas_t marcha;
 
+  //Leemos del ADC el valor en bruto (por ej: 1.5V)
     voltios_Pedal = ADC_in(CH1_PRESION) * 3.3 / 3000;
-    //printf("\nVoltios Pedales: %.2f ", voltios_Pedal);
 
     if (voltios_Pedal <= (MIN_VOLTIOS_ADC + SENSIBILITY))
         return ADC_MARCHA_2;  // 0 V
@@ -195,13 +202,13 @@ marchas_t getPedal(void)
     if (voltios_Pedal >= (MAX_VOLTIOS_ADC - SENSIBILITY))
         return ADC_MARCHA_0;  // 3.3V
 
-    // Dividimos el rango �til en tramos
+    // Dividimos el rango util en tramos (sabemos cuando voltaje ocupa cada marcha = 3.3/2 = 1.65V)
     tramo = (MAX_VOLTIOS_ADC - MIN_VOLTIOS_ADC) / (float)(NUM_MAX_MARCHAS - NUM_MIN_MARCHAS);
 
-    // Normalizamos el voltaje al rango de tramos
-    marcha_calculada = (uint32_t)(((voltios_Pedal - MIN_VOLTIOS_ADC) / tramo) + 0.5f);
+    // Normalizamos el voltaje al rango de tramos: en nuestro ejemplo: ((1.5 - 0)/1.65 = 0.9+0.5 = 1.4) -> marcha calculada = 1
+    marcha_calculada = (uint32_t)(((voltios_Pedal - MIN_VOLTIOS_ADC) / tramo) + 0.5f); //sumamos 0.5 para aproximar siempre hacia arriba
 
-    // Invertimos el �ndice de la marcha
+    // Invertimos el �ndice de la marcha (2-1 = 1) -> marcha 1
     marcha = (marchas_t)((NUM_MAX_MARCHAS) - marcha_calculada);
 
     return marcha;

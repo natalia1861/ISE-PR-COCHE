@@ -25,6 +25,7 @@ Izquierda - 2ms (180º) Centro - 1.5ms (90º) Izquierda 1ms (0º)
 //PWM
 static TIM_HandleTypeDef htim1;             // Estructura para el TIM1 en modo PWM
 static TIM_HandleTypeDef htim3;             // Estructura para el TIM3 en modo PWM
+static TIM_HandleTypeDef htim4;
 static TIM_OC_InitTypeDef sConfigOC;        //config tim1 PWM mode
 static GPIO_InitTypeDef GPIO_InitStruct;    //estructura config pin salida TIM1
 
@@ -33,6 +34,8 @@ static void initTim1PWM(void);
 static void initPinPE9(void);
 static void initTim3PWM(void);
 static void initPinPA6(void);
+static void initTim4PWM(void);
+static void initPinPD15(void);
 
 void Init_Servomotors (void)
 {
@@ -40,9 +43,13 @@ void Init_Servomotors (void)
     initTim1PWM();
 	  initPinPE9();
 
-    //Init servomotor de velocidad
+    //Init servomotor de velocidad rueda izquierda
     initTim3PWM();
     initPinPA6();
+
+    //Init servomotor de velocidad rueda derecha
+    initTim4PWM();
+    initPinPD15()
 }
 
 /*
@@ -127,6 +134,40 @@ static void initPinPA6(void){ // Pin salida PA6 TIM3
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 }
 
+/*
+ * Función que inicializa el timer 4 para PWM
+ * APB1 = 84MHz -> Prescaler 83: 84MHz / 84 = 1MHz -> 1us por tick
+ */
+static void initTim4PWM(void) {
+  __HAL_RCC_TIM4_CLK_ENABLE();
+  htim4.Instance = TIM4;
+  htim4.Init.Prescaler = 83;         // 84MHz / (83+1) = 1MHz (1us por cuenta)
+  htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim4.Init.Period = 19999;         // 1MHz / 50Hz = 20000 -> 20ms período
+  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  HAL_TIM_PWM_Init(&htim4);
+
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = MIDDLE_DIRECTION_PWM;  // valor inicial del pulso
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  HAL_TIM_PWM_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_4);
+  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_4);
+}
+
+/*
+ * Configura el pin PD15 como salida PWM (TIM4_CH4)
+ */
+static void initPinPD15(void) {
+  __HAL_RCC_GPIOD_CLK_ENABLE();
+  GPIO_InitStruct.Pin = GPIO_PIN_15;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FAST;
+  GPIO_InitStruct.Alternate = GPIO_AF2_TIM4;  // AF2 para TIM4_CH4
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+}
+
 // Función para establecer la velocidad del motor (usando PWM de 1000 a 2000)
 /*| `speed` | `back_gear` | `pulse` |
 | ------- | ----------- | ------- |
@@ -149,7 +190,8 @@ void setMotorSpeed(speed_marchas_t speed) {
     if (speed == MIN_VELOCITY) 
     {
         // Vehículo parado
-        pulse = MIDDLE_DIRECTION_PWM;
+        pulse_left = MIDDLE_DIRECTION_PWM;
+        pulse_right = MIDDLE_DIRECTION_PWM;
     } else {
         // Calculo lineal de PWM entre MIDDLE y MAX o MIN segun el modo
         if (app_coche_state == STATE__BACK_GEAR)  //BACK GEAR Mode
@@ -169,7 +211,7 @@ void setMotorSpeed(speed_marchas_t speed) {
     }
 
     __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulse_left);
-    __HAL_TIM_SET_COMPARE(&htim)
+    __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_4, pulse_right);
 }
 
 

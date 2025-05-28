@@ -10,7 +10,7 @@ void thread__GetConsumption (void *no_argument)
     Init_ADC1_consumo();
     while(1)
     {
-        consumption = (uint16_t) (getConsumo() * 1000);
+        consumption = (uint16_t) (getConsumo() * 1000); //revisarNAK
     }
 }
 
