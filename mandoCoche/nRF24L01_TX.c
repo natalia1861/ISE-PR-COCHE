@@ -98,7 +98,7 @@ void thread__SendData_RF_TX(void *argument)
     if (TM_NRF24L01_GetStatus() != 0x0E)
     {
         strncpy(detalleError, "RF Error. Restart!", sizeof(detalleError) - 1);
-        osThreadFlagsSet(id_thread__app_main, FLAG__ERROR); //revisarNAK error permanente. Por mucho que lo aceptes, se volverá a generar (hasta que la conexion vuelva).
+        osThreadFlagsSet(id_thread__app_main, FLAG__ERROR); //revisarNAK error permanente. Por mucho que lo aceptes, se volverï¿½ a generar (hasta que la conexion vuelva).
     }
     
     //Debug status
@@ -221,7 +221,7 @@ void thread__GetData_RF_TX (void *no_argument)
                 /* Mandamos flag de ERROR */
                 #ifndef TEST_RF
                 strncpy(detalleError, "RF Lost max ACK", sizeof(detalleError) - 1);
-                osThreadFlagsSet(id_thread__app_main, FLAG__ERROR); //revisarNAK error permanente. Por mucho que lo aceptes, se volverá a generar (hasta que la conexion vuelva).
+                osThreadFlagsSet(id_thread__app_main, FLAG__ERROR); //revisarNAK error permanente. Por mucho que lo aceptes, se volverï¿½ a generar (hasta que la conexion vuelva).
                 #endif
             }
             

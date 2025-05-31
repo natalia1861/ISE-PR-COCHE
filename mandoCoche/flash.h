@@ -33,8 +33,9 @@ typedef enum
 
 typedef struct 
 {
-	cmd_flash_t command;
+	  cmd_flash_t command;
     float* consumption;
+    char[20] hora;
 } MSGQUEUE_FLASH_t;
 
 void Init_FlashControl (void);

@@ -26,6 +26,7 @@ erases the entire sector memory, and then rewrites the information.
 //Data application
 #define MAX_CONSUMPTION_DATA			10			//num max of consumption data information in flash
 #define CONSUMPTION_SIZE_B				32			//32 bits (FLOAT)
+#define HORA_SIZE_B						24			//3 uint8_t (hora + minutos + segundos)
 
 typedef union {
     float f;
@@ -91,6 +92,7 @@ static void Th_flash (void *argument) {
   W25Q16_Init();
   erase_usable_memory();
 
+//Funciones de test
   //leer_mem_entera();
   //test_write_read();
 	
@@ -99,10 +101,12 @@ static void Th_flash (void *argument) {
 			switch (flash_msg_rec.command) 
 			{
 				case FLASH_CMD__ADD_CONSUMPTION:
+				//Se añade hasta un maximo de 10 consumos de manera circular
                     addConsumption(posicion_consumo, flash_msg_rec.consumption);
-                    posicion_consumo = (posicion_consumo == (MAX_CONSUMPTION_DATA - 1)) ? 0 : (posicion_consumo+1);
+                    posicion_consumo = (posicion_consumo == (MAX_CONSUMPTION_DATA - 1)) ? 0 : (posicion_consumo + 1);
 				break;
 				case FLASH_CMD__GET_ALL_CONSUMPTION:
+				//Se le pasa un puntero de consumos donde se guardaran todos
                     getAllConsumptions(flash_msg_rec.consumption);
                     osThreadFlagsSet(id_thread__app_main, FLAG__CONSUMO_READY_FLASH);
 				break;
@@ -133,13 +137,14 @@ static void leer_mem_entera(void) {
 static void test_write_read (void) {
 	uint8_t num = 1;
 	uint8_t TxData[32] =  {num};
-  uint8_t RxData[32];
+  	uint8_t RxData[32];
 	while (1) {
-		for (int e = 0; e < 1000; e++) {
-       num++;
-      TxData[0] = num;
-      W25Q16_WritePage_Clean(0, num, 32,TxData);
-      W25Q16_FastRead (0, 0, sizeof(RxData), RxData);
+		for (int e = 0; e < 1000; e++) 
+		{
+       		num++;
+      		TxData[0] = num;
+      		W25Q16_WritePage_Clean(0, num, 32,TxData);	//Write byte to byte 1 add number
+      		W25Q16_FastRead (0, 0, sizeof(RxData), RxData);	//Read all sector
 		}
 	}
 }
@@ -158,23 +163,10 @@ static void W25Q16_Init_SPI(void){
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct_RFID);
   HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_SET);
   
-//  /*Reset*/   //SPI_MISO -- SPI_B_MISO  PA15
-//  __HAL_RCC_GPIOA_CLK_ENABLE();
-//  GPIO_InitStruct_RFID.Mode = GPIO_MODE_OUTPUT_PP;
-//  GPIO_InitStruct_RFID.Pull = GPIO_PULLUP;
-//  GPIO_InitStruct_RFID.Speed = GPIO_SPEED_FREQ_HIGH;
-//  GPIO_InitStruct_RFID.Pin = GPIO_PIN_15;
-//  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct_RFID);
-//  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_SET);
-  
   /*SPI*/   
   SPIdrv->Initialize(SPI_callback);
   SPIdrv-> PowerControl(ARM_POWER_FULL);
   SPIdrv-> Control(ARM_SPI_MODE_MASTER | ARM_SPI_CPOL1_CPHA1 | ARM_SPI_MSB_LSB | ARM_SPI_DATA_BITS (8), 1000000);
-//  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_RESET);
-//  osDelay(1);
-//  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_SET);
-//  osDelay(1000);
 }
 
 static void SPI_callback(uint32_t event){
@@ -281,13 +273,13 @@ static void W25Q16_FastRead (uint32_t startPage, uint8_t offset, uint32_t size, 
 	tData [3] =	(memAddr)&0xFF;
 	tData[4] 	= 0;	//dummy clocks
   
-    //CS low
+  //CS low
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_RESET);
 	//send address and data
 	SPIdrv->Send(tData, 5);
 	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, osWaitForever);
 	SPIdrv->Receive(rData, size);
-  osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, osWaitForever);
+  	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, osWaitForever);
 
   //CS high
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_SET);
@@ -429,10 +421,11 @@ static void W25Q16_WritePage_Clean (uint32_t page, uint16_t offset, uint32_t siz
 	}
 }
 
-static void addConsumption(uint8_t position, float *consumption)
+static void addConsumption(uint8_t position, float *consumption, char* hora)
 {
-	uint8_t consumption_data[CONSUMPTION_SIZE_B];
+	uint8_t consumption_data[HORA_SIZE_B + CONSUMPTION_SIZE_B];
 	floatToBytes(*consumption, consumption_data);
+	
 	W25Q16_WritePage_Clean(position*PAGES_FOR_SECTOR, 0, CONSUMPTION_SIZE_B, consumption_data);
 }
 
