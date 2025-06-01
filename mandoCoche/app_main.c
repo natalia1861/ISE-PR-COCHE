@@ -28,7 +28,7 @@ app_state_t app_state = FIRST_APP_STAGE;
 //Message to nRF queue
 nRF_data_transmitted_t nRF_data = {0};
 
-//Message to flash queue
+//Message to flash queue (tanto para enviar como para recibir datos)
 MSGQUEUE_FLASH_t flash_msg_data = {0};
 
 //Comunicacion con Web
@@ -45,12 +45,18 @@ void Send_CMD_LowPower(void);
 //Funcion principal - control del automata y el LCD
 void thread__app_main_control (void *no_argument)
 {
-    float consumo_rx;
     uint32_t flags;
-    float medidas_consumo[NUM_MAX_MUESTRA_CONSUMO];
-    float *medidas_consumo_ptr = medidas_consumo;
-    uint8_t numero_muestra = 0;
+ 
+    //Variables locales para guardar el consumo y la hora en flash (se envian en la cola de mensajes junto al comando)
+    float flash_consumo_tx; //revisar NAK buscar consumo_rx
+    char flash_hora_tx[FLASH_NUM_CHAR_HORA];
 
+    //Variables para guardar las medidas del consumo (y la hora) y mostrarlas en LCD tras obtenerse de flash
+    float medidas_consumo[NUM_MAX_MUESTRA_CONSUMO];
+    char horas_consumo[FLASH_NUM_CHAR_HORA][NUM_MAX_MUESTRA_CONSUMO];
+    uint8_t numero_muestra = 0; //Numero de muestra actual a mostrar, se reinicia al entrar al modo de mostrar consumos
+
+    //Variables para controlar el LCD en modo marcha atras
     lineas_distancia_t lineas_prev = LCD_LINE__NO_LINE;
     lineas_distancia_t lineas_actuales = LCD_LINE__NO_LINE;
 
@@ -88,29 +94,30 @@ void thread__app_main_control (void *no_argument)
             state_enter = true;
         }
         
+        //Se añade la hora y el consumo en la flash (dentro de flash se gestiona segun la muestra que sea en diferente sector)
         if (flags & FLAG__CONSUMO_EN_FLASH)
         {
-            //revisarNAK guardar consumo en memoria flash
-            consumo_rx = (float) ((float) nRF_data_received.consumo / 1000);
+            //Actualizamos las variables de envio
+            flash_consumo_tx = (float) ((float) nRF_data_received.consumo / 1000); //Guardamos el ultimo valor recibido desde el coche del consumo
+            memcpy(flash_hora_tx, rtc_date_time[RTC_HOUR], FLASH_NUM_CHAR_HORA); //Guardamos el valor actual de la hora en el mensaje de envio hacia flash (HH:MM:SS, 8 char)
                  
-            //Actualizamos Web
-            sprintf(consumo_S, "%.2f", consumo_rx);
+            //Actualizamos Web revisar NAK unicamente actualizar cuando el valor cambie? revisar refresco de web
+            sprintf(consumo_S, "%.2f", flash_consumo_tx);
+            //revisar NAK mandar flag a web?¿?
 
-            //Añadimos en flash el consumo
+            //Añadimos en el mensaje de la cola los valores a añadir y el comando de añadir Consumo en flash
             flash_msg_data.command = FLASH_CMD__ADD_CONSUMPTION;
-            flash_msg_data.consumption = &consumo_rx;
+            flash_msg_data.consumption = &flash_consumo_tx;
+            flash_msg_data.hour = &flash_hora_tx;
             
+            //Mandamos el mensaje
             if (osMessageQueuePut(id_flash_commands_queue, &flash_msg_data, NULL, 500) != osOK)
             {
                 strncpy(detalleError, "MSG QUEUE ERROR FLASH", sizeof(detalleError) - 1);
                 osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
             }
         }
-        
-        if (flags & FLAG__CONSUMO_READY_FLASH)
-        {
-            osThreadFlagsSet(id_thread__app_main, FLAG__PRESS_RIGHT);
-        }
+
         if (flags & FLAG__ERROR) //Flag de error
         {
             //Paramos todos los controles
@@ -254,8 +261,10 @@ void thread__app_main_control (void *no_argument)
                 case APP_STAGE__MOSTRAR_CONSUMO:
                     if (state_enter)
                     {
+                        //Pasamos un puntero hacia ambos arrays con todas las medidas de consumo y horas (las ultimas)
                         flash_msg_data.command = FLASH_CMD__GET_ALL_CONSUMPTION;
-                        flash_msg_data.consumption = medidas_consumo_ptr;
+                        flash_msg_data.consumption = medidas_consumo;   //puntero a las medidas del consumo que se mostraran en lcd y flash
+                        flash_msg_data.hour = horas_consumo;            //puntero a las horas del consumo que se mostraran en lcd y flash
                         
                         //Cargar los datos de la flash
                         if (osMessageQueuePut(id_flash_commands_queue, &flash_msg_data, NULL, 500) != osOK)
@@ -265,7 +274,7 @@ void thread__app_main_control (void *no_argument)
                         }
                         
                         //Desactivamos todos los controles de otros estados
-                        Stop_askDistanceControl();
+                        Stop_askDistanceControl(); //Desactivamos el control de distancia
                         
                         //Enviamos el estado al coche para habilitar/deshabilitar controles
                         Send_CMD_StateChange(app_state);
@@ -275,37 +284,44 @@ void thread__app_main_control (void *no_argument)
                         leds_activate_mask &= ~GET_MASK_LED(LED_BLUE);
                         leds_activate_mask &= ~GET_MASK_LED(LED_RED);
                         
-                        //Mostramos en la lï¿½nea 1 del LCD que estamos en el modo de mostrar consumo
-                        LCD_write (LCD_LINE__ONE, "State: Consumpion");
+                        //Mostramos en la linea 1 del LCD que estamos en el modo de mostrar consumo
+                        LCD_write (LCD_LINE__ONE, "State: Consumption    ");
                         
-                        //Reiniciamos la muestra
-                        numero_muestra = 0;
-                        medidas_consumo_ptr = medidas_consumo;
-                        
-                        //Mostramos por el LCD la muestra indicada
-                        LCD_mostrarConsumo(numero_muestra, *medidas_consumo_ptr);
-                        
+                        //Mostramos por LCD que se esta realizando la operacion de leer de memoria flash
+                        LCD_Write(LCD_LINE__TWO, "Leyendo FLASH...     ");
                         state_enter = false;
                     }
-                    
+
+                    //Flag que se activara cuando los consumos esten listos para mostrar la primera muestra
+                    if (flags & FLAG__CONSUMO_READY_FLASH)
+                    {
+                        //revisar NAK antes de pulsaba RIGHT
+                        //Mostramos en la linea 1 del LCD que estamos en el modo de mostrar consumo
+                        LCD_write (LCD_LINE__ONE, "State: Consumption    ");
+
+                        //Reiniciamos la muestra seleccionada
+                        numero_muestra = 0;
+
+                        //Mostramos por el LCD la muestra indicada
+                        LCD_mostrarConsumo(numero_muestra, medidas_consumo[numero_muestra]);
+                    }
+
                     if (flags & FLAG__PRESS_RIGHT) //Mostramos el consumo de la flash en el LCD
                     {
                         //actualizamos el numero de la muestra que mostramos
                         numero_muestra = (numero_muestra == NUM_MAX_MUESTRA_CONSUMO - 1) ? 0 : numero_muestra + 1;
-                        medidas_consumo_ptr = medidas_consumo + numero_muestra;
                         
                         //Mostramos por el LCD la muestra indicada
-                        LCD_mostrarConsumo(numero_muestra, *medidas_consumo_ptr);
+                        LCD_mostrarConsumo(numero_muestra, medidas_consumo[numero_muestra]);
                     }
                     
                     if (flags & FLAG__PRESS_LEFT) //Mostramos el consumo de la flash en el LCD
                     {
                         //actualizamos el numero de la muestra que mostramos
                         numero_muestra = (numero_muestra == 0) ? (NUM_MAX_MUESTRA_CONSUMO - 1) : numero_muestra - 1;
-                        medidas_consumo_ptr = medidas_consumo + numero_muestra;
                         
                         //Mostramos por el LCD la muestra indicada
-                        LCD_mostrarConsumo(numero_muestra, *medidas_consumo_ptr);
+                        LCD_mostrarConsumo(numero_muestra, medidas_consumo[numero_muestra]);
                     }
                     break;
             }
