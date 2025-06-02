@@ -68,7 +68,7 @@ static void erase_usable_memory (void);
 void W25Q16_PowerDown (void);
 void W25Q16_PowerUp (void);
 
-static void addConsumption(uint8_t position, float *consumption);
+static void addConsumption(uint8_t position, float *consumption, char* hora);
 static void getAllConsumptions(float *consumptions);
 static void floatToBytes(float valor, uint8_t bytes[sizeof(float)]);
 static float bytesToFloat(uint8_t bytes[sizeof(float)]);
@@ -102,7 +102,7 @@ static void Th_flash (void *argument) {
 			{
 				case FLASH_CMD__ADD_CONSUMPTION:
 				//Se añade hasta un maximo de 10 consumos de manera circular
-                    addConsumption(posicion_consumo, flash_msg_rec.consumption);
+                    addConsumption(posicion_consumo, flash_msg_rec.consumption, flash_msg_rec.hora);
                     posicion_consumo = (posicion_consumo == (MAX_CONSUMPTION_DATA - 1)) ? 0 : (posicion_consumo + 1);
 				break;
 				case FLASH_CMD__GET_ALL_CONSUMPTION:
