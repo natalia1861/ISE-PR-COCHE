@@ -7,6 +7,7 @@
  *      												Thread PWM
  *---------------------------------------------------------------------------*/
  
+//Este PWM esta empleado para el pitido, revisar NAK
 //TIMER
 TIM_HandleTypeDef htim; 
 TIM_OC_InitTypeDef pwm_output;

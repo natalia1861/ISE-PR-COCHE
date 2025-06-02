@@ -26,6 +26,14 @@
 #include "tm_stm32_nrf24l01.h"
 #include <stdio.h>
 
+//Nota: si se quiere saber algo de un registro se puede hacer de 2 maneras:
+// - 1. Buscar el nombre del registro definido justo abajo y mirar donde aparece para leer comentarios cercanos
+// - 2. Buscar en el datasheet, en la pagina 53
+
+//Nota: si se quiere saber algo acerca de los comandos empleados:
+// - 1: Buscar abajo, donde estan definidos los comandos en codigo, linea: 199
+// - 2. Buscar en datasheet, pagina 46
+
 /* NRF24L01+ registers*/
 #define NRF24L01_REG_CONFIG			0x00	//Configuration Register
 #define NRF24L01_REG_EN_AA			0x01	//Enable Auto Acknowledgment Function

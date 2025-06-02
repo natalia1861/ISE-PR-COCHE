@@ -9,7 +9,8 @@
 #define FLAG_STATE__LOW_POWER   0x0010
 
 #define FLAG__MAIN_CONTROL (FLAG_STATE_NORMAL       | \
-                            FLAG_STATE_BACK_GEAR    )
+                            FLAG_STATE_BACK_GEAR    | \
+                            FLAG_STATE__LOW_POWER)
 
 typedef enum
 {

@@ -39,7 +39,7 @@ void EXTI3_IRQHandler(void) {
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
   if(GPIO_Pin==GPIO_PIN_13)
   {
-    //Despertamos el micro por si acaso
+    //Despertamos el micro por si acaso con el boton azul del coche
     if(__HAL_PWR_GET_FLAG(PWR_FLAG_SB) != RESET)
     {
         __HAL_PWR_CLEAR_FLAG(PWR_FLAG_SB);
@@ -48,7 +48,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
   }
   if (GPIO_Pin == GPIO_PIN_3) 
   {
-    HAL_GPIO_EXTI_Callback_NRF(GPIO_Pin);  //revisarNAK FUTURO: cambiar a una flag para que un hilo de alta prioridad que gestione todo eso
+    HAL_GPIO_EXTI_Callback_NRF(GPIO_Pin);  //Dentro de esta funcion se manda flag al hilo de control de RF para que lea el estado del IRQ (interrupcion)
   }
 }
 

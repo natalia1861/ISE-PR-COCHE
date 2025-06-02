@@ -7,7 +7,7 @@
 #include "direction_control.h"
 
 #define I2C_TX_RX                   0x0CU   //Raw angle
-#define AS5600_I2C_ADDRESS_SLAVE    0x36    // Direcci�n I2C del AS560
+#define AS5600_I2C_ADDRESS_SLAVE    0x36    // Direccion I2C del AS560
 
 //Registers
 #define AS5600_STATUS_REG           0x0B    // Registro de estado
@@ -15,7 +15,9 @@
 #define AS5600_CONFIG_REG           0x07    // Configuration register (2 byte)
 
 //Default configuration
-#define AS5600_CONFIG_DEFAULT       0x00
+#define AS5600_CONFIG_DEFAULT       0x00    //Configuracion por defecto del sensor (que es la misma que queremos)
+//Segun el datasheet hay que leer la configuracion y en caso de querer cambiarla, se debe actualizar. 
+//Como en nuestro caso, la configuracion es siempre la misma y es la de por defecto. Omitimos este paso
 
 #define AS5600_ZPOS_HIGH_REG        0x01
 #define AS5600_ZPOS_LOW_REG         0x00
@@ -24,10 +26,10 @@
 #define HALF_ROTATION_STEPS_180_GRADOS (FULL_ROTATION_STEPS_360_GRADOS / 2)
 #define INICIAL_0_GRADOS            0
 
-#define IDEAL      0
+#define IDEAL      0 //Implica que en la primera lectura justo el angulo medido es de 180 (comienza justo en la mitad) - no va a ocurrir
 //#define PEQUENO    1
 //#define GRANDE     2
-#define IRREGULAR  3
+#define IRREGULAR  3 //El primer angulo medido de referencia sera diferente a 180 por lo que tendremos que guardar un offset inicial que se usara para todas las medidas posteriores
 
 //#define CENTRO     0
 //#define IZQUIERDA  1
@@ -41,7 +43,7 @@
 #define UMBRAL_ALTO_GRADOS 300
 
 osThreadId_t id_sensor_AS5600;                        // thread id
-void sensor_AS5600_Thread(void *argument);                   // thread function
+void sensor_AS5600_Thread(void *argument);            // thread function
 
 osMessageQueueId_t id_volante_MsgQueue;
 
@@ -51,7 +53,7 @@ static ARM_DRIVER_I2C *I2Cdrv = &Driver_I2C1;
 
 //Funciones internas
 void I2C_TX_RX_Callback(uint32_t flags);
-bool as5600_isMagnetDetected(void);
+bool as5600_isMagnetDetected(void);       //No se utiliza - revisar NAK
 
 //Variables globales para el control de angulo y vueltas
 uint16_t angle_offset = 0; //valor que toma como inicial y lo inicia a 180�
@@ -100,8 +102,9 @@ AS5600_status_t as5600_readout(float* read_angle){
     uint16_t angle_first = 0;
 
     //First data is trash
-    if (!start){
-      // Enviar direcci�n de lectura
+    if (!start)
+    {
+      // Enviar direccion de lectura
       I2Cdrv->MasterTransmit(AS5600_I2C_ADDRESS_SLAVE, &reg, 1, true);
       flags = osThreadFlagsWait(I2C_TX_RX, osFlagsWaitAny, osWaitForever);
 
@@ -121,20 +124,25 @@ AS5600_status_t as5600_readout(float* read_angle){
     //Angulo ente 0 y 4095
     angle_raw = (content_rx[0] << 8) | content_rx[1];
 
-    if (!start){ //Hago que el offset sea 2048 que es 180 grados (solo lo hace con el primer valor que recibe)
-      if (angle_raw < HALF_ROTATION_STEPS_180_GRADOS){
+    if (!start)
+    { //Hago que el offset sea 2048 que es 180 grados (solo lo hace con el primer valor que recibe)
+      if (angle_raw < HALF_ROTATION_STEPS_180_GRADOS)
+      {
         rest = HALF_ROTATION_STEPS_180_GRADOS - angle_raw;
         angle_first = angle_raw + rest;
-      }else if(angle_raw > HALF_ROTATION_STEPS_180_GRADOS){
+      }else if(angle_raw > HALF_ROTATION_STEPS_180_GRADOS)
+      {
         rest = angle_raw - HALF_ROTATION_STEPS_180_GRADOS;
         angle_first = angle_raw - rest;
-      }else {
+      }else 
+      {
         angle_first = angle_raw;
       }
       angle_offset = angle_raw;
       start = true;
       
-      if (HALF_ROTATION_STEPS_180_GRADOS > angle_offset || HALF_ROTATION_STEPS_180_GRADOS < angle_offset){//si el valor es offset es menor o mayor que 2048 (180�)
+      if (HALF_ROTATION_STEPS_180_GRADOS > angle_offset || HALF_ROTATION_STEPS_180_GRADOS < angle_offset)
+      {//si el valor es offset es menor o mayor que 2048 (180 grados)
         modo = IRREGULAR;
       }else { //si el offset justo es 2048 es decir 180 grados
         modo = IDEAL;
@@ -154,26 +162,32 @@ AS5600_status_t as5600_readout(float* read_angle){
     
     /*                  HAY QUE MODIFICAR LA SEGUNDA TERCERA ... MEDIDA                 */
     /*                    TENIENDO EN CUENTA EL OFFSET DEL PRINCIPIO                    */
-          //Corrigo el valor referenciado al offset
-    if (modo == IDEAL){ // Si el offset esta en el medio de 180� que equivale a 2048
+
+    //Corrigo el valor referenciado al offset
+    if (modo == IDEAL)
+    { // Si el offset esta en el medio de 180 grados que equivale a 2048
       angle_new = angle_raw;
-    } else if (modo == IRREGULAR){ // Si el offset esta cerca del 0� o de 360�
+    } else if (modo == IRREGULAR){ // Si el offset esta cerca del 0 o de 360
       angle_new = (HALF_ROTATION_STEPS_180_GRADOS - angle_offset + angle_raw) & 0x0FFF;
     }
 
     //Lo comparo con los grados cogidos (el actual y el anterior)
     angle_deg = (angle_new * 360.0f) / FULL_ROTATION_STEPS_360_GRADOS;
-    if ((last_angle > UMBRAL_ALTO_GRADOS) && (angle_deg < UMBRAL_BAJO_GRADOS)) {
-        vuelta++;  // Giro completo horario (paso por 0�)
-    } else if ((last_angle < UMBRAL_BAJO_GRADOS) && (angle_deg > UMBRAL_ALTO_GRADOS)) {
-        vuelta--;  // Giro completo antihorario (paso por 4095, 360�)
+    if ((last_angle > UMBRAL_ALTO_GRADOS) && (angle_deg < UMBRAL_BAJO_GRADOS)) 
+    {
+        vuelta++;  // Giro completo horario (paso por 0 grados)
+    } else if ((last_angle < UMBRAL_BAJO_GRADOS) && (angle_deg > UMBRAL_ALTO_GRADOS)) 
+    {
+        vuelta--;  // Giro completo antihorario (paso por 4095, 360 grados)
     }
     
     last_angle = angle_deg;
     
-    if (vuelta <= -1){//Si hace una vuelta a la izquierda envia una constante hasta que las vueltas sean 0
+    if (vuelta <= -1) //Si hace una vuelta a la izquierda envia una constante hasta que las vueltas sean 0
+    {
       angle_deg = GIRO_IZQUIERDA;
-    }else if (vuelta >= 1){//Si hace una vuelta a la derecha envia una constante hasta que las vueltas sean 0
+    }else if (vuelta >= 1) //Si hace una vuelta a la derecha envia una constante hasta que las vueltas sean 0
+    {
       angle_deg = GIRO_DERECHA;
     }
 
@@ -196,25 +210,30 @@ void I2C_TX_RX_Callback(uint32_t flags)
   }
 }
 
+//Funcionq que comprueba que el angulo este presente porque puede leer angulo cuando el iman no lo esta. revisar NAK
 bool as5600_isMagnetDetected(void) 
 {
     uint8_t reg = AS5600_STATUS_REG;
     uint8_t status_sen = 0;
     
-    // Escribir la direcci�n del registro que queremos leer
-    if (I2Cdrv->MasterTransmit(AS5600_I2C_ADDRESS_SLAVE, &reg, 1, false) != ARM_DRIVER_OK) {
+    // Escribir la direccion del registro que queremos leer
+    if (I2Cdrv->MasterTransmit(AS5600_I2C_ADDRESS_SLAVE, &reg, 1, false) != ARM_DRIVER_OK) 
+    {
         return false; // Error de transmisi�n
     }
 
     // Leer 1 byte desde el registro
-    if (I2Cdrv->MasterReceive(AS5600_I2C_ADDRESS_SLAVE, &status_sen, 1, false) != ARM_DRIVER_OK) {
-        return false; // Error de recepci�n
+    if (I2Cdrv->MasterReceive(AS5600_I2C_ADDRESS_SLAVE, &status_sen, 1, false) != ARM_DRIVER_OK) 
+    {
+        return false; // Error de recepcion
     }
 
     // Verificar bit 5 del registro de estado (MD - Magnet Detected)
-    if ((status_sen & (1 << 5)) != 0) {
+    if ((status_sen & (1 << 5)) != 0) 
+    {
         return true;  // Im�n presente
-    } else {
+    } else 
+    {
         return false; // Im�n no detectado
     }
 }

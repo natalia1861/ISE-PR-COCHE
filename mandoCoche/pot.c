@@ -32,6 +32,8 @@
  * Rev.:    1.0.3
  *----------------------------------------------------------------------------*/
 
+ //revisar NAK no se si este fichero se llega a usar porque esta el comun del adc creo
+
 #include "stm32f4xx_hal.h"
 
 #define ADC_RESOLUTION        12        /* Number of A/D converter bits       */

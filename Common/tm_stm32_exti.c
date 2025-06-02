@@ -23,6 +23,8 @@
  * | OTHER DEALINGS IN THE SOFTWARE.
  * |----------------------------------------------------------------------
  */
+
+ //NO SE USA ESTA LIBRERIA
 #include "tm_stm32_exti.h"
 
 TM_EXTI_Result_t TM_EXTI_Attach(GPIO_TypeDef* GPIOx, uint16_t GPIO_Line, TM_EXTI_Trigger_t trigger) {

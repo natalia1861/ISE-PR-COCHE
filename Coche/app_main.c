@@ -36,6 +36,7 @@ void thread__app_main (void *no_argument)
             //Paramos el control de distancia
             Stop_DistanceControl();
             
+            //Despertamos el coche por si acaso venimos de modo bajo consumo
             if(__HAL_PWR_GET_FLAG(PWR_FLAG_SB) != RESET)
             {
             __HAL_PWR_CLEAR_FLAG(PWR_FLAG_SB);
@@ -52,7 +53,7 @@ void thread__app_main (void *no_argument)
         }
         if (flags & FLAG_STATE__LOW_POWER)
         {
-            //Modo bajo consumo
+            //Entramos en modo bajo consumo
             SleepMode_Measure();
             ETH_PhyEnterPowerDownMode();
         }
@@ -64,6 +65,7 @@ void Init_AllAppThreads (void)
     //Inicializamos modo bajo consumo
     __HAL_RCC_PWR_CLK_ENABLE();
     
+    //Inicializamos el resto de contoles
     init_pulsador();
     Init_LedsControl();
     Init_SensorDistancia();

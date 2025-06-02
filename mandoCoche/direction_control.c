@@ -11,7 +11,7 @@
 #define DIRECTION_REFRESH                           100
 
 osThreadId_t id_thread__DirectionControl = NULL;
-char direccion_S[80];
+char direccion_S[80];       //Variable de direccion para Web revisar NAK falta comentar
 
 void thread__direction_control(void *no_argument)
 {

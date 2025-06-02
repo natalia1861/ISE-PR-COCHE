@@ -3,6 +3,9 @@
 #include "VL53L0X.h"
 #include "i2c.h"
 
+//Distancia  se actualiza en coche cada DISTANCE_UPDATE_TIME, pero se envia a RF segun cada cuanto tiempo pregunte el mando
+#define DISTANCE_UPDATE_TIME                 100 //ms
+
 #define myoffset        10
 #define myscale         1.05
 
@@ -27,7 +30,7 @@ void thread__distance_control (void *no_argument)
         #else
         distancia = (uint16_t)(readRangeContinuousMillimeters(&sensor1)*myscale)-myoffset;
         #endif
-        osDelay(100);
+        osDelay(DISTANCE_UPDATE_TIME);
     }
 }
 

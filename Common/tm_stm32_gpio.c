@@ -23,6 +23,8 @@
  * | OTHER DEALINGS IN THE SOFTWARE.
  * |----------------------------------------------------------------------
  */
+
+ //NO SE USA
 #include "tm_stm32_gpio.h"
 
 /* Private function */

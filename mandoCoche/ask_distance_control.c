@@ -6,7 +6,7 @@
 
 #define GET_DISTANCE_TIME           200
 
-osThreadId_t id_thread__askDistanceControl = NULL;
+osThreadId_t id_thread__askDistanceControl = NULL; //revisar NAK falta comentar
 
 void thread__askDistanceControl (void *no_argument)
 {

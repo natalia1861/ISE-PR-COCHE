@@ -11,6 +11,7 @@
   * @retval None
   */
  
+//Definiciones para las marchas del pedal segun el valor recibido del ADC
 #define NUM_MIN_MARCHAS     ADC_MARCHA_0
 #define NUM_MAX_MARCHAS     ADC_MARCHA_2
 
