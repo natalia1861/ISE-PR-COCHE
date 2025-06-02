@@ -25,10 +25,6 @@
 #include "app_main.h"
 #include <string.h>
 
-//control de leds
-extern bool LED_Rrun;	//referenciado a HTTP_Server.c
-extern bool LED_Grun;	//referenciado a HTTP_Server.c
-
 /* My address */
 uint8_t MyAddress[] = {
 	0xE7,
