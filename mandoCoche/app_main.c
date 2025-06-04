@@ -29,7 +29,7 @@ app_state_t app_state = FIRST_APP_STAGE;
 nRF_data_transmitted_t nRF_data = {0};
 
 //Message to flash queue (tanto para enviar como para recibir datos)
-MSGQUEUE_FLASH_t flash_msg_data = {0};
+MSGQUEUE_FLASH_t flash_msg_data;
 
 //Comunicacion con Web
 char consumo_S [80];
@@ -100,7 +100,8 @@ void thread__app_main_control (void *no_argument)
             //Actualizamos las variables de envio
             flash_consumo_tx = (float) ((float) nRF_data_received.consumo / 1000); //Guardamos el ultimo valor recibido desde el coche del consumo
             memcpy(flash_hora_tx, rtc_date_time[RTC_HOUR], FLASH_NUM_CHAR_HORA); //Guardamos el valor actual de la hora en el mensaje de envio hacia flash (HH:MM:SS, 8 char)
-                 
+            //revisar debuggear que caracteres se meten, deben ser HH:MM:SS
+            
             //Actualizamos Web revisar NAK unicamente actualizar cuando el valor cambie? revisar refresco de web
             sprintf(consumo_S, "%.2f", flash_consumo_tx);
             //revisar NAK mandar flag a web?¿?
@@ -108,7 +109,7 @@ void thread__app_main_control (void *no_argument)
             //Añadimos en el mensaje de la cola los valores a añadir y el comando de añadir Consumo en flash
             flash_msg_data.command = FLASH_CMD__ADD_CONSUMPTION;
             flash_msg_data.consumption = &flash_consumo_tx;
-            flash_msg_data.hour = &flash_hora_tx;
+            flash_msg_data.hour = flash_hora_tx;
             
             //Mandamos el mensaje
             if (osMessageQueuePut(id_flash_commands_queue, &flash_msg_data, NULL, 500) != osOK)
@@ -264,7 +265,7 @@ void thread__app_main_control (void *no_argument)
                         //Pasamos un puntero hacia ambos arrays con todas las medidas de consumo y horas (las ultimas)
                         flash_msg_data.command = FLASH_CMD__GET_ALL_CONSUMPTION;
                         flash_msg_data.consumption = medidas_consumo;   //puntero a las medidas del consumo que se mostraran en lcd y flash
-                        flash_msg_data.hour = horas_consumo;            //puntero a las horas del consumo que se mostraran en lcd y flash
+                        flash_msg_data.hour = &horas_consumo[0][0];     //puntero a las horas del consumo que se mostraran en lcd y flash
                         
                         //Cargar los datos de la flash
                         if (osMessageQueuePut(id_flash_commands_queue, &flash_msg_data, NULL, 500) != osOK)
@@ -288,7 +289,7 @@ void thread__app_main_control (void *no_argument)
                         LCD_write (LCD_LINE__ONE, "State: Consumption    ");
                         
                         //Mostramos por LCD que se esta realizando la operacion de leer de memoria flash
-                        LCD_Write(LCD_LINE__TWO, "Leyendo FLASH...     ");
+                        LCD_write (LCD_LINE__TWO, "Leyendo FLASH...   ");
                         state_enter = false;
                     }
 
@@ -333,16 +334,16 @@ void Init_AllAppThreads(void)
 {
     
     /* Init all threads here*/
-    id_thread__app_main = osThreadNew(thread__app_main_control, NULL, NULL);
-    Init_RF_TX();
-    Init_LedsControl();
-    Init_RTC_Update();
-    Init_JoystickControl();
+    //id_thread__app_main = osThreadNew(thread__app_main_control, NULL, NULL);
+    //Init_RF_TX();
+    //Init_LedsControl();
+    //Init_RTC_Update();
+    //Init_JoystickControl();
     Init_VelocityCointrol();
     Init_DirectionControl();
-    Init_FlashControl();
+    //Init_FlashControl();
     //osThreadNew(app_main, NULL, &app_main_attr); WEB
-    netInitialize();
+    //netInitialize();
 }
 
 lineas_distancia_t calcularLineasDistancia(uint16_t distancia)

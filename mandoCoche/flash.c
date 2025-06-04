@@ -77,7 +77,8 @@ void W25Q16_PowerUp (void);       // Reactiva el chip desde bajo consumo
 
 //Funciones locales para a�adir consumos y horas en flash y recibir todos
 static void addConsumption(uint8_t position, float *consumption, char* hora);
-static void getAllConsumptions(float *consumptions, float *hour);                   // Lee todos los consumos y los copia
+//static void getAllConsumptions(float *consumptions, char hour[][FLASH_NUM_CHAR_HORA]); // Lee todos los consumos y los copia
+static void getAllConsumptions(float *consumptions, char *hours);
 
 //Funciones para Tests
 static void leer_mem_entera(void);              // Lee los primeros 50 bytes para depuraci�n
@@ -114,12 +115,12 @@ static void Th_flash (void *argument)
 			{
 				case FLASH_CMD__ADD_CONSUMPTION:
 					// Guarda un nuevo consumo y avanza de forma circular (maximo 10)
-                    addConsumption(posicion_consumo, flash_msg_rec.consumption, flash_msg_rec.hora);
+                    addConsumption(posicion_consumo, flash_msg_rec.consumption, flash_msg_rec.hour);
                     posicion_consumo = (posicion_consumo == (MAX_CONSUMPTION_DATA - 1)) ? 0 : (posicion_consumo + 1);
 				break;
 				case FLASH_CMD__GET_ALL_CONSUMPTION:
 					// Copia todos los consumos guardados en memoria
-                    getAllConsumptions(flash_msg_rec.consumption, flash_msg_rec.hora);
+                    getAllConsumptions(flash_msg_rec.consumption, flash_msg_rec.hour);
                     osThreadFlagsSet(id_thread__app_main, FLAG__CONSUMO_READY_FLASH);
 				break;
 				case FLASH_CMD__ERASE:
@@ -531,10 +532,14 @@ static void W25Q16_WritePage_Clean (uint32_t page, uint16_t offset, uint32_t siz
 }
 
 /**
- * @brief A�ade un nuevo valor de consumo en una posici�n concreta de memoria.
- * @param position Posici�n en memoria circular (0-9).
- * @param consumption Puntero al float de consumo.
- * @param hour Puntero a la cadena de hora (formato "HH:MM:SS").
+ * @brief Anade un nuevo valor de consumo en una posicion concreta de memoria.
+ * @param position Posicion en memoria circular (0-9).
+ * @param consumption Puntero al float de consumo que queremos escribir en flash.
+ * @param hour Puntero a la cadena de hora (formato "HH:MM:SS") que queremos escribir en flash.
+ 
+ Llamada a funcion: addConsumption(posicion_consumo, flash_msg_rec.consumption, flash_msg_rec.hour);
+ ** flash_msg_rec.consumption = float flash_consumo_tx; con valores de consumo en ese instante
+ ** flash_msg_rec.hour = char flash_hora_tx[FLASH_NUM_CHAR_HORA]; con valores de hora en ese instante
  */
 
 static void addConsumption(uint8_t position, float* consumption, char* hour)
@@ -554,26 +559,46 @@ static void addConsumption(uint8_t position, float* consumption, char* hour)
 
 /**
  * @brief Recupera todos los valores de consumo guardados.
- * @param consumptions Puntero al array de floats donde se copiar�n los consumos.
- * @param hour Puntero al array donde se copiar�n las horas.
+ * @param consumptions Puntero al array de floats donde se copiaran los consumos.
+ * @param hour Puntero al array donde se copiaran las horas.
+ 
+ Llamada a funcion -> getAllConsumptions(flash_msg_rec.consumption, flash_msg_rec.hour);
+ *** flash_msg_data.consumption = medidas_consumo;   ->> float medidas_consumo[NUM_MAX_MUESTRA_CONSUMO];					//puntero a las medidas del consumo que se mostraran en lcd y flash
+ *** flash_msg_data.hour = &horas_consumo[0][0];   	 ->> char horas_consumo[FLASH_NUM_CHAR_HORA][NUM_MAX_MUESTRA_CONSUMO];	//puntero a las horas del consumo que se mostraran en lcd y flash
  */
 
-static void getAllConsumptions(float *consumptions, float *hour)
-{
-    uint8_t flash_data[HORA_SIZE_BYTES + CONSUMPTION_SIZE_BYTES];
+//static void getAllConsumptions(float *consumptions, char hour[][FLASH_NUM_CHAR_HORA])
+//{
+//    uint8_t flash_data[HORA_SIZE_BYTES + CONSUMPTION_SIZE_BYTES];
+//    char horas[MAX_CONSUMPTION_DATA][FLASH_NUM_CHAR_HORA];
+//    &horas[0][0] = hour;
+//	//Se lee sector por sector (los primeros 10, donde deberian estar todos los consumos y horas) y
+//	//se van copiando 1 a 1 al array apuntado por el mensaje.
+//    for (uint8_t position = 0; position < MAX_CONSUMPTION_DATA; position++) 
+//    {
+//        // Leer los 4 bytes de la memoria flash
+//        W25Q16_FastRead(position * PAGES_FOR_SECTOR, 0, sizeof(flash_data), flash_data);
 
-	//Se lee sector por sector (los primeros 10, donde deberian estar todos los consumos y horas) y
-	//se van copiando 1 a 1 al array apuntado por el mensaje.
+//		// Copiar la hora en la fila correspondiente
+//        memcpy(horas[position], flash_data, HORA_SIZE_BYTES);
+
+//        // Copiar el float al array de consumos
+//        memcpy(&consumptions[position], &flash_data[HORA_SIZE_BYTES], CONSUMPTION_SIZE_BYTES);
+    //}
+//}
+
+
+static void getAllConsumptions(float *consumptions, char *hours)
+{
+    uint8_t flash_data[FLASH_NUM_CHAR_HORA + sizeof(float)];
+
     for (uint8_t position = 0; position < MAX_CONSUMPTION_DATA; position++) 
     {
-        // Leer los 4 bytes de la memoria flash
         W25Q16_FastRead(position * PAGES_FOR_SECTOR, 0, sizeof(flash_data), flash_data);
 
-		// Copiar la hora en la fila correspondiente
-        memcpy(horas[position], flash_data, HORA_SIZE_BYTES);
+        memcpy(&hours[position * FLASH_NUM_CHAR_HORA], flash_data, FLASH_NUM_CHAR_HORA);  //Se copian los datos de hora de 8 en 8 (ya que le pasamos un puntero a )
 
-        // Copiar el float al array de consumos
-        memcpy(&consumptions[position], &flash_data[HORA_SIZE_BYTES], CONSUMPTION_SIZE_BYTES);
+        memcpy(&consumptions[position], &flash_data[FLASH_NUM_CHAR_HORA], sizeof(float));  //Se copian los datos de consumo en el array que le pasamos
     }
 }
 

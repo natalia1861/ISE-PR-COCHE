@@ -25,7 +25,7 @@ void thread__distance_control (void *no_argument)
         #ifdef DISTANCIA_TEST
         distancia = (distancia == 5000) ? 0 : distancia + 50;
         #else
-        distancia = (uint16_t)(readRangeContinuousMillimeters(&sensor1)*myscale)-myoffset;
+        distancia = (uint16_t) ((readRangeContinuousMillimeters(&sensor1)*myscale)-myoffset);
         #endif
         osDelay(100);
     }

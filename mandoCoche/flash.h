@@ -36,8 +36,8 @@ typedef enum
 typedef struct 
 {
 	cmd_flash_t command;
-    float* consumption;
-    char[FLASH_NUM_CHAR_HORA] hour;
+    float* consumption;   //Puntero al consumo que se añadira | puntero al array de consumos donde se obtendran
+    char* hour;           //Puntero a la hora que se añadira | puntero al array de horas donde se obtendra
 } MSGQUEUE_FLASH_t;
 
 void Init_FlashControl (void);
