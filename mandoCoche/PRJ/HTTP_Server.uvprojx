@@ -337,7 +337,7 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>HSE_VALUE=8000000</Define>
+              <Define>HSE_VALUE=8000000, TEST_SERVOS</Define>
               <Undefine></Undefine>
               <IncludePath>..\Common</IncludePath>
             </VariousControls>
@@ -622,6 +622,11 @@
               <FileName>flash.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\flash.c</FilePath>
+            </File>
+            <File>
+              <FileName>servomotor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\servomotor.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1306,6 +1311,11 @@
               <FileName>flash.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\flash.c</FilePath>
+            </File>
+            <File>
+              <FileName>servomotor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\servomotor.c</FilePath>
             </File>
           </Files>
         </Group>
