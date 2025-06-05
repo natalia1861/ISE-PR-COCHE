@@ -30,7 +30,7 @@ void thread__direction_control(void *no_argument)
         #ifdef DIRECTION_TEST
         direction = direction + 1;
         nRF_data.auxiliar_data = direction;
-        if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, osWaitForever) != osOK)   //Se añade a la cola de envio de RF
+        if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, osWaitForever) != osOK)   //Se anade a la cola de envio de RF
         {
             strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
             osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);

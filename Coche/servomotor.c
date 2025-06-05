@@ -65,7 +65,7 @@ static void initTim1PWM(void) {
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   HAL_TIM_PWM_Init(&htim1);
   
-  //Como el period es 20k, pulse valdrá entre 0 y 20k
+  //Como el period es 20k, pulse valdra entre 0 y 20k
   //50Hz = 20ms
   //20ms/20k = 1us cada numero de pulse
   //Para conseguir: 1ms, pulse tendra que valer 1m/1us = 1000				- izquierda
@@ -89,21 +89,21 @@ static void initPinPE9(void){ //Pin salida PE9 TIM1
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 }
 
-// Función para establecer el ángulo del servomotor
+// Funcion para establecer el angulo del servomotor
 void setServoAngle(float angle) {
-  // Asegurarse de que el ángulo esté dentro del rango permitido
+  // Asegurarse de que el ángulo esta dentro del rango permitido
   if (angle < MIN_ANGLE) angle = MIN_ANGLE;
   if (angle > MAX_ANGLE) angle = MAX_ANGLE;
 
-  // Calcular el valor del pulso PWM correspondiente al ángulo (de 1000 a 2000)
+  // Calcular el valor del pulso PWM correspondiente al angulo (de 1000 a 2000)
   uint16_t pulse = MIN_DIRECTION_PWM + ((uint32_t)(angle - MIN_ANGLE) * (MAX_DIRECTION_PWM - MIN_DIRECTION_PWM)) / (MAX_ANGLE - MIN_ANGLE);
 
-  // Establecer el valor de comparación (pulso) en el timer
+  // Establecer el valor de comparacion (pulso) en el timer
   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pulse);
 }
 
 /*
-  Función que inicializa el timer 3 para PWM
+  Funcion que inicializa el timer 3 para PWM
   APB1 = 84MHz - SystemCoreClock
 */
 static void initTim3PWM(void) {
@@ -115,7 +115,7 @@ static void initTim3PWM(void) {
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   HAL_TIM_PWM_Init(&htim3);
   
-  // Configuración del PWM
+  // Configuracion del PWM
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
   sConfigOC.Pulse = MIDDLE_DIRECTION_PWM;  // Empezamos en la mitad (parada)
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
@@ -135,7 +135,7 @@ static void initPinPA6(void){ // Pin salida PA6 TIM3
 }
 
 /*
- * Función que inicializa el timer 4 para PWM
+ * Funcion que inicializa el timer 4 para PWM
  * APB1 = 84MHz -> Prescaler 83: 84MHz / 84 = 1MHz -> 1us por tick
  */
 static void initTim4PWM(void) {
@@ -168,7 +168,7 @@ static void initPinPD15(void) {
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 }
 
-// Función para establecer la velocidad del motor (usando PWM de 1000 a 2000)
+// Funcion para establecer la velocidad del motor (usando PWM de 1000 a 2000)
 /*| `speed` | `back_gear` | `pulse` |
 | ------- | ----------- | ------- |
 | 0       | false       | 1500    |
@@ -180,7 +180,7 @@ static void initPinPD15(void) {
 */
 
 void setMotorSpeed(speed_marchas_t speed) {
-    // Asegurar que la velocidad esté dentro del rango permitido
+    // Asegurar que la velocidad esta dentro del rango permitido
     if (speed < MIN_VELOCITY) speed = MIN_VELOCITY;
     if (speed > MAX_VELOCITY) speed = MAX_VELOCITY;
 
@@ -189,7 +189,7 @@ void setMotorSpeed(speed_marchas_t speed) {
     
     if (speed == MIN_VELOCITY) 
     {
-        // Vehículo parado
+        // Vehi�culo parado
         pulse_left = MIDDLE_DIRECTION_PWM;
         pulse_right = MIDDLE_DIRECTION_PWM;
     } else {
@@ -210,26 +210,26 @@ void setMotorSpeed(speed_marchas_t speed) {
         }
     }
 
-    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulse_left);
-    __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_4, pulse_right);
+    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulse_left); //Se actualiza la rueda izquierda
+    __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_4, pulse_right); //Se actualiza la rueda derecha
 }
 
 
-// Función para detener el motor (parada)
+// Funcion para detener el motor (parada) - no se usa
 void stop_motor(void) {
   // El valor de PWM correspondiente a la parada (velocidad 3) es el punto medio
   uint16_t stopPulse = (MIN_DIRECTION_PWM + MAX_DIRECTION_PWM) / 2; // 1500us (parada)
   __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, stopPulse);
 }
 
-// Función para avanzar (máxima velocidad)
+// Funcion para avanzar (maxima velocidad) - no se usa
 void move_forward(void) {
-  // El valor de PWM correspondiente a la velocidad máxima (6) es 2000us
-  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, MAX_DIRECTION_PWM); // 2000us (avance máximo)
+  // El valor de PWM correspondiente a la velocidad maxima (2) es 2000us
+  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, MAX_DIRECTION_PWM); // 2000us (avance maximo)
 }
 
-// Función para moverse hacia atrás (máxima velocidad en reversa)
+// Funcion para moverse hacia atras (maxima velocidad en reversa) - no se usa
 void move_reverse(void) {
-  // El valor de PWM correspondiente a la velocidad máxima en reversa (0) es 1000us
-  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, MIN_DIRECTION_PWM); // 1000us (reversa máxima)
+  // El valor de PWM correspondiente a la velocidad maxima en reversa (2) es 1000us
+  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, MIN_DIRECTION_PWM); // 1000us (reversa maxima)
 }

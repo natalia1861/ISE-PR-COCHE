@@ -43,7 +43,7 @@ void init_RTC(void) {     //inicializa el RTC y configura una hora por defecto
         printf("Initialization RTC Error");
     }
 	
-	//Se añade hora genérica
+	//Se anade hora generica
 	  RTC_set_Time(18,6,1,0,0,0);
   
   //Tras reinicar esperamos 6 segundos antes de poner la hora SNTP
@@ -54,12 +54,12 @@ void init_RTC(void) {     //inicializa el RTC y configura una hora por defecto
   tim_id_3min = osTimerNew((osTimerFunc_t)&Timer_Callback_3min, osTimerPeriodic, NULL, NULL);
 	if (osTimerStart(tim_id_3min, 180000) != osOK)
     {
-      //revisar añadir error
+      //revisar anadir error
         printf("Error Timer RTC");
     }
 }
 
-//Añade una hora que se le especifica
+//Anade una hora que se le especifica
 void RTC_set_Time(uint8_t day, uint8_t month, uint8_t year, uint8_t hora, uint8_t minutos, uint8_t segundos) {  
 	fech.Year=year;
 	fech.Month=month;

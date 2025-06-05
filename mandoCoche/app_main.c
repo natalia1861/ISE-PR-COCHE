@@ -94,7 +94,7 @@ void thread__app_main_control (void *no_argument)
             state_enter = true;
         }
         
-        //Se añade la hora y el consumo en la flash (dentro de flash se gestiona segun la muestra que sea en diferente sector)
+        //Se anade la hora y el consumo en la flash (dentro de flash se gestiona segun la muestra que sea en diferente sector)
         if (flags & FLAG__CONSUMO_EN_FLASH)
         {
             //Actualizamos las variables de envio
@@ -106,7 +106,7 @@ void thread__app_main_control (void *no_argument)
             sprintf(consumo_S, "%.2f", flash_consumo_tx);
             //revisar NAK mandar flag a web?¿?
 
-            //Añadimos en el mensaje de la cola los valores a añadir y el comando de añadir Consumo en flash
+            //Anadimos en el mensaje de la cola los valores a añadir y el comando de añadir Consumo en flash
             flash_msg_data.command = FLASH_CMD__ADD_CONSUMPTION;
             flash_msg_data.consumption = &flash_consumo_tx;
             flash_msg_data.hour = flash_hora_tx;
@@ -131,7 +131,7 @@ void thread__app_main_control (void *no_argument)
 
             state_error = true;
             LCD_write(LCD_LINE__ONE, "ERROR...");
-            LCD_write(LCD_LINE__TWO, detalleError); //revisarNAK aï¿½adir detalle de error
+            LCD_write(LCD_LINE__TWO, detalleError);
         }
         
         if (flags & FLAG__PRESS_CENTER) //Se sale del estado de error tras presionar el boton central - se vuelve al inicio
@@ -244,7 +244,7 @@ void thread__app_main_control (void *no_argument)
                         state_enter = false;
                     }
                     
-                    osDelay (1000); //Espera 2 segundos para visualizar que se entrï¿½ al estado de marcha atrï¿½s
+                    osDelay (1000); //Espera 1 segundo para visualizar que se entra al estado de marcha atras
                     if (flags & FLAG__MOSTRAR_DISTANCIA) //Flag enviado desde nRF TX tras recibir la distancia
                     {
                         //Se muestra la distancia por el LCD
@@ -332,7 +332,7 @@ void thread__app_main_control (void *no_argument)
 
 void Init_AllAppThreads(void)
 {
-    
+    //revisar NAK
     /* Init all threads here*/
     //id_thread__app_main = osThreadNew(thread__app_main_control, NULL, NULL);
     //Init_RF_TX();
@@ -351,11 +351,11 @@ lineas_distancia_t calcularLineasDistancia(uint16_t distancia)
     float tramo;
     uint32_t lineas;
     
-    // Si estï¿½ muy cerca, sin lï¿½neas
+    // Si esta muy cerca, sin lineas
     if (distancia >= (MIN_DISTANCE - DISTANCE_SENSIBILITY))
         return LCD_LINE__NO_LINE;
 
-    // Si estï¿½ muy lejos, todas las lï¿½neas
+    // Si esta muy lejos, todas las lineas
     if (distancia <= (MAX_DISTANCE + DISTANCE_SENSIBILITY))
         return LCD_MAX_LINES;
 

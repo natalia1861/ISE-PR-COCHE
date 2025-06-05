@@ -6,16 +6,16 @@ Flash memory is a device that operates via SPI.
 D1 - input (MOSI)
 D0 - output (MISO)
 
-Caracter�sticas:
+Caracteristicas:
 - Memoria de 16 Mbit = 2 MB
 - 32 bloques de 64KB cada uno
 - Cada bloque tiene 16 sectores de 4KB
-- Cada sector tiene 16 p�ginas de 256 bytes
+- Cada sector tiene 16 paginas de 256 bytes
 
 IMPORTANTE: la memoria es tipo NOR, por lo tanto para escribir primero hay que borrar (poner a 0xFF).
-El borrado m�nimo posible es por sector (4KB).
+El borrado minimo posible es por sector (4KB).
 
-Para escribir se usar� `W25Q16_WritePage_Clean`, que guarda el valor del sector, limpia el sector completo 
+Para escribir se usara W25Q16_WritePage_Clean`, que guarda el valor del sector, limpia el sector completo 
 y luego reescribe los datos con las modificaciones.
 
 Respecto nuestra aplicacion:
@@ -31,7 +31,7 @@ Por consiguiente, ocuparemos un total de 10 paginas, es decir, algo menos de un 
 #define nBlock							32	 	//Numero de bloques totales (2MB / 64KB)							//32 blocks in our 16MBytes memory
 #define PAGES_FOR_SECTOR				16		//Numero de paginas por sector
 
-//Daos para guardar consumo y hora
+//Datos para guardar consumo y hora
 #define MAX_CONSUMPTION_DATA			10			//Numero maximo de consumos que guardaremos
 #define CONSUMPTION_SIZE_BYTES			4			//Cada consumo ocupa 4 bytes (float)
 #define HORA_SIZE_BYTES					4			//Cada hora ocupa 8 char (HH:MM:SS)
@@ -48,34 +48,34 @@ static void Th_flash (void *argument);				//Declaracion del hilo
 
 //Funciones locales
 // Inicializaci�n
-static void W25Q16_Init_SPI(void);                     // Configuraci�n de pines y driver SPI
-static void SPI_callback(uint32_t event);              // Callback al terminar transmisi�n SPI
+static void W25Q16_Init_SPI(void);                     // Configuracion de pines y driver SPI
+static void SPI_callback(uint32_t event);              // Callback al terminar transmision SPI
 static void W25Q16_Init (void);                        // Inicializa la memoria Flash
 
 // Funciones recurrentes
-static void W25Q16_WriteInstruction(uint8_t val);      // Escribe una instrucci�n (1 byte)
+static void W25Q16_WriteInstruction(uint8_t val);      // Escribe una instruccion (1 byte)
 static void W25Q16_Reset(void);                        // Reinicia el chip (no borra datos)
 static void W25Q16_Erase_64kBlock (uint16_t numBlock); // Borra un bloque de 64 KB
 static void W25Q16_Erase_Sector (uint16_t numSector);  // Borra un sector de 4 KB
 static uint16_t W25Q16_ReadID(uint8_t number_id);      // Lee el ID del fabricante/dispositivo
 
 static void W25Q16_Read (uint32_t startPage, uint8_t offset, uint32_t size, uint8_t *rData);       // Lectura lenta
-static void W25Q16_FastRead (uint32_t startPage, uint8_t offset, uint32_t size, uint8_t *rData);   // Lectura r�pida
+static void W25Q16_FastRead (uint32_t startPage, uint8_t offset, uint32_t size, uint8_t *rData);   // Lectura rapida
 
-static void W25Q16_WritePage_Clean (uint32_t page, uint16_t offset, uint32_t size, uint8_t *data); // Escritura tras limpiar p�gina
+static void W25Q16_WritePage_Clean (uint32_t page, uint16_t offset, uint32_t size, uint8_t *data); // Escritura tras limpiar pagina
 
 // Control escritura
 static void write_enable (void);                       // Habilita escritura
 static void write_disable (void);                      // Deshabilita escritura
 
-static uint32_t bytesToWrite (uint32_t size, uint32_t offset); // C�lculo de bytes �tiles en p�gina
+static uint32_t bytesToWrite (uint32_t size, uint32_t offset); // Caculo de bytes �tiles en pagina
 static void erase_usable_memory (void);                         // Borra la memoria que usaremos
 
 //Funciones para bajo consumo (no se emplean)
 void W25Q16_PowerDown (void);     // Pone el chip en modo bajo consumo
 void W25Q16_PowerUp (void);       // Reactiva el chip desde bajo consumo
 
-//Funciones locales para a�adir consumos y horas en flash y recibir todos
+//Funciones locales para anadir consumos y horas en flash y recibir todos
 static void addConsumption(uint8_t position, float *consumption, char* hora);
 //static void getAllConsumptions(float *consumptions, char hour[][FLASH_NUM_CHAR_HORA]); // Lee todos los consumos y los copia
 static void getAllConsumptions(float *consumptions, char *hours);
@@ -92,7 +92,7 @@ void Init_FlashControl (void)
 }
 
 /**
- * @brief Hilo principal de gesti�n de la memoria Flash. Procesa comandos mediante cola.
+ * @brief Hilo principal de gestion de la memoria Flash. Procesa comandos mediante cola.
  * @param argument No usado.
  */
 
@@ -132,7 +132,7 @@ static void Th_flash (void *argument)
 }
 
 /**
- * @brief Borra la memoria que ser� utilizada para guardar consumos.
+ * @brief Borra la memoria que sera utilizada para guardar consumos.
  */
 static void erase_usable_memory (void) 
 {
@@ -242,8 +242,8 @@ static void W25Q16_Init (void)
 }
 
 /**
- * @brief Escribe una instrucci�n de un solo byte en la memoria (�til para comandos simples).
- * @param val Instrucci�n a enviar.
+ * @brief Escribe una instruccion de un solo byte en la memoria (util para comandos simples).
+ * @param val Instruccion a enviar.
  */
 
 static void W25Q16_WriteInstruction(uint8_t val) 
@@ -269,7 +269,7 @@ static void W25Q16_Reset(void)
 
 /**
  * @brief Lee el ID del fabricante/dispositivo.
- * @param number_id N�mero de ID a leer.
+ * @param number_id Numero de ID a leer.
  * @return ID del dispositivo.
  */
 
@@ -291,11 +291,11 @@ static uint16_t W25Q16_ReadID(uint8_t number_id)
 }
 
 /**
- * @brief Lee datos de la memoria Flash desde una direcci�n concreta.
- * @param startPage P�gina inicial (cada p�gina = 256 bytes).
- * @param offset Desplazamiento desde el inicio de la p�gina.
- * @param size N�mero de bytes a leer.
- * @param rData Puntero al buffer donde se guardar�n los datos le�dos.
+ * @brief Lee datos de la memoria Flash desde una direccion concreta.
+ * @param startPage Pagina inicial (cada pagina = 256 bytes).
+ * @param offset Desplazamiento desde el inicio de la pagina.
+ * @param size Numero de bytes a leer.
+ * @param rData Puntero al buffer donde se guardaran los datos leidos.
  * 
  * Se necesita mandar la instruccion de leer + 24 bit address
  */
@@ -323,10 +323,10 @@ static void W25Q16_Read (uint32_t startPage, uint8_t offset, uint32_t size, uint
 }
 
 /**
- * @brief Lee datos r�pidamente usando la instrucci�n FastRead.
- * @param startPage P�gina inicial.
- * @param offset Desplazamiento dentro de la p�gina.
- * @param size N�mero de bytes a leer.
+ * @brief Lee datos rapidamente usando la instruccion FastRead.
+ * @param startPage Pagina inicial.
+ * @param offset Desplazamiento dentro de la pagina.
+ * @param size Numero de bytes a leer.
  * @param rData Puntero al buffer para almacenar datos.
  * 
  * Funciona en la maxima frecuencia posible (50 Hz)
@@ -378,7 +378,7 @@ static void write_disable (void)
 
 /**
  * @brief Borra un bloque de 64 KB.
- * @param numBlock �ndice del bloque (0 a 31).
+ * @param numBlock indice del bloque (0 a 31).
  * 
  * El minimo espacio para borrar es un sector (4 KB)
  * Antes de poder borrar memoria es necesario usar la instruccion write_enable
@@ -411,7 +411,7 @@ static void W25Q16_Erase_64kBlock (uint16_t numBlock)
 
 /**
  * @brief Borra un sector de 4 KB.
- * @param numSector �ndice del sector dentro del bloque.
+ * @param numSector indice del sector dentro del bloque.
  */
 
 static void W25Q16_Erase_Sector (uint16_t numSector) 
@@ -440,10 +440,10 @@ static void W25Q16_Erase_Sector (uint16_t numSector)
 }
 
 /**
- * @brief Calcula cu�ntos bytes se pueden escribir desde un offset hasta el final de la p�gina.
- * @param size Tama�o total de los datos a escribir.
- * @param offset Desplazamiento dentro de la p�gina.
- * @return N�mero de bytes que se pueden escribir en esa p�gina.
+ * @brief Calcula cuantos bytes se pueden escribir desde un offset hasta el final de la p�gina.
+ * @param size Tamano total de los datos a escribir.
+ * @param offset Desplazamiento dentro de la pagina.
+ * @return Numero de bytes que se pueden escribir en esa pagina.
  */
 
 static uint32_t bytesToWrite (uint32_t size, uint32_t offset) 
@@ -453,10 +453,10 @@ static uint32_t bytesToWrite (uint32_t size, uint32_t offset)
 }
 
 /**
- * @brief Escribe datos en una p�gina despu�s de limpiar el sector (obligatorio para poder escribir).
- * @param page P�gina de inicio.
- * @param offset Desplazamiento desde el inicio de la p�gina.
- * @param size N�mero de bytes a escribir.
+ * @brief Escribe datos en una pagina despues de limpiar el sector (obligatorio para poder escribir).
+ * @param page Pagina de inicio.
+ * @param offset Desplazamiento desde el inicio de la pagina.
+ * @param size Numero de bytes a escribir.
  * @param data Puntero a los datos a escribir.
  * 
  * Si se excede el numero de bytes de una pagina, se sobreescribiran los datos 
@@ -567,6 +567,8 @@ static void addConsumption(uint8_t position, float* consumption, char* hour)
  *** flash_msg_data.hour = &horas_consumo[0][0];   	 ->> char horas_consumo[FLASH_NUM_CHAR_HORA][NUM_MAX_MUESTRA_CONSUMO];	//puntero a las horas del consumo que se mostraran en lcd y flash
  */
 
+ //revisar NAK eliminar y probar
+ 
 //static void getAllConsumptions(float *consumptions, char hour[][FLASH_NUM_CHAR_HORA])
 //{
 //    uint8_t flash_data[HORA_SIZE_BYTES + CONSUMPTION_SIZE_BYTES];
