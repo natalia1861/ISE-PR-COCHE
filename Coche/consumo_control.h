@@ -8,3 +8,5 @@ extern uint16_t consumption;
 void Init_GetConsumption(void);
 
 #endif
+
+

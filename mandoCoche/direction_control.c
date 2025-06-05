@@ -6,7 +6,7 @@
 #include "tm_stm32_nrf24l01.h"
 #include "app_main.h"
 #include "sensor_AS5600.h"
-#include "servomotor.h"
+//#include "servomotor.h"
 
 #define DIRECTION_THRESHOLD                         0.1  //Sensibilidad para variar el valor guardado //revisar, segura que no es 1?¿
 #define DIRECTION_REFRESH                           100
@@ -57,7 +57,7 @@ void thread__direction_control(void *no_argument)
             }
             
             #else 
-            setServoAngle(direction);
+            //setServoAngle(direction);
             #endif
             //Se pasa a Web
             sprintf(direccion_S, "%.2f", direction);

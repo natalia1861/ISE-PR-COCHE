@@ -98,15 +98,15 @@ void thread__app_main_control (void *no_argument)
         if (flags & FLAG__CONSUMO_EN_FLASH)
         {
             //Actualizamos las variables de envio
-            flash_consumo_tx = (float) ((float) nRF_data_received.consumo / 1000); //Guardamos el ultimo valor recibido desde el coche del consumo
+            flash_consumo_tx = (float) ((float) nRF_data_received_mando.consumo / 1000); //Guardamos el ultimo valor recibido desde el coche del consumo
             memcpy(flash_hora_tx, rtc_date_time[RTC_HOUR], FLASH_NUM_CHAR_HORA); //Guardamos el valor actual de la hora en el mensaje de envio hacia flash (HH:MM:SS, 8 char)
             //revisar debuggear que caracteres se meten, deben ser HH:MM:SS
             
             //Actualizamos Web revisar NAK unicamente actualizar cuando el valor cambie? revisar refresco de web
             sprintf(consumo_S, "%.2f", flash_consumo_tx);
-            //revisar NAK mandar flag a web?¿?
+            //revisar NAK mandar flag a web?ï¿½?
 
-            //Anadimos en el mensaje de la cola los valores a añadir y el comando de añadir Consumo en flash
+            //Anadimos en el mensaje de la cola los valores a aï¿½adir y el comando de aï¿½adir Consumo en flash
             flash_msg_data.command = FLASH_CMD__ADD_CONSUMPTION;
             flash_msg_data.consumption = &flash_consumo_tx;
             flash_msg_data.hour = flash_hora_tx;
@@ -340,7 +340,7 @@ void Init_AllAppThreads(void)
         //Error (no se puede gestionar como normalmente porque no hay app main)
         // strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
         // osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
-        SystemReset(); //revisar
+        //SystemReset(); //revisar
     }
     Init_RF_TX();               //Radiofrecuencia
     Init_LedsControl();         //Leds
@@ -375,7 +375,7 @@ lineas_distancia_t calcularLineasDistancia(uint16_t distancia)
     //Calculamos el tramo en el que se encuentra
     lineas = ((distancia - MIN_RANGE_DISTANCE) / tramo); //Ej distancia = 300; lineas = (300-0)/166.67 = 1.79 = 1
                                                     //Ej distancia = 100; lineas = 100/166.67 = 0.6 = 0
-    //Se invierte para que menor distancia implique más lineas
+    //Se invierte para que menor distancia implique mï¿½s lineas
     lineas = (LCD_MAX_LINES - lineas); //lineas = 3-1 = 2
                                         //lineas = 3
     

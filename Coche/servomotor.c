@@ -51,7 +51,7 @@ void Init_Servomotors (void)
 
     //Init servomotor de velocidad rueda derecha
     initTim4PWM();
-    initPinPD15()
+    initPinPD15();
 }
 
 /*

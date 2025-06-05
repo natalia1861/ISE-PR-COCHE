@@ -41,9 +41,9 @@ extern ARM_DRIVER_SPI Driver_SPI4;					//Driver SPI4 externo
 static ARM_DRIVER_SPI* SPIdrv = &Driver_SPI4;		//Puntero al driver usado
 
 //Hilo y cola
-static osThreadId_t tid_flash;						//ID del hilo de Flash
-osMessageQueueId_t id_flash_commands_queue;			//Cola de mensajes para comandos de flash
-static void Th_flash (void *argument);				//Declaracion del hilo
+static osThreadId_t id_thread__flash;           //ID del hilo de Flash
+osMessageQueueId_t id_flash_commands_queue;     //Cola de mensajes para comandos de flash
+static void thread__flash (void *argument);          //Declaracion del hilo
 
 
 //Funciones locales

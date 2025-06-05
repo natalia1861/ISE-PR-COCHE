@@ -68,7 +68,7 @@ nRF_data_received_mando_t nRF_data_received_mando;
 
 void thread__SendData_RF_TX(void *argument) 
 {
-	uint8_t printed = 0;
+    uint8_t printed = 0;
     nRF_data_transmitted_t nRF_data;
 
     printf("Initializing...\n");

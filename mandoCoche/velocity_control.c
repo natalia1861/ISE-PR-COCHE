@@ -6,7 +6,7 @@
 #include "tm_stm32_nrf24l01.h"
 #include "app_main.h"
 #include "adc.h"
-#include "servomotor.h"
+//#include "servomotor.h"
 
 #define VELOCITY_REFRESH                    100         //La velocidad / presion / marchas se mira cada 100ms para ver si ha cambiado el valor
 
@@ -73,8 +73,8 @@ void thread__VelocityControl (void *no_argument)
                 sprintf(marcha_S,"%02d", marcha);
                 
                 setMotorSpeed( (speed_marchas_t) marcha);
+                #endif
             }
-            #endif
             osDelay(VELOCITY_REFRESH);
         #endif
     }
@@ -88,4 +88,3 @@ void Init_VelocityCointrol (void)
         osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
     }
 }
-
