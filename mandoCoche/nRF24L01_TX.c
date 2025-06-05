@@ -25,10 +25,6 @@
 #include "app_main.h"
 #include <string.h>
 
-//control de leds
-extern bool LED_Rrun;	//referenciado a HTTP_Server.c
-extern bool LED_Grun;	//referenciado a HTTP_Server.c
-
 /* My address */
 uint8_t MyAddress[] = { //Address de envio y recepcion por pipe 0  del mando (para enviar y recibir los ack) -> debe coincidir con la de recepcion del coche
 	0xE7,
@@ -100,7 +96,7 @@ void thread__SendData_RF_TX(void *argument)
     if (TM_NRF24L01_GetStatus() != 0x0E)
     {
         strncpy(detalleError, "RF Error. Restart!", sizeof(detalleError) - 1);
-        osThreadFlagsSet(id_thread__app_main, FLAG__ERROR); //revisarNAK error permanente. Por mucho que lo aceptes, se volverá a generar (hasta que la conexion vuelva).
+        osThreadFlagsSet(id_thread__app_main, FLAG__ERROR); //revisarNAK error permanente. Por mucho que lo aceptes, se volvera a generar (hasta que la conexion vuelva).
     }
     
     //Debug status
