@@ -24,6 +24,8 @@
 //FLAGS
 #define TRANSFER_COMPLETE 				0x01              //internal flag used by SPI to know that a single transfer has been completed
 
+#define FLASH_NUM_CHAR_HORA        8
+
 typedef enum
 {
   FLASH_CMD__ADD_CONSUMPTION,
@@ -34,7 +36,8 @@ typedef enum
 typedef struct 
 {
 	cmd_flash_t command;
-    float* consumption;
+    float* consumption;   //Puntero al consumo que se anadira | puntero al array de consumos donde se obtendran
+    char* hour;           //Puntero a la hora que se anadira | puntero al array de horas donde se obtendra
 } MSGQUEUE_FLASH_t;
 
 void Init_FlashControl (void);

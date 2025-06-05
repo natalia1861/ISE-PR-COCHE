@@ -25,8 +25,8 @@ char rtc_date_time[RTC_MAX][LCD_MAX_CHARACTERS+1];	//maximo de caracteres + EOS
 static osTimerId_t tim_id_3min;	//timer sincronizacion cada 3 min
 
 static void Timer_Callback_3min (void);
-char hora[80];
-char fecha[80];
+char hora[80];    //variable global usada en web
+char fecha[80];   //variable global usada en web
 
 void init_RTC(void) {     //inicializa el RTC y configura una hora por defecto
     hrtc.Instance = RTC; 
@@ -43,22 +43,23 @@ void init_RTC(void) {     //inicializa el RTC y configura una hora por defecto
         printf("Initialization RTC Error");
     }
 	
-	//Se añade hora genérica
-	RTC_set_Time(18,6,1,0,0,0);
+	//Se anade hora generica
+	  RTC_set_Time(18,6,1,0,0,0);
   
-    //Tras reinicar esperamos 6 segundos antes de poner la hora SNTP
+  //Tras reinicar esperamos 6 segundos antes de poner la hora SNTP
     osDelay(6000);
   	get_sntp_time();
   
    //Iniciamos el timer para volver a actualizar la hora con el servidor SNTP
-    tim_id_3min = osTimerNew((osTimerFunc_t)&Timer_Callback_3min, osTimerPeriodic, NULL, NULL);
+  tim_id_3min = osTimerNew((osTimerFunc_t)&Timer_Callback_3min, osTimerPeriodic, NULL, NULL);
 	if (osTimerStart(tim_id_3min, 180000) != osOK)
     {
-        printf("error Timer");
+      //revisar anadir error
+        printf("Error Timer RTC");
     }
 }
 
-//Añade una hora que se le especifica
+//Anade una hora que se le especifica
 void RTC_set_Time(uint8_t day, uint8_t month, uint8_t year, uint8_t hora, uint8_t minutos, uint8_t segundos) {  
 	fech.Year=year;
 	fech.Month=month;

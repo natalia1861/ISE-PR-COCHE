@@ -6,6 +6,7 @@
 #include "tm_stm32_nrf24l01.h"
 #include "app_main.h"
 #include "sensor_AS5600.h"
+#include "servomotor.h"
 
 #define DIRECTION_THRESHOLD                         0.1  //revisarPAR revisarNAK ajustar segun sensibilidad real 
 #define DIRECTION_REFRESH                           100
@@ -29,7 +30,7 @@ void thread__direction_control(void *no_argument)
         #ifdef DIRECTION_TEST
         direction = direction + 1;
         nRF_data.auxiliar_data = direction;
-        if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, osWaitForever) != osOK)   //Se añade a la cola de envio de RF
+        if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, osWaitForever) != osOK)   //Se anade a la cola de envio de RF
         {
             strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
             osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
@@ -45,6 +46,8 @@ void thread__direction_control(void *no_argument)
         if (fabsf(direction - direction_prev) >= DIRECTION_THRESHOLD)
         {
             direction_prev = direction;
+
+            #ifndef TEST_SERVOS
             //Se pasa a uint16_t con dos decimales (Representa valores 0.00 a 655.35)
             nRF_data.auxiliar_data = (uint16_t)(direction * 100);
             direction_prev = direction;
@@ -53,7 +56,10 @@ void thread__direction_control(void *no_argument)
                 strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
                 osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
             }
-
+            
+            #else 
+            setServoAngle(direction);
+            #endif
             //Se pasa a Web
             sprintf(direccion_S, "%.2f", direction);
         }

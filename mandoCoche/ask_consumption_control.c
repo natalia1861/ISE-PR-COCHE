@@ -4,7 +4,7 @@
 #include "tm_stm32_nrf24l01.h"
 #include "app_main.h"
 
-#define GET_CONSUMPTION_TIME           2000
+#define GET_CONSUMPTION_TIME           1000
 
 osThreadId_t id_thread__askConsumptionControl = NULL;
 

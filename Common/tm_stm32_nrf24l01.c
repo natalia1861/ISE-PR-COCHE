@@ -344,10 +344,11 @@ void TM_NRF24L01_SetMyAddress(uint8_t *adr) {
 	NRF24L01_CE_HIGH;
 }
 
+//Se añade address a la transmision (el registro de tx address y a la rx para los acks, que deben ser el mismo para que se pueda responder a un mensaje)
 void TM_NRF24L01_SetTxAddress(uint8_t *adr) {
     NRF24L01_CE_LOW;
-	TM_NRF24L01_WriteRegisterMulti(NRF24L01_REG_RX_ADDR_P0, adr, 5);
-	TM_NRF24L01_WriteRegisterMulti(NRF24L01_REG_TX_ADDR, adr, 5);
+	TM_NRF24L01_WriteRegisterMulti(NRF24L01_REG_RX_ADDR_P0, adr, 5); 	//Se añade address a la recepcion pipe 0
+	TM_NRF24L01_WriteRegisterMulti(NRF24L01_REG_TX_ADDR, adr, 5);		//Se añade address a la transmision 
     NRF24L01_CE_HIGH;
 }
 

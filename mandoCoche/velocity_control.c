@@ -6,6 +6,7 @@
 #include "tm_stm32_nrf24l01.h"
 #include "app_main.h"
 #include "adc.h"
+#include "servomotor.h"
 
 #define VELOCITY_REFRESH                    100
 
@@ -20,9 +21,13 @@ void thread__VelocityControl (void *no_argument)
     marchas_t marcha;
     
 	Init_ADC1_presion();
+
+    #ifdef TEST_SERVOS
+        Init_Servomotors();
+    #endif
     
     //Primera iteraccion
-    nRF_data.command = nRF_CMD__VELOCITY;   //Se añade el comando de velocidad
+    nRF_data.command = nRF_CMD__VELOCITY;   //Se incluye el comando de velocidad
     marcha_prev = getPedal();
     nRF_data.auxiliar_data = marcha_prev;
     if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, osWaitForever) != osOK)   //Se añade a la cola de envio de RF
@@ -40,25 +45,34 @@ void thread__VelocityControl (void *no_argument)
             strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
             osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
         }
-        #else
-        marcha = getPedal();
-        if (marcha != marcha_prev)
-        {
-            nRF_data.command = nRF_CMD__VELOCITY;
-            nRF_data.auxiliar_data = (marcha) ;
-            marcha_prev = marcha;
-            
-            //printf("Marcha: %d\n", marcha);
-            if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, osWaitForever) != osOK)   //Se añade a la cola de envio de RF
+        #else 
+            marcha = getPedal();
+            if (marcha != marcha_prev)
             {
-                strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
-                osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
-            }
+                nRF_data.command = nRF_CMD__VELOCITY;
+                nRF_data.auxiliar_data = (marcha) ;
+                marcha_prev = marcha;
 
-            //Se actualiza la informacion de Web
-            sprintf(marcha_S,"%02d", marcha);
-        }
-        osDelay(VELOCITY_REFRESH);
+                #ifndef TEST_SERVOS
+                //printf("Marcha: %d\n", marcha);
+                if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, osWaitForever) != osOK)   //Se añade a la cola de envio de RF
+                {
+                    strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
+                    osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
+                }
+                
+                //Se actualiza la informacion de Web
+                sprintf(marcha_S,"%02d", marcha);
+                
+                #else   //Prueba Servomotores conectado al mando (para medir frecuencia)
+                
+                //Se actualiza la informacion de Web
+                sprintf(marcha_S,"%02d", marcha);
+                
+                setMotorSpeed( (speed_marchas_t) marcha);
+            }
+            #endif
+            osDelay(VELOCITY_REFRESH);
         #endif
     }
 }
