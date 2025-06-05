@@ -129,7 +129,7 @@ static void initPinPA6(void){ // Pin salida PA6 TIM3
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 }
 
-// Función para establecer la velocidad del motor (usando PWM de 1000 a 2000)
+// Funcion para establecer la velocidad del motor (usando PWM de 1000 a 2000)
 /*| `speed` | `back_gear` | `pulse` |
 | ------- | ----------- | ------- |
 | 0       | false       | 1500    |
@@ -149,15 +149,15 @@ void setMotorSpeed(speed_marchas_t speed) {
 
     if (speed == MIN_VELOCITY) 
     {
-        // Vehículo parado
+        // Vehi�culo parado
         pulse = MIDDLE_DIRECTION_PWM;
     } else {
-        // Cálculo lineal de PWM entre MIDDLE y MAX o MIN según el modo
+        // Calculo lineal de PWM entre MIDDLE y MAX o MIN segun el modo
         if (app_coche_state == STATE__BACK_GEAR) { //BACK_GEAR REVISAR
-            // Reversa: MIDDLE → MIN
+            // Reversa: MIDDLE to MIN
             pulse = MIDDLE_DIRECTION_PWM - ((MIDDLE_DIRECTION_PWM - MIN_DIRECTION_PWM) * speed) / MAX_VELOCITY;
         } else {
-            // Avance: MIDDLE → MAX
+            // Avance: MIDDLE to MAX
             pulse = MIDDLE_DIRECTION_PWM + ((MAX_DIRECTION_PWM - MIDDLE_DIRECTION_PWM) * speed) / MAX_VELOCITY;
         }
     }
@@ -165,21 +165,22 @@ void setMotorSpeed(speed_marchas_t speed) {
     __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulse);
 }
 
+//Funciones para tests
 
-// Función para detener el motor (parada)
+// Funcion para detener el motor (parada)
 void stop_motor(void) {
   // El valor de PWM correspondiente a la parada (velocidad 3) es el punto medio
   uint16_t stopPulse = (MIN_DIRECTION_PWM + MAX_DIRECTION_PWM) / 2; // 1500us (parada)
   __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, stopPulse);
 }
 
-// Función para avanzar (máxima velocidad)
+// Funcion para avanzar (máxima velocidad)
 void move_forward(void) {
   // El valor de PWM correspondiente a la velocidad máxima (6) es 2000us
   __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, MAX_DIRECTION_PWM); // 2000us (avance máximo)
 }
 
-// Función para moverse hacia atrás (máxima velocidad en reversa)
+// Funcion para moverse hacia atrás (máxima velocidad en reversa)
 void move_reverse(void) {
   // El valor de PWM correspondiente a la velocidad máxima en reversa (0) es 1000us
   __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, MIN_DIRECTION_PWM); // 1000us (reversa máxima)

@@ -87,14 +87,6 @@ static void Error_Handler(void);
   * @param  None
   * @retval None
   */
-	
-//revisar
-//void LED_Init(void);
-//void RGB_mbed(void);
-//void LED_Init(void);
-//void config_pulsador(void);
-//extern I2C_HandleTypeDef hi2c2;
-//void InitVL53(void); 
 
 int main(void)
 {
@@ -115,15 +107,6 @@ int main(void)
   SystemCoreClockUpdate();
 
   /* Add your application code here*/
-       
- //revisar (no se hace aqui, se hace abajo)
-    //meter RGB en caso de querer usarse
-	//RGB_mbed();
-    //meter pulsador 
-     //init_pulsador()
-     //inicializa I2C2 (meter donde corresponda - en el init del sensor)
-	 //MX_I2C2_Init();
-	 //HAL_I2C_MspInit(&hi2c2);	
 	 
 #ifdef RTE_CMSIS_RTOS2
   /* Initialize CMSIS-RTOS2 */

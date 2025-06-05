@@ -16,8 +16,8 @@
 #include "flash.h"
 
 #define NUM_MAX_MUESTRA_CONSUMO     10      //Buffer circular de consumo (memoria flash)
-#define MIN_DISTANCE                500    //Definir el maximo valor para la distancia
-#define MAX_DISTANCE                0       //Definir el minimo valor para la distancia
+#define MAX_RANGE_DISTANCE          500     //Definir el valor en sensor que significa minima distancia
+#define MIN_RANGE_DISTANCE          0       //Definir el valor en sensor que significa maxima distancia
 #define DISTANCE_SENSIBILITY        25
 
 //Variables globales
@@ -45,7 +45,7 @@ void Send_CMD_LowPower(void);
 //Funcion principal - control del automata y el LCD
 void thread__app_main_control (void *no_argument)
 {
-    float consumo_rx;
+    float consumo_rx;   //Variable de consumo tipo float (el consumo se recibe como uint con 3 decimales, aqui se guarda como valor float para web)
     uint32_t flags;
     float medidas_consumo[NUM_MAX_MUESTRA_CONSUMO];
     float *medidas_consumo_ptr = medidas_consumo;
@@ -91,7 +91,7 @@ void thread__app_main_control (void *no_argument)
         if (flags & FLAG__CONSUMO_EN_FLASH)
         {
             //revisarNAK guardar consumo en memoria flash
-            consumo_rx = (float) ((float) nRF_data_received.consumo / 1000);
+            consumo_rx = (float) ((float) nRF_data_received_mando.consumo / 1000); //Se divide entre 1000 porque se manda como uint con 3 decimales (es decir, en tx se multiplico por 1000 para quitar el float)
                  
             //Actualizamos Web
             sprintf(consumo_S, "%.2f", consumo_rx);
@@ -123,7 +123,7 @@ void thread__app_main_control (void *no_argument)
 
             state_error = true;
             LCD_write(LCD_LINE__ONE, "ERROR...");
-            LCD_write(LCD_LINE__TWO, detalleError); //revisarNAK aï¿½adir detalle de error
+            LCD_write(LCD_LINE__TWO, detalleError); //detalleError es una variable global que se actualiza siempre que haya un error (prevalece el ultimo)
         }
         
         if (flags & FLAG__PRESS_CENTER) //Se sale del estado de error tras presionar el boton central - se vuelve al inicio
@@ -197,7 +197,7 @@ void thread__app_main_control (void *no_argument)
                         
                         //Enviamos el estado al coche para habilitar/deshabilitar controles
                         Send_CMD_StateChange(app_state);
-                        Send_CMD_LowPower();
+                        Send_CMD_LowPower();    //revisar Creo que no hace falta (ya se hace arriba)
 
                         //Mostramos estado inicial de LEDs
                         leds_activate_mask &= ~GET_MASK_LED(LED_GREEN);
@@ -230,23 +230,23 @@ void thread__app_main_control (void *no_argument)
                         //Mostramos por el LCD que estamos en modo de bajo consumo
                         LCD_write (1, "State: Back Gear");
                         
-                        //Creamos el hilo de solicitud de distancia cada x tiempo que mandarï¿½ comando de solicitud de distancia revisarNAK revisarMSP
+                        //Creamos el hilo de solicitud de distancia cada x tiempo que mandara comando de solicitud de distancia
                         Init_askDistanceControl();
                         
                         state_enter = false;
                     }
                     
-                    osDelay (1000); //Espera 2 segundos para visualizar que se entrï¿½ al estado de marcha atrï¿½s
+                    osDelay (1000); //Espera 2 segundos para visualizar que se entra al estado de marcha atras
                     if (flags & FLAG__MOSTRAR_DISTANCIA) //Flag enviado desde nRF TX tras recibir la distancia
                     {
                         //Se muestra la distancia por el LCD
-                        if (lineas_prev != (lineas_actuales = calcularLineasDistancia(nRF_data_received.distancia)))
+                        if (lineas_prev != (lineas_actuales = calcularLineasDistancia(nRF_data_received_mando.distancia)))
                         {
                             LCD_mostrarLineasDistancia(lineas_actuales);
                             lineas_prev = lineas_actuales;
                         }
                         //Se pasa distancia por Web
-                        sprintf(distancia_S,"%02d", nRF_data_received.distancia);
+                        sprintf(distancia_S,"%02d", nRF_data_received_mando.distancia);
 
                     }
                     break;
@@ -316,40 +316,51 @@ void thread__app_main_control (void *no_argument)
 void Init_AllAppThreads(void)
 {
     
-    /* Init all threads here*/
+    /* Init all threads here. Nota: todos los hilos son de control. Luego ademas hay ficheros de driver que incluye cada hilo*/
     id_thread__app_main = osThreadNew(thread__app_main_control, NULL, NULL);
-    Init_RF_TX();
-    Init_LedsControl();
-    Init_RTC_Update();
-    Init_JoystickControl();
-    Init_VelocityCointrol();
-    Init_DirectionControl();
-    Init_FlashControl();
-    //osThreadNew(app_main, NULL, &app_main_attr); WEB
-    netInitialize();
+    if (id_thread__app_main == NULL)
+    {
+        //Error (no se puede gestionar como normalmente porque no hay app main)
+        // strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
+        // osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
+        SystemReset(); //revisar
+    }
+    Init_RF_TX();               //Radiofrecuencia
+    Init_LedsControl();         //Leds
+    Init_RTC_Update();          //RTC
+    Init_JoystickControl();     //Joystick
+    Init_VelocityCointrol();    //Velocidad / presion
+    Init_DirectionControl();    //Direccion / marchas
+    Init_FlashControl();        //Flash
+    netInitialize();            //Web
 }
 
+//revisar comentar mejor, no entiendo un papo
+//Funcion que calcula las lineas necesarias en display segun la distancia obtenida
+/* La distancia funciona tal que:
+ * Cuando mayor sea el numero -> mas cerca esta*/
 lineas_distancia_t calcularLineasDistancia(uint16_t distancia)
 {
     float tramo;
     uint32_t lineas;
     
-    // Si estï¿½ muy cerca, sin lï¿½neas
-    if (distancia >= (MIN_DISTANCE - DISTANCE_SENSIBILITY))
+    // Si esta muy cerca, sin lineas
+    if (distancia >= (MAX_RANGE_DISTANCE - DISTANCE_SENSIBILITY)) //distancia >= (500-25)
         return LCD_LINE__NO_LINE;
 
-    // Si estï¿½ muy lejos, todas las lï¿½neas
-    if (distancia <= (MAX_DISTANCE + DISTANCE_SENSIBILITY))
+    // Si esta muy lejos, todas las lineas
+    if (distancia <= (MIN_RANGE_DISTANCE + DISTANCE_SENSIBILITY)) //distancia <= (0+25)
         return LCD_MAX_LINES;
 
     //Calculamos el tramo
-    tramo = (MIN_DISTANCE - MAX_DISTANCE) / (LCD_MAX_LINES - LCD_MIN_LINES);
+    tramo = (float) (MAX_RANGE_DISTANCE - MIN_RANGE_DISTANCE) / (LCD_MAX_LINES - LCD_MIN_LINES); //tramo = (500-0) / (3-0) = 166.67
     
-    //Calculamos las lineas
-    lineas = ((distancia - MAX_DISTANCE) / tramo);
-
-    //Se invierte
-    lineas = (LCD_MAX_LINES - lineas);
+    //Calculamos el tramo en el que se encuentra
+    lineas = ((distancia - MIN_RANGE_DISTANCE) / tramo); //Ej distancia = 300; lineas = (300-0)/166.67 = 1.79 = 1
+                                                    //Ej distancia = 100; lineas = 100/166.67 = 0.6 = 0
+    //Se invierte para que menor distancia implique más lineas
+    lineas = (LCD_MAX_LINES - lineas); //lineas = 3-1 = 2
+                                        //lineas = 3
     
     return (lineas_distancia_t)lineas;
 }
@@ -358,17 +369,17 @@ lineas_distancia_t calcularLineasDistancia(uint16_t distancia)
 //Utilizado para habilitar y deshabilitar controles en el coche (distancia)
 void Send_CMD_StateChange (app_state_t app_state)
 {
-    if (app_state == APP_STAGE__BACK_GEAR)
+    if (app_state == APP_STAGE__BACK_GEAR)  //Modo marcha atras. (empleado para saber el sentido de los servos y desactivar distancia)
     {
         nRF_data.command = nRF_CMD__BACK_GEAR_MODE;
     }
-    else if (app_state == APP_STAGE__LOW_POWER)
+    else if (app_state == APP_STAGE__LOW_POWER) //Modo bajo consumo
     {
         nRF_data.command = nRF_CMD__LOW_POWER;
     }
-    else
+    else    //Cualquier otro estado implica modo normal de funcionamiento en coche
     {
-        nRF_data.command = nRF_CMD__NORMAL_MODE;
+        nRF_data.command = nRF_CMD__NORMAL_MODE; //Modo normal de funcionamiento. (empleado para saber el sentido de los servos y desactivar distancia)
     }
     if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, 1000) != osOK)
     {
@@ -377,7 +388,7 @@ void Send_CMD_StateChange (app_state_t app_state)
     }
 }
 
-void Send_CMD_LowPower(void)
+void Send_CMD_LowPower(void) //revisar creo que se hace arriba
 {
     nRF_data.command = nRF_CMD__LOW_POWER;
     if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, 1000) != osOK)

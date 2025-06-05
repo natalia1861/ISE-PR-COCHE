@@ -71,4 +71,8 @@ void Init_AllAppThreads (void)
     Init_SensorDistancia();
     Init_RF_RX();
     id_thread__app_main = osThreadNew(thread__app_main, NULL, NULL);
+    // if (id_thread__app_main == NULL) revisar
+    // {
+        
+    // }
 }

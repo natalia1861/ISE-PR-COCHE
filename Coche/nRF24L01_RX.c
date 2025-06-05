@@ -34,7 +34,7 @@
 #include "consumo_control.h"
 
 
-/* Receiver address - direccion con la que se comunican mando y coche*/ 
+/* Transmission address - direccion con la que envia el mando, por consiguiente, direccion de recepcion del coche (deben coincidir)*/ 
 uint8_t TxAddress[] = {
 	0xE7,
 	0xE7,
@@ -42,7 +42,7 @@ uint8_t TxAddress[] = {
 	0xE7,
 	0xE7
 };
-/* My address */
+/* My address */    //NO SE USA
 // uint8_t MyAddress[] = {
 // 	0x7E,
 // 	0x7E,
@@ -68,7 +68,7 @@ TM_NRF24L01_Transmit_Status_t transmissionStatus;
 TM_NRF24L01_IRQ_t NRF_IRQ;
 
 //nRF Data
-nRF_data_received_rx_t nRF_data_received_rx;
+nRF_data_received_coche_t nRF_data_received_coche;
 
 //DEBUG variables
 HAL_EXTI_Result_t status_IRQ = HAL_EXTI_Result_Not_Defined;
@@ -95,6 +95,7 @@ void thread__transmissor_RF_RX(void *argument)
 	/* Set TX address, and RX Pipe 0 address, 5 bytes */
 	TM_NRF24L01_SetTxAddress(TxAddress);    // Se configura la dirección para recibir (RX_ADDR_P0) por la pipe0, que también se usará para devolver ACKs con o sin payload.
                                             // En modo PRX (recepcion), TX_ADDR no se utiliza para enviar ACKs, por lo que puede omitirse en el coche, ya que nunca entra en modo PTX (transmision).
+                                            // En modo PTX (transmision), TX_ADDR es utilizado para enviar la informacion y RX_ADDR_P0 para recibirla por ACKs. Por lo que ambas deben coincidir (en el mando).
 	
 	/* Enable interrupts for NRF24L01+ IRQ pin */
     init_nRF_IRQ();
@@ -118,8 +119,8 @@ void thread__transmissor_RF_RX(void *argument)
             TM_NRF24L01_Read_Interrupts(&NRF_IRQ);
 		
             /* If data is ready on NRF24L01+*/
-            //Si en modo RX: se activará si recibe datos normales. 
-            //Si en modo TX: se activará si recibe ACK Payload .
+                //Si en modo RX: se activará si recibe correctamente datos normales (coche)
+                //Si en modo TX: se activará si recibe correctamente ACK Payload (mando)
             if (NRF_IRQ.F.DataReady) 
             {
                 printf("\nIRQ: Data Ready IRQ\n");
@@ -139,13 +140,13 @@ void thread__transmissor_RF_RX(void *argument)
                         osThreadFlagsSet(id_thread__app_main, FLAG_STATE__LOW_POWER);
                         break;
                     case nRF_CMD__VELOCITY:         //Comando para cambiar velocidad de los servos
-                        nRF_data_received_rx.velocidad = GET_NRF_AUX_DATA(dataIn); //Marchas. 0-2
-                        setMotorSpeed((speed_marchas_t) nRF_data_received_rx.velocidad);
+                        nRF_data_received_coche.velocidad = GET_NRF_AUX_DATA(dataIn); //Marchas. 0-2
+                        setMotorSpeed((speed_marchas_t) nRF_data_received_coche.velocidad);
                         printf("Comando velocidad\n");
                         break;
                     case nRF_CMD__DIRECTION:        //Comando para cambiar la direccion del servo delantero
-                        nRF_data_received_rx.direccion = GET_NRF_AUX_DATA(dataIn);
-                        setServoAngle((float) ((float) nRF_data_received_rx.direccion / 100)); //El valor se obtiene como un float representado por uint16_t con 2 decimales
+                        nRF_data_received_coche.direccion = GET_NRF_AUX_DATA(dataIn);
+                        setServoAngle((float) ((float) nRF_data_received_coche.direccion / 100)); //El valor se obtiene como un float representado por uint16_t con 2 decimales
                         printf("Comando direccion\n");
                         break;
 
@@ -233,4 +234,8 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin) {
 void Init_RF_RX(void) {
     INITIALIZE_LEDS();
     id_thread__RF_RX = osThreadNew (thread__transmissor_RF_RX, NULL, NULL);
+    if (id_thread__RF_RX == NULL)
+    {
+        //Error revisar como mandar a RF
+    }
 }

@@ -24,5 +24,9 @@ void Init_GetConsumption(void)
     if (id_thread__GetConsumption == NULL)
     {
         id_thread__GetConsumption = osThreadNew(thread__GetConsumption, NULL, NULL);
+        if (id_thread__GetConsumption == NULL)
+        {
+            //Error revisar como mandar a RF
+        }
     }
 }

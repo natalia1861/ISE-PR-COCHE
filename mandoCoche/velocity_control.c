@@ -7,7 +7,7 @@
 #include "app_main.h"
 #include "adc.h"
 
-#define VELOCITY_REFRESH                    100
+#define VELOCITY_REFRESH                    100         //La velocidad / presion / marchas se mira cada 100ms para ver si ha cambiado el valor
 
 osThreadId_t id_thread__velocityControl;
 char marcha_S[80]; //Variable para compartir en web

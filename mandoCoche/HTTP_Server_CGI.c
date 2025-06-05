@@ -22,7 +22,7 @@
 #pragma  clang diagnostic ignored "-Wformat-nonliteral"
 #endif
 
-//SERVIDOR
+//SERVIDOR REVISAR FALTA COMENTAR
 extern char hora[80];
 extern char fecha[80];
 extern char marcha_S[80];

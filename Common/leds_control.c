@@ -34,5 +34,8 @@ void thread__ledsControl (void *no_argument)
 
 void Init_LedsControl(void)
 {
-    osThreadNew(thread__ledsControl, NULL, NULL);
+    if (osThreadNew(thread__ledsControl, NULL, NULL) == NULL)
+    {
+        //Error revisar como mandar a RF
+    }
 }

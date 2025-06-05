@@ -4,21 +4,23 @@
 #include "tm_stm32_nrf24l01.h"
 #include "app_main.h"
 
-#define GET_DISTANCE_TIME           200
+#define GET_DISTANCE_TIME           200     //La distancia se pregunta al coche cada 200ms
 
-osThreadId_t id_thread__askDistanceControl = NULL; //revisar NAK falta comentar
+osThreadId_t id_thread__askDistanceControl = NULL; 
 
 void thread__askDistanceControl (void *no_argument)
 {
-    nRF_data_transmitted_t nRF_data;
+    nRF_data_transmitted_t nRF_data; //Mensaje hacia RF para que envie el comando con los datos
     while (1)
     {
+        //Manda comando de preguntar consumo al coche
         nRF_data.command = nRF_CMD__ASK_DISTANCE;
         if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, 1000) != osOK)
         {
             strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
             osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
         }
+        //Manda comando para recibir el consumo del coche
         nRF_data.command = nRF_CMD__RECEIVE_DISTANCE;
         if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, 1000) != osOK)
         {
@@ -29,7 +31,7 @@ void thread__askDistanceControl (void *no_argument)
     }
 }
 
-void Init_askDistanceControl (void)
+void Init_askDistanceControl (void) //Comienza el control de pregunta / respuesta
 {
     if (id_thread__askDistanceControl == NULL)
         id_thread__askDistanceControl = osThreadNew(thread__askDistanceControl, NULL, NULL);
@@ -40,7 +42,7 @@ void Init_askDistanceControl (void)
     }
 }
 
-void Stop_askDistanceControl (void)
+void Stop_askDistanceControl (void) //Para el control de pregunta / respuesta
 {
     if (id_thread__askDistanceControl != NULL)
     {

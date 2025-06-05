@@ -34,6 +34,8 @@
 // - 1: Buscar abajo, donde estan definidos los comandos en codigo, linea: 199
 // - 2. Buscar en datasheet, pagina 46
 
+//Si se quiere saber algo acerca de las funciones, MIRAR EL .H
+
 /* NRF24L01+ registers*/
 #define NRF24L01_REG_CONFIG			0x00	//Configuration Register
 #define NRF24L01_REG_EN_AA			0x01	//Enable Auto Acknowledgment Function
@@ -151,7 +153,7 @@
 #define NRF24L01_RX_DR			6  //Data ready RX FIFO interrupt. Asserted when new data arrives in RX FIFO
 #define NRF24L01_TX_DS			5  //Data sent TX FIFO interrupt. Asserted when packet transmitted on TX. If AUTO_ACK is activated, this bit is set high only when ACK is received.
 #define NRF24L01_MAX_RT			4  //Maximum number of TX retransmits interrupt. 
-#define NRF24L01_RX_P_NO		1  //3 bits. Data pipe number for the payload avaiable for reading from RX FIFO.
+#define NRF24L01_RX_P_NO		1  //3 bits. Data pipe number for the payload avaiable from RX FIFO.
 #define NRF24L01_TX_FULL		0  //TX FIFO full flag. 1: FULL, 0: Available locations in TX FIFO.
 
 /* Transmit observe register - NRF24L01_REG_OBSERVE_TX*/
@@ -283,7 +285,6 @@ uint8_t TM_NRF24L01_Init(uint8_t channel, uint8_t payload_size) {
 	
 	/* Channel select */
 	TM_NRF24L01_SetChannel(channel);
-	
 	
 	/* Set RF settings (2mbps, output power) */
 	TM_NRF24L01_SetRF(TM_NRF24L01_Struct.DataRate, TM_NRF24L01_Struct.OutPwr);
@@ -440,7 +441,6 @@ void TM_NRF24L01_PowerDown(void) {
 /* Write TX-payload: 1 ? 32 bytes. A write operation
  * always starts at byte 0 used in TX payload.*/
 
- //revisar_NAK quitar los printf
 void TM_NRF24L01_Transmit(uint8_t *data, uint8_t lenght) {
     #ifndef ACK_PAY_EN
 	lenght = TM_NRF24L01_Struct.PayloadSize;

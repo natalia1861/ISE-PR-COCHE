@@ -30,21 +30,21 @@ extern bool LED_Rrun;	//referenciado a HTTP_Server.c
 extern bool LED_Grun;	//referenciado a HTTP_Server.c
 
 /* My address */
-uint8_t MyAddress[] = {
+uint8_t MyAddress[] = { //Address de envio y recepcion por pipe 0  del mando (para enviar y recibir los ack) -> debe coincidir con la de recepcion del coche
 	0xE7,
 	0xE7,
 	0xE7,
 	0xE7,
 	0xE7
 };
-/* Receiver address */
-uint8_t TxAddress[] = {
-	0x7E,
-	0x7E,
-	0x7E,
-	0x7E,
-	0x7E
-};
+/* Receiver address */  //NO SE USA
+// uint8_t TxAddress[] = {
+// 	0x7E,
+// 	0x7E,
+// 	0x7E,
+// 	0x7E,
+// 	0x7E
+// };
 
 //Hilos y timers
 osThreadId_t id_thread__SendData_RF_TX = NULL;
@@ -68,7 +68,7 @@ uint8_t dataIn[nRF_DATA_LENGTH] = {0};
 TM_NRF24L01_Transmit_Status_t transmissionStatus;
 TM_NRF24L01_IRQ_t NRF_IRQ;
 
-nRF_data_received_t nRF_data_received; //revisar cambiar nombre estructura con tx
+nRF_data_received_mando_t nRF_data_received_mando;
 
 void thread__SendData_RF_TX(void *argument) 
 {
@@ -89,7 +89,9 @@ void thread__SendData_RF_TX(void *argument)
 	//TM_NRF24L01_SetMyAddress(MyAddress); //Se utilizaba para tener una pipe por donde transmitia el PTX y otra por donde transmitia PRX
 	
 	/* Set TX address, 5 bytes */
-	TM_NRF24L01_SetTxAddress(MyAddress);  //Pipe 0
+	TM_NRF24L01_SetTxAddress(MyAddress);  // Se configura la dirección para recibir (RX_ADDR_P0) por la pipe0, que también se usará para devolver ACKs con o sin payload.
+                                            // En modo PRX (recepcion), TX_ADDR no se utiliza para enviar ACKs, por lo que puede omitirse en el coche, ya que nunca entra en modo PTX (transmision).
+                                            // En modo PTX (transmision), TX_ADDR es utilizado para enviar la informacion y RX_ADDR_P0 para recibirla por ACKs. Por lo que ambas deben coincidir (en el mando).
 	
 	/* Attach interrupt for NRF IRQ pin */
     init_nRF_IRQ();
@@ -225,18 +227,18 @@ void thread__GetData_RF_TX (void *no_argument)
                 
                 /* Mandamos flag de ERROR */
                 #ifndef TEST_RF //Aplicacion
-                strncpy(detalleError, "RF Lost max ACK", sizeof(detalleError) - 1);
-                osThreadFlagsSet(id_thread__app_main, FLAG__ERROR); 
+                    strncpy(detalleError, "RF Lost max ACK", sizeof(detalleError) - 1);
+                    osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);                     
                 //Error permanente. Por mucho que lo aceptes, se volverá a generar (hasta que la conexion vuelva).
                 // Basicamente porque esta todo el rato intentando transmitir entonces se esta generando todo el rato de nuevo
                 #endif
             }
             
             /* If data is ready on NRF24L01+*/
-                //Si en modo RX: se activara si envia correctamente el ACK (coche)
-                //Si en modo TX: se activara si recibe ACK Payload. (mando)
-            if (NRF_IRQ.F.DataReady) 
-            { //una vez se fue a RX, si recibe datos
+                //Si en modo RX: se activará si recibe correctamente datos normales (coche)
+                //Si en modo TX: se activará si recibe correctamente ACK Payload (mando)
+            if (NRF_IRQ.F.DataReady)  //Recibo ACKs de payload
+            {
                 printf("IRQ: Data Ready IRQ\n");
                 //printf("STATUS FIFO before read %d\n", TM_NRF24L01_GetFIFOStatus());
                 //printf("FIFO RX before read: %d\n", TM_NRF24L01_RxFifoEmpty());
@@ -247,21 +249,21 @@ void thread__GetData_RF_TX (void *no_argument)
                 
                 #ifndef TEST_RF //Aplicacion
                 
-                    if (GET_NRF_COMMAND(dataIn) == nRF_CMD__ASK_DISTANCE)
+                    if (GET_NRF_COMMAND(dataIn) == nRF_CMD__ASK_DISTANCE) //Comando de "pregunte por distancia" - es la respuesta con los datos de distancia
                     {
                         //Obtenemos el dato de distancia
-                        nRF_data_received.distancia = (GET_NRF_AUX_DATA_HIGH(dataIn) << 8) | (GET_NRF_AUX_DATA_LOW(dataIn));
+                        nRF_data_received_mando.distancia = GET_NRF_AUX_DATA(dataIn);
                         
                         //Mandamos flag a app_main de que la distancia fue actualizada para mostrarse por lcd y pitido (en caso de que cambie)
                         osThreadFlagsSet(id_thread__app_main, FLAG__MOSTRAR_DISTANCIA);
                     }
                     
-                    if (GET_NRF_COMMAND(dataIn) == nRF_CMD__ASK_CONSUMPTION)
+                    if (GET_NRF_COMMAND(dataIn) == nRF_CMD__ASK_CONSUMPTION) //Comando de "pregunte por consumo" - es la respuesta con los datos de consumo
                     {
-                        //Obtenemos el dato de distancia
-                        nRF_data_received.consumo = (GET_NRF_AUX_DATA_HIGH(dataIn) << 8) | (GET_NRF_AUX_DATA_LOW(dataIn));
+                        //Obtenemos el dato de consumo
+                        nRF_data_received_mando.consumo = GET_NRF_AUX_DATA(dataIn);
                         
-                        //Mandamos flag a app_main de que el consumo fue actualizado para guardarse en flash
+                        //Mandamos flag a app_main de que el consumo fue actualizado para guardarse en flash y mandarse a web
                         osThreadFlagsSet(id_thread__app_main, FLAG__CONSUMO_EN_FLASH);
                     }
                 
@@ -278,9 +280,9 @@ void thread__GetData_RF_TX (void *no_argument)
 }
 
 void Init_RF_TX(void) {
-    id_queue__nRF_TX_Data = osMessageQueueNew(MAX_RF_MESS_QUEUE, sizeof(nRF_data_transmitted_t), NULL);
-    id_thread__SendData_RF_TX = osThreadNew (thread__SendData_RF_TX, NULL, NULL);             //Envio de datos
-    id_thread__GetData_RF_TX = osThreadNew (thread__GetData_RF_TX, NULL, NULL);
+    id_queue__nRF_TX_Data = osMessageQueueNew(MAX_RF_MESS_QUEUE, sizeof(nRF_data_transmitted_t), NULL);     //Cola de mensajes para gestionar el envio de RF
+    id_thread__SendData_RF_TX = osThreadNew (thread__SendData_RF_TX, NULL, NULL);             //Hilo para gestionar el envio de datos
+    id_thread__GetData_RF_TX = osThreadNew (thread__GetData_RF_TX, NULL, NULL);                //Hilo para gestionar la recepcion de datos
 }
 
 

@@ -39,6 +39,10 @@ void Init_DistanceControl (void)
     if (id_thread__DistanceControl == NULL)
     {
        id_thread__DistanceControl = osThreadNew(thread__distance_control, NULL, NULL);
+       if (id_thread__DistanceControl == NULL)
+       {
+            //Error revisar como mandar a RF
+       }
     }
 }
 
