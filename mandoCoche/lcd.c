@@ -310,6 +310,7 @@ void LCD_update_L4(void){
  }
 }
 
+//FUNCIONES DE CONTROL DE LCD PARA MODO MARCHA ATRAS
 void rellenarLCD_L1(void){
 	for(int i= 0; i<128; i++){
     buffer[i] = 0xFF;
@@ -362,6 +363,7 @@ void vaciarLCD_L4(void){
 	LCD_update_L4();
 }
 
+//Funcion que muestra las lineas en modo marcha atras
 void LCD_mostrarLineasDistancia (lineas_distancia_t lineas)
 {
     switch (lineas)
@@ -390,12 +392,13 @@ void LCD_mostrarLineasDistancia (lineas_distancia_t lineas)
             rellenarLCD_L3();
             rellenarLCD_L4();
             break;
-        case LCD_LINE__MAX:
+        case LCD_LINE__MAX: //No va a entrar
             printf("Error: numero de lineas mayor que el maximo permitido");
             break;
     }
 }
 
+//Funcion para mostrar el consumo por pantalla en la linea 2
 void LCD_mostrarConsumo(uint8_t muestra, float consumo)
 {
     char linea2[20];

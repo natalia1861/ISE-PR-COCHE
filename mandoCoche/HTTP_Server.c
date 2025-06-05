@@ -23,6 +23,7 @@
 #define FLAG_SERVER 0x01
 #define FLAG_RTC 0x02
 
+//REVISAR FALTA COMENTAR
 //#include "Board_Buttons.h"              // ::Board Support:Buttons
 //#include "Board_ADC.h"                  // ::Board Support:A/D Converter
 //#include "Board_GLCD.h"                 // ::Board Support:Graphic LCD

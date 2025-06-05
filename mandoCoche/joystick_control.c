@@ -25,14 +25,14 @@ void thread__Joystick_control (void *no_argument)
     for (;;)
     {
         flags = osThreadFlagsWait(FLAG_PULSACION | FLAG_FIN_REB | FLAG_PL, osFlagsWaitAny, osWaitForever);
-		if (flags & FLAG_PULSACION)
+		if (flags & FLAG_PULSACION) //Se ha detectado una interrupcion de algun pin de joystick
         {
             osTimerStart(id_timer_rebotes, 50);
             osTimerStart(id_timer_pulsacion_larga, 1000);
         }
-		if (flags & FLAG_FIN_REB)
+		if (flags & FLAG_FIN_REB)   //Se ha terminado el tiempo para considerar rebotes
         {
-			if (HAL_GPIO_ReadPin(joy_pin_pulsado.port, joy_pin_pulsado.pin) == GPIO_PIN_RESET) 
+			if (HAL_GPIO_ReadPin(joy_pin_pulsado.port, joy_pin_pulsado.pin) == GPIO_PIN_RESET)  //Se mira el estado del pin
              {
 				switch (joy_pin_pulsado.pin) 
                 {
@@ -60,7 +60,7 @@ void thread__Joystick_control (void *no_argument)
                 osTimerStart(id_timer_rebotes, 50);
 			}
         }
-		if (flags & FLAG_PL) 
+		if (flags & FLAG_PL) //La pulsacion larga no se gestiona -> siempre es corta
         {
             //me da igual si es largo o corto realmente
             //msg_joy.largo_corto = 1;

@@ -6,11 +6,13 @@
  Datos tecnicos:
  - El servomor funciona con una frecuencia de 50Hz
  - Para controlarlo, se va cambiando el periodo del pulso
-Izquierda - 2ms (180ยบ) Centro - 1.5ms (90ยบ) Izquierda 1ms (0ยบ)
+Servomotor de direccion (180) -> Izquierda - 2ms (180บ) Centro - 1.5ms (90บ) Izquierda 1ms (0บ)
+Servomotor de velocidad (360) -> Girar hacia un lado max -> 2ms. Parado -> 1.5ms. Girar hacia el otro lado max -> 1ms
+
  */
  
 //valores minimos y maximos que debera tener el duty segun el period configurado en PWM
-#define MIN_DIRECTION_PWM               1000
+#define MIN_DIRECTION_PWM               1000    //Estos valores los obtenemos tras configurar el timer, ver funcion initTim1PWM
 #define MAX_DIRECTION_PWM               2000
 #define MIDDLE_DIRECTION_PWM            ((MIN_DIRECTION_PWM + MAX_DIRECTION_PWM)/2)
 
@@ -214,6 +216,7 @@ void setMotorSpeed(speed_marchas_t speed) {
     __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_4, pulse_right); //Se actualiza la rueda derecha
 }
 
+//Funciones para tests
 
 // Funcion para detener el motor (parada) - no se usa
 void stop_motor(void) {

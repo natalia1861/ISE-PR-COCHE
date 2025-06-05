@@ -46,31 +46,31 @@ void init_Joystick(void)
     
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
-    //UP 
+    //UP PB10
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   GPIO_InitStruct.Pin = GPIO_PIN_10;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);  
   
-    //RIGHT 
+    //RIGHT PB11
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   GPIO_InitStruct.Pin = GPIO_PIN_11;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct); 
 
-    //DOWN
+    //DOWN PF12
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   GPIO_InitStruct.Pin = GPIO_PIN_12;
   HAL_GPIO_Init(GPIOF, &GPIO_InitStruct); 
   
-    //LEFT
+    //LEFT PG14
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   GPIO_InitStruct.Pin = GPIO_PIN_14;
   HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
   
-    //CENTER
+    //CENTER PE15
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   GPIO_InitStruct.Pin = GPIO_PIN_15;
@@ -78,7 +78,7 @@ void init_Joystick(void)
 }
 
 void EXTI15_10_IRQHandler(void) {
-    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_10);
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_10);
 	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_11);
 	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_12);
 	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_13);
@@ -90,12 +90,12 @@ void EXTI3_IRQHandler(void) {
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
-  if (GPIO_Pin == GPIO_PIN_3) //Llamada a callback de nRF
+  if (GPIO_Pin == GPIO_PIN_3) //PG3 - RF IRQ
   {
     HAL_GPIO_EXTI_Callback_NRF(GPIO_Pin);
   }
   
-  if(GPIO_Pin==GPIO_PIN_13) //Boton azul
+  if(GPIO_Pin == GPIO_PIN_13) //PC13 - Boton azul
   {
     //*Mandamos comando para despertar al microcontrolador del modo bajo consumo*/
     osThreadFlagsSet(id_thread__app_main, FLAG__ENTER_LOW_POWER);

@@ -9,6 +9,7 @@ void thread__ledsControl (void *no_argument)
     INITIALIZE_LEDS();
     for(;;)
     {
+        //Se emplea una mascara global para ir actualizando el estado de los LEDs
         if (leds_activate_mask & (GET_MASK_LED(LED_GREEN)))
         {
             LED_GREEN_ON();
@@ -33,5 +34,8 @@ void thread__ledsControl (void *no_argument)
 
 void Init_LedsControl(void)
 {
-    osThreadNew(thread__ledsControl, NULL, NULL);
+    if (osThreadNew(thread__ledsControl, NULL, NULL) == NULL)
+    {
+        //Error revisar como mandar a RF
+    }
 }

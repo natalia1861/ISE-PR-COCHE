@@ -18,6 +18,7 @@
   * @retval None
   */
  
+//Definiciones para las marchas del pedal segun el valor recibido del ADC
 #define NUM_MIN_MARCHAS     ADC_MARCHA_0
 #define NUM_MAX_MARCHAS     ADC_MARCHA_2
 
@@ -208,7 +209,7 @@ marchas_t getPedal(void)
     // Normalizamos el voltaje al rango de tramos: en nuestro ejemplo: ((1.5 - 0)/1.65 = 0.9+0.5 = 1.4) -> marcha calculada = 1
     marcha_calculada = (uint32_t)(((voltios_Pedal - MIN_VOLTIOS_ADC) / tramo) + 0.5f); //sumamos 0.5 para aproximar siempre hacia arriba
 
-    // Invertimos el �ndice de la marcha (2-1 = 1) -> marcha 1
+    // Invertimos el indice de la marcha (2-1 = 1) -> marcha 1
     marcha = (marchas_t)((NUM_MAX_MARCHAS) - marcha_calculada);
 
     return marcha;

@@ -10,7 +10,7 @@ typedef struct
 {
     uint16_t direccion;
     uint16_t velocidad;
-} nRF_data_received_rx_t;
+} nRF_data_received_coche_t;
 
 void Init_RF_RX(void);
 void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin);

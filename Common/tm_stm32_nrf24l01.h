@@ -206,6 +206,8 @@ typedef enum _TM_NRF24L01_OutputPower_t {
 
 
 /********************Application Data****************************************/
+
+//COMANDOS DE RF entre mando y coche. Si se quiere saber algo mas de alguno, buscar donde se usan
 typedef enum
 {
     nRF_CMD__DIRECTION = 0,
@@ -217,22 +219,25 @@ typedef enum
     nRF_CMD__BACK_GEAR_MODE,
     nRF_CMD__NORMAL_MODE,
     nRF_CMD__LOW_POWER
-} nRF_commands_t;               //uinr8_t max 255
+} nRF_commands_t;               //uint8_t max 255
 
+//Estructura del mensaje interno de RF
 typedef enum
 {
-    nRF_DATA__COMMAND = 0,
-    nRF_DATA__AUX_DATA_LOW = 1,
-    nRF_DATA__AUX_DATA_HIGH = 2,
-    nRF_DATA__MAX
+    nRF_DATA__COMMAND = 0,          //comando - Byte 0
+    nRF_DATA__AUX_DATA_LOW = 1,     //dato auxiliar bajo - Byte 1
+    nRF_DATA__AUX_DATA_HIGH = 2,    //dato auxiliar alto - Byte 2
+    nRF_DATA__MAX                   //nRF_DATA_LENGTH
 } nRF_data_struct_t;
+
+//Macros para obtener directamente a partir del mensaje recibido los datos necesarios
 
 #define GET_NRF_COMMAND(dataIn)             ((dataIn)[nRF_DATA__COMMAND])
 #define GET_NRF_AUX_DATA_LOW(dataIn)        ((dataIn)[nRF_DATA__AUX_DATA_LOW])
 #define GET_NRF_AUX_DATA_HIGH(dataIn)       ((dataIn)[nRF_DATA__AUX_DATA_HIGH])
 #define GET_NRF_AUX_DATA(dataIn)            ((GET_NRF_AUX_DATA_HIGH(dataIn) << 8) | (GET_NRF_AUX_DATA_LOW(dataIn)))
 
-#define nRF_DATA_LENGTH                     3
+#define nRF_DATA_LENGTH                     (nRF_DATA__MAX)
 
 /****************************************************************************/
 /**

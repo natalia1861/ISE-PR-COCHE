@@ -85,10 +85,22 @@ static void leer_mem_entera(void);              // Lee los primeros 50 bytes par
 static void test_write_read(void);              // Prueba de escritura y lectura en bucle
 
 //Init flash
-void Init_FlashControl (void) 
-{
-	id_flash_commands_queue = osMessageQueueNew(QUEUE_MAX, sizeof(MSGQUEUE_FLASH_t), NULL);
-	tid_flash = osThreadNew(Th_flash, NULL, NULL); 
+void Init_FlashControl (void) {
+  //const static osThreadAttr_t th_attr = {.stack_size = 7000};
+	if (id_flash_commands_queue != NULL)
+		id_flash_commands_queue = osMessageQueueNew(QUEUE_MAX, sizeof(MSGQUEUE_FLASH_t), NULL);
+	if (id_thread__flash != NULL)
+		id_thread__flash = osThreadNew(thread__flash, NULL, NULL); 
+	if (id_thread__flash == NULL)
+	{
+      	strncpy(detalleError, "MSG QUEUE ERROR FLASH", sizeof(detalleError) - 1);
+        osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
+	}
+	if (id_flash_commands_queue == NULL)
+	{
+       	strncpy(detalleError, "THREAD ERROR FLASH", sizeof(detalleError) - 1);
+       	osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
+	}
 }
 
 /**
@@ -96,8 +108,7 @@ void Init_FlashControl (void)
  * @param argument No usado.
  */
 
-static void Th_flash (void *argument) 
-{
+static void thread__flash (void *argument) {
   MSGQUEUE_FLASH_t flash_msg_rec;
   uint8_t posicion_consumo = 0;
 
@@ -206,11 +217,11 @@ static void SPI_callback(uint32_t event)
   uint32_t error;
     switch (event) {
     case ARM_SPI_EVENT_TRANSFER_COMPLETE:
-        error = osThreadFlagsSet(tid_flash, TRANSFER_COMPLETE);
+        error = osThreadFlagsSet(id_thread__flash, TRANSFER_COMPLETE);
         if(error == osFlagsErrorUnknown) {
           __breakpoint(0);
         } else if (error == osFlagsErrorParameter) {
-          osThreadFlagsSet(tid_flash, TRANSFER_COMPLETE);
+          osThreadFlagsSet(id_thread__flash, TRANSFER_COMPLETE);
           __breakpoint(0);
         } else if (error == osFlagsErrorResource) {
           __breakpoint(0);

@@ -68,10 +68,10 @@ void RTC_set_Time(uint8_t day, uint8_t month, uint8_t year, uint8_t hora, uint8_
 	
 	hor.Hours=hora;
 	hor.Minutes=minutos;
-    hor.Seconds=segundos;
-    hor.TimeFormat=RTC_HOURFORMAT_24;
+  hor.Seconds=segundos;
+  hor.TimeFormat=RTC_HOURFORMAT_24;
 	hor.DayLightSaving = RTC_DAYLIGHTSAVING_NONE ;
-    hor.StoreOperation = RTC_STOREOPERATION_RESET;
+  hor.StoreOperation = RTC_STOREOPERATION_RESET;
 	HAL_RTC_SetTime(&hrtc,&hor,RTC_FORMAT_BIN);
 }
 

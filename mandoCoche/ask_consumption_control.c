@@ -4,13 +4,13 @@
 #include "tm_stm32_nrf24l01.h"
 #include "app_main.h"
 
-#define GET_CONSUMPTION_TIME           1000
+#define GET_CONSUMPTION_TIME           1000     //El consumo se pide al coche cada segundo
 
 osThreadId_t id_thread__askConsumptionControl = NULL;
 
 void thread__askConsumptionControl (void *no_argument)
 {
-    nRF_data_transmitted_t nRF_data;
+    nRF_data_transmitted_t nRF_data; //Mensaje hacia RF para que envie el comando con los datos
     while (1)
     {
         //Manda comando de preguntar consumo al coche
@@ -31,13 +31,21 @@ void thread__askConsumptionControl (void *no_argument)
     }
 }
 
-void Init_askConsumptionControl (void)
+void Init_askConsumptionControl (void) //Comienza el control de pregunta / respuesta
 {
     if (id_thread__askConsumptionControl == NULL)
+    {
         id_thread__askConsumptionControl = osThreadNew(thread__askConsumptionControl, NULL, NULL);
+        if (id_thread__askConsumptionControl == NULL)
+        {
+            //Error
+            strncpy(detalleError, "THREAD CONSUMPTION ERROR", sizeof(detalleError) - 1);
+            osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
+        }
+    }
 }
 
-void Stop_askConsumptionControl (void)
+void Stop_askConsumptionControl (void)  //Para el control de pregunta / respuesta
 {
     if (id_thread__askConsumptionControl != NULL)
     {

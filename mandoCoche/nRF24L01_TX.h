@@ -11,16 +11,16 @@ typedef struct
 {
     uint8_t command;
     uint16_t auxiliar_data;
-} nRF_data_transmitted_t;
+} nRF_data_transmitted_t;    //Mensaje hacia RF para que envie el comando con los datos
 
 typedef struct
 {
     uint16_t distancia;
     uint16_t consumo;
-} nRF_data_received_t;
+} nRF_data_received_mando_t;
 
 extern osMessageQueueId_t id_queue__nRF_TX_Data;
-extern nRF_data_received_t nRF_data_received;
+extern nRF_data_received_mando_t nRF_data_received_mando;
 
 void Init_RF_TX(void);
 void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin);
