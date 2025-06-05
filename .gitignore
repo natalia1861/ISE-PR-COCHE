@@ -20,7 +20,6 @@ Objects/
 *.inp
 *.scvd
 *.dbgconf
-*.inc
 
 # Archivos específicos de Keil
 *.uvoptx
