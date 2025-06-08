@@ -33,13 +33,13 @@ void EXTI15_10_IRQHandler(void) {
 }
 
 void EXTI3_IRQHandler(void) {
-    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_3); //LIMPIA flag y llama a la callback
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_3); //Limpia flag y llama a la callback
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
   if(GPIO_Pin==GPIO_PIN_13)
   {
-    //Despertamos el micro por si acaso con el boton azul del coche
+    //Despertamos el micro por si acaso con el boton azul del coche. En principio se hace con comando de RF (el boton azul del mando).
     if(__HAL_PWR_GET_FLAG(PWR_FLAG_SB) != RESET)
     {
         __HAL_PWR_CLEAR_FLAG(PWR_FLAG_SB);

@@ -41,8 +41,8 @@ extern ARM_DRIVER_SPI Driver_SPI4;					//Driver SPI4 externo
 static ARM_DRIVER_SPI* SPIdrv = &Driver_SPI4;		//Puntero al driver usado
 
 //Hilo y cola
-static osThreadId_t id_thread__flash;           //ID del hilo de Flash
-osMessageQueueId_t id_flash_commands_queue;     //Cola de mensajes para comandos de flash
+static osThreadId_t id_thread__flash = NULL;           //ID del hilo de Flash
+osMessageQueueId_t id_flash_commands_queue = NULL;     //Cola de mensajes para comandos de flash
 static void thread__flash (void *argument);          //Declaracion del hilo
 
 
@@ -87,16 +87,16 @@ static void test_write_read(void);              // Prueba de escritura y lectura
 //Init flash
 void Init_FlashControl (void) {
   //const static osThreadAttr_t th_attr = {.stack_size = 7000};
-	if (id_flash_commands_queue != NULL)
+	if (id_flash_commands_queue == NULL)
 		id_flash_commands_queue = osMessageQueueNew(QUEUE_MAX, sizeof(MSGQUEUE_FLASH_t), NULL);
-	if (id_thread__flash != NULL)
-		id_thread__flash = osThreadNew(thread__flash, NULL, NULL); 
 	if (id_thread__flash == NULL)
+		id_thread__flash = osThreadNew(thread__flash, NULL, NULL); 
+	if (id_flash_commands_queue == NULL)
 	{
       	strncpy(detalleError, "MSG QUEUE ERROR FLASH", sizeof(detalleError) - 1);
         osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
 	}
-	if (id_flash_commands_queue == NULL)
+	if (id_thread__flash == NULL)
 	{
        	strncpy(detalleError, "THREAD ERROR FLASH", sizeof(detalleError) - 1);
        	osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);

@@ -145,22 +145,6 @@ float ADC_getVoltage(ADC_HandleTypeDef *hadc, uint32_t Channel)
 	return voltage;
 }
 	
-/* Example of using this code from a Thread 
-void Thread (void *argument) {
-  ADC_HandleTypeDef adchandle; //handler definition
-	ADC1_pins_F429ZI_config(); //specific PINS configuration
-	float value;
-	ADC_Init_Single_Conversion(&adchandle , ADC1); //ADC1 configuration
-  while (1) {
-    
-	  value=ADC_getVoltage(&adchandle , 10 ); //get values from channel 10->ADC123_IN10
-		value=ADC_getVoltage(&adchandle , 13 );
-		osDelay(1000);
-   
-  }
-}
-*/
-
 void Init_ADC1_consumo (void)
 {
     ADC1_pins_PC0_config();
