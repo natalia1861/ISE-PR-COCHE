@@ -22,9 +22,9 @@
 #define POWER_UP                      0xAB
 
 //FLAGS
-#define TRANSFER_COMPLETE 				0x01              //internal flag used by SPI to know that a single transfer has been completed
+#define TRANSFER_COMPLETE 			      0x01              //internal flag used by SPI to know that a single transfer has been completed
 
-#define FLASH_NUM_CHAR_HORA        8
+#define FLASH_NUM_CHAR_HORA           8
 
 typedef enum
 {

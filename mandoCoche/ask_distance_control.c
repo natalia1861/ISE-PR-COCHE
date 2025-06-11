@@ -17,14 +17,14 @@ void thread__askDistanceControl (void *no_argument)
         nRF_data.command = nRF_CMD__ASK_DISTANCE;
         if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, 1000) != osOK)
         {
-            strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
+            strncpy(detalleError, "MSG QUEUE ERROR DIR", sizeof(detalleError) - 1);
             osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
         }
         //Manda comando para recibir el consumo del coche
         nRF_data.command = nRF_CMD__RECEIVE_DISTANCE;
         if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, 1000) != osOK)
         {
-            strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
+            strncpy(detalleError, "MSG QUEUE ERROR DIR", sizeof(detalleError) - 1);
             osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
         }
         osDelay(GET_DISTANCE_TIME);

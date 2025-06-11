@@ -34,7 +34,7 @@ Por consiguiente, ocuparemos un total de 10 paginas, es decir, algo menos de un 
 //Datos para guardar consumo y hora
 #define MAX_CONSUMPTION_DATA			10			//Numero maximo de consumos que guardaremos
 #define CONSUMPTION_SIZE_BYTES			4			//Cada consumo ocupa 4 bytes (float)
-#define HORA_SIZE_BYTES					4			//Cada hora ocupa 8 char (HH:MM:SS)
+#define HORA_SIZE_BYTES					8			//Cada hora ocupa 8 char (bytes) (HH:MM:SS)
 
 //SPI
 extern ARM_DRIVER_SPI Driver_SPI4;					//Driver SPI4 externo
@@ -81,7 +81,7 @@ static void addConsumption(uint8_t position, float *consumption, char* hora);
 static void getAllConsumptions(float *consumptions, char *hours);
 
 //Funciones para Tests
-static void leer_mem_entera(void);              // Lee los primeros 50 bytes para depuraci�n
+static void leer_mem_entera(uint8_t posicion);              // Lee los primeros 50 bytes para depuraci�n
 static void test_write_read(void);              // Prueba de escritura y lectura en bucle
 
 //Init flash
@@ -153,13 +153,13 @@ static void erase_usable_memory (void)
 }
 
 /**
- * @brief Lee los primeros 50 bytes de la memoria para comprobar su contenido.
+ * @brief Lee los primeros 50 bytes de la memoria de la pagina que se le pasa para comprobar su contenido.
 */
 
-static void leer_mem_entera(void) 
+static void leer_mem_entera(uint8_t posicion) 
 {
 	uint8_t previousData[50];
-	W25Q16_FastRead(0, 0, 50, previousData);
+	W25Q16_FastRead(posicion * PAGES_FOR_SECTOR, 0, 50, previousData);
 	previousData[0] = 0x00;
 }
 

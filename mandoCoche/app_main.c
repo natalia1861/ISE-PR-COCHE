@@ -41,6 +41,7 @@ lineas_distancia_t calcularLineasDistancia (uint16_t distancia);
 //Funciones locales
 void Send_CMD_StateChange (app_state_t app_state);
 void Send_CMD_LowPower(void);
+void activeControls (bool ask_distance, bool ask_consumption);
 
 //Funcion principal - control del automata y el LCD
 void thread__app_main_control (void *no_argument)
@@ -53,7 +54,7 @@ void thread__app_main_control (void *no_argument)
 
     //Variables para guardar las medidas del consumo (y la hora) y mostrarlas en LCD tras obtenerse de flash
     float medidas_consumo[NUM_MAX_MUESTRA_CONSUMO];
-    char horas_consumo[FLASH_NUM_CHAR_HORA][NUM_MAX_MUESTRA_CONSUMO];
+    char horas_consumo[NUM_MAX_MUESTRA_CONSUMO][FLASH_NUM_CHAR_HORA];
     uint8_t numero_muestra = 0; //Numero de muestra actual a mostrar, se reinicia al entrar al modo de mostrar consumos
 
     //Variables para controlar el LCD en modo marcha atras
@@ -67,10 +68,6 @@ void thread__app_main_control (void *no_argument)
     //Inicializamos el LCD
     LCD_start();
     
-    //ESTADO INICIAL
-    //Inicializamos controles iniciales
-    Init_askConsumptionControl();
-    
     //Mostramos estado inicial de LEDs
     leds_activate_mask |= GET_MASK_LED(LED_GREEN);
     leds_activate_mask &= ~GET_MASK_LED(LED_BLUE);
@@ -78,9 +75,11 @@ void thread__app_main_control (void *no_argument)
     
     //Mostramos por el LCD que estamos en modo normal de funcionamiento
     LCD_write (LCD_LINE__ONE, "State: Normal");
+    LCD_write (LCD_LINE__TWO, "Initializing...");
+
     state_enter = false;
     
-    osDelay(6000);
+    osDelay(7000);
     while(1)
     {
         flags = osThreadFlagsWait(FLAG__MAIN_CONTROL, osFlagsWaitAny, osWaitForever);
@@ -173,7 +172,7 @@ void thread__app_main_control (void *no_argument)
                     if (state_enter)
                     {
                         //Desactivamos todos los controles de otros estados
-                        Stop_askDistanceControl();
+                        activeControls(false, true);    //desactivamos Distancia, activamos Consumo
                         
                         //Enviamos el estado al coche para habilitar/deshabilitar controles
                         Send_CMD_StateChange(app_state);
@@ -201,7 +200,7 @@ void thread__app_main_control (void *no_argument)
                     if (state_enter)
                     {
                         //Desactivamos todos los controles de otros estados
-                        Stop_askDistanceControl();
+                        activeControls(false, true);    //desactivamos Distancia, activamos Consumo
                         
                         //Enviamos el estado al coche para habilitar/deshabilitar controles
                         Send_CMD_StateChange(app_state);
@@ -239,7 +238,7 @@ void thread__app_main_control (void *no_argument)
                         LCD_write (1, "State: Back Gear");
                         
                         //Creamos el hilo de solicitud de distancia cada x tiempo que mandara comando de solicitud de distancia
-                        Init_askDistanceControl();
+                        activeControls(true, true);    //activamos Distancia, activamos Consumo
                         
                         state_enter = false;
                     }
@@ -270,12 +269,12 @@ void thread__app_main_control (void *no_argument)
                         //Cargar los datos de la flash
                         if (osMessageQueuePut(id_flash_commands_queue, &flash_msg_data, NULL, 500) != osOK)
                         {
-                            strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
+                            strncpy(detalleError, "MSG QUEUE ERROR APP", sizeof(detalleError) - 1);
                             osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
                         }
                         
                         //Desactivamos todos los controles de otros estados
-                        Stop_askDistanceControl(); //Desactivamos el control de distancia
+                        activeControls(false, true);    //desactivamos Distancia, activamos Consumo
                         
                         //Enviamos el estado al coche para habilitar/deshabilitar controles
                         Send_CMD_StateChange(app_state);
@@ -289,7 +288,7 @@ void thread__app_main_control (void *no_argument)
                         LCD_write (LCD_LINE__ONE, "State: Consumption    ");
                         
                         //Mostramos por LCD que se esta realizando la operacion de leer de memoria flash
-                        LCD_write (LCD_LINE__TWO, "Leyendo FLASH...   ");
+                        LCD_write (LCD_LINE__TWO, "Reading FLASH...   ");
                         state_enter = false;
                     }
 
@@ -338,46 +337,83 @@ void Init_AllAppThreads(void)
     if (id_thread__app_main == NULL)
     {
         //Error (no se puede gestionar como normalmente porque no hay app main)
-        // strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
+        // strncpy(detalleError, "MSG QUEUE ERROR APP", sizeof(detalleError) - 1);
         // osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
         //SystemReset(); //revisar
     }
-    Init_RF_TX();               //Radiofrecuencia
+    netInitialize();            //Web
+    //Init_RF_TX();               //Radiofrecuencia
     Init_LedsControl();         //Leds
     Init_RTC_Update();          //RTC
     Init_JoystickControl();     //Joystick
-    Init_VelocityCointrol();    //Velocidad / presion
-    Init_DirectionControl();    //Direccion / marchas
+    //Init_VelocityCointrol();    //Velocidad / presion
+    //Init_DirectionControl();    //Direccion / marchas
     Init_FlashControl();        //Flash
-    netInitialize();            //Web
+    
+    
+    //ESTADO INICIAL
+    activeControls(false, true);    //desactivamos Distancia, activamos Consumo
 }
 
-//revisar comentar mejor, no entiendo un papo
-//Funcion que calcula las lineas necesarias en display segun la distancia obtenida
-/* La distancia funciona tal que:
- * Cuando mayor sea el numero -> mas cerca esta*/
+//Funcion para activar/ desactivar los controles de pregunta/ respuesta del coche (Control de distancia y Control de consumo).
+//En caso de que ya esten activos/ desactivados no se hace nada (gestion interna de creacion de threads)
+
+void activeControls (bool ask_distance, bool ask_consumption)
+{
+    #ifndef RF_NO_ACTIVE
+    if (ask_distance)
+    {
+        Init_askDistanceControl();
+    }
+    else
+    {
+        Stop_askDistanceControl();
+    }
+    if (ask_consumption)
+    {
+        Init_askConsumptionControl();
+    }
+    else
+    {
+        Stop_askConsumptionControl();
+    }
+    #endif
+}
+
+/**
+ * @brief Calcula el número de líneas de advertencia que deben mostrarse en el display
+ *        en función de la distancia detectada por un sensor.
+ *
+ *        Cuanto menor sea la distancia, más líneas se muestran (hasta un máximo de 3).
+ *        Si el objeto está demasiado lejos, no se muestra ninguna línea.
+ *        Si está demasiado cerca, se muestran las 3 líneas.
+ *
+ * @param distancia  Valor de distancia medido (0 a 500 en mm), donde 0 es muy cerca y 500 muy lejos.
+ * @return lineas_distancia_t  Número de líneas a mostrar (0 a 3).
+ */
+
 lineas_distancia_t calcularLineasDistancia(uint16_t distancia)
 {
     float tramo;
     uint32_t lineas;
     
-    // Si esta muy cerca, sin lineas
+    // Si la distancia es mayor o igual a 475 (muy lejos), no se muestra ninguna línea
     if (distancia >= (MAX_RANGE_DISTANCE - DISTANCE_SENSIBILITY)) //distancia >= (500-25)
         return LCD_LINE__NO_LINE;
 
-    // Si esta muy lejos, todas las lineas
+    // Si la distancia es menor o igual a 25 (muy cerca), se muestran todas las líneas
     if (distancia <= (MIN_RANGE_DISTANCE + DISTANCE_SENSIBILITY)) //distancia <= (0+25)
         return LCD_MAX_LINES;
 
-    //Calculamos el tramo
-    tramo = (float) (MAX_RANGE_DISTANCE - MIN_RANGE_DISTANCE) / (LCD_MAX_LINES - LCD_MIN_LINES); //tramo = (500-0) / (3-0) = 166.67
+    // Se calcula el tamaño de cada tramo proporcional al número de líneas posibles
+    // Ej: 500 / 3 = ~166.67 unidades por tramo
+    tramo = (float) (MAX_RANGE_DISTANCE - MIN_RANGE_DISTANCE) / (LCD_MAX_LINES - LCD_MIN_LINES);
     
-    //Calculamos el tramo en el que se encuentra
+    // Se determina en qué tramo está la distancia (cuántas líneas "no" mostraría)
     lineas = ((distancia - MIN_RANGE_DISTANCE) / tramo); //Ej distancia = 300; lineas = (300-0)/166.67 = 1.79 = 1
-                                                    //Ej distancia = 100; lineas = 100/166.67 = 0.6 = 0
-    //Se invierte para que menor distancia implique m�s lineas
-    lineas = (LCD_MAX_LINES - lineas); //lineas = 3-1 = 2
-                                        //lineas = 3
+
+    // Se invierte la relación para que menor distancia implique más líneas
+    lineas = (LCD_MAX_LINES - lineas); //Ej: lineas = 3-1 = 2
     
     return (lineas_distancia_t)lineas;
 }
@@ -386,6 +422,7 @@ lineas_distancia_t calcularLineasDistancia(uint16_t distancia)
 //Utilizado para habilitar y deshabilitar controles en el coche (distancia)
 void Send_CMD_StateChange (app_state_t app_state)
 {
+    #ifndef RF_NO_ACTIVE
     if (app_state == APP_STAGE__BACK_GEAR)  //Modo marcha atras. (empleado para saber el sentido de los servos y desactivar distancia)
     {
         nRF_data.command = nRF_CMD__BACK_GEAR_MODE;
@@ -400,17 +437,20 @@ void Send_CMD_StateChange (app_state_t app_state)
     }
     if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, 1000) != osOK)
     {
-        strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
+        strncpy(detalleError, "MSG QUEUE ERROR RF", sizeof(detalleError) - 1);
         osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
     }
+    #endif
 }
 
 void Send_CMD_LowPower(void) //revisar creo que se hace arriba
 {
+    #ifndef RF_NO_ACTIVE
     nRF_data.command = nRF_CMD__LOW_POWER;
     if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, 1000) != osOK)
     {
-        strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
+        strncpy(detalleError, "MSG QUEUE ERROR RF", sizeof(detalleError) - 1);
         osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
     }
+    #endif
 }

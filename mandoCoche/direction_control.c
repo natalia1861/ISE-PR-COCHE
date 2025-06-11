@@ -31,7 +31,7 @@ void thread__direction_control(void *no_argument)
         nRF_data.auxiliar_data = direction;
         if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, osWaitForever) != osOK)   //Se anade a la cola de envio de RF
         {
-            strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
+            strncpy(detalleError, "MSG QUEUE ERROR DIR", sizeof(detalleError) - 1);
             osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
         }
         #else   //Aplicacion
@@ -52,7 +52,7 @@ void thread__direction_control(void *no_argument)
             direction_prev = direction;
             if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, osWaitForever) != osOK)   //Se incluye a la cola de envio de RF
             {
-                strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
+                strncpy(detalleError, "MSG QUEUE ERROR DIR", sizeof(detalleError) - 1);
                 osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
             }
             

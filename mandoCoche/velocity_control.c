@@ -35,7 +35,7 @@ void thread__VelocityControl (void *no_argument)
     nRF_data.auxiliar_data = marcha_prev;
     if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, osWaitForever) != osOK)   //Se a�ade a la cola de envio de RF
     {
-        strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
+        strncpy(detalleError, "MSG QUEUE ERROR VEL", sizeof(detalleError) - 1);
         osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
     }
 	
@@ -45,7 +45,7 @@ void thread__VelocityControl (void *no_argument)
         velocidad = velocidad + 1;
         if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, osWaitForever) != osOK)   //Se añade a la cola de envio de RF
         {
-            strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
+            strncpy(detalleError, "MSG QUEUE ERROR VEL", sizeof(detalleError) - 1);
             osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
         }
         #else 
@@ -60,7 +60,7 @@ void thread__VelocityControl (void *no_argument)
                 //printf("Marcha: %d\n", marcha);
                 if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, osWaitForever) != osOK)   //Se añade a la cola de envio de RF
                 {
-                    strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
+                    strncpy(detalleError, "MSG QUEUE ERROR VEL", sizeof(detalleError) - 1);
                     osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
                 }
                 

@@ -23,8 +23,8 @@ char rtc_date_time[RTC_MAX][LCD_MAX_CHARACTERS+1];	//maximo de caracteres + EOS
 
 //timers
 static osTimerId_t tim_id_3min;	//timer sincronizacion cada 3 min
+static void Timer_Callback_3min (void *no_argument);
 
-static void Timer_Callback_3min (void);
 char hora[80];    //variable global usada en web
 char fecha[80];   //variable global usada en web
 
@@ -134,12 +134,12 @@ static void RTC_Set_Time_SNTP(void) {
 	fech.Month=horaSNTP.tm_mon+1;
 	fech.Date=horaSNTP.tm_mday;
 	HAL_RTC_SetDate(&hrtc,&fech,RTC_FORMAT_BIN);
-	hor.Hours=horaSNTP.tm_hour+1;
+	hor.Hours=horaSNTP.tm_hour+2;
 	hor.Minutes=horaSNTP.tm_min;
-    hor.Seconds=horaSNTP.tm_sec;
-    hor.TimeFormat=RTC_HOURFORMAT_24;
+  hor.Seconds=horaSNTP.tm_sec;
+  hor.TimeFormat=RTC_HOURFORMAT_24;
 	hor.DayLightSaving = RTC_DAYLIGHTSAVING_NONE ;
-    hor.StoreOperation = RTC_STOREOPERATION_RESET;
+  hor.StoreOperation = RTC_STOREOPERATION_RESET;
 	HAL_RTC_SetTime(&hrtc,&hor,RTC_FORMAT_BIN);
 }
 
@@ -164,23 +164,27 @@ static void sntp_time_callback (uint32_t time, uint32_t seconds_fraction) {
 }
 
 //Cada 3min se sincroniza la hora con el servidor SNTP
-static void Timer_Callback_3min (void) {
+static void Timer_Callback_3min (void *no_argument) {
 	 get_sntp_time();							
 }
 
 //HILO RTC
 static void thread__RTC_Update (void *no_argument) {
-	while (1) 
+	init_RTC();
+    while (1) 
     {
         /* Every 1000 ms */
         RTC_getTime_Date();
-		
         osDelay (1000);
+        
+        #ifdef TEST_CONSUMO
+        //Mandamos flag a app_main de que el consumo fue actualizado para guardarse en flash y mandarse a web
+        osThreadFlagsSet(id_thread__app_main, FLAG__CONSUMO_EN_FLASH);
+        #endif
 	}
 }
 
 void Init_RTC_Update (void)
 {
-    init_RTC();
     osThreadNew(thread__RTC_Update, NULL, NULL);
 }

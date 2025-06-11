@@ -17,14 +17,14 @@ void thread__askConsumptionControl (void *no_argument)
         nRF_data.command = nRF_CMD__ASK_CONSUMPTION;
         if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, osWaitForever) != osOK)
         {
-            strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
+            strncpy(detalleError, "MSG QUEUE ERR 1", sizeof(detalleError) - 1);
             osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
         }
         //Manda comando para recibir el consumo del coche
         nRF_data.command = nRF_CMD__RECIEVE_CONSUMPTION;
         if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, osWaitForever) != osOK)
         {
-            strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
+            strncpy(detalleError, "MSG QUEUE ERR 2", sizeof(detalleError) - 1);
             osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
         }
         osDelay(GET_CONSUMPTION_TIME);
