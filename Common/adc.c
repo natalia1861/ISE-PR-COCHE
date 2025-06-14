@@ -164,7 +164,7 @@ float getConsumo(void) //revisarNAK
 
     //2.5V tenemos 150mA
 	//adc_valor es x
-    corriente_Consumo = ADC_in(CH0_CONSUMO)*0.15/2.5;
+    corriente_Consumo = ADC_in(CH0_CONSUMO)*0.2;
  	return corriente_Consumo;
 	//printf("Corriente: %.2f\n", corriente_Consumo);
 }

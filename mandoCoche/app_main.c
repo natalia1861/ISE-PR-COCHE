@@ -342,14 +342,17 @@ void Init_AllAppThreads(void)
         //SystemReset(); //revisar
     }
     netInitialize();            //Web
-    //Init_RF_TX();               //Radiofrecuencia
     Init_LedsControl();         //Leds
     Init_RTC_Update();          //RTC
     Init_JoystickControl();     //Joystick
-    //Init_VelocityCointrol();    //Velocidad / presion
-    //Init_DirectionControl();    //Direccion / marchas
-    Init_FlashControl();        //Flash
     
+    #ifndef RF_NO_ACTIVE
+    Init_RF_TX();               //Radiofrecuencia
+    Init_VelocityCointrol();    //Velocidad / presion
+    Init_DirectionControl();    //Direccion / marchas
+    #endif
+    
+    Init_FlashControl();        //Flash
     
     //ESTADO INICIAL
     activeControls(false, true);    //desactivamos Distancia, activamos Consumo
