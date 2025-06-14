@@ -24,6 +24,7 @@
 #include "lcd.h"
 #include "app_main.h"
 #include <string.h>
+#include "errors.h"
 
 /* My address */
 uint8_t MyAddress[] = { //Address de envio y recepcion por pipe 0  del mando (para enviar y recibir los ack) -> debe coincidir con la de recepcion del coche
@@ -69,7 +70,7 @@ nRF_data_received_mando_t nRF_data_received_mando;
 void thread__SendData_RF_TX(void *argument) 
 {
     uint8_t printed = 0;
-    nRF_data_transmitted_t nRF_data;
+    nRF_data_transmitted_t nRF_data_transmitted;
 
     printf("Initializing...\n");
     
@@ -85,7 +86,7 @@ void thread__SendData_RF_TX(void *argument)
 	//TM_NRF24L01_SetMyAddress(MyAddress); //Se utilizaba para tener una pipe por donde transmitia el PTX y otra por donde transmitia PRX
 	
 	/* Set TX address, 5 bytes */
-	TM_NRF24L01_SetTxAddress(MyAddress);  // Se configura la dirección para recibir (RX_ADDR_P0) por la pipe0, que también se usará para devolver ACKs con o sin payload.
+	TM_NRF24L01_SetTxAddress(MyAddress);  // Se configura la direcciï¿½n para recibir (RX_ADDR_P0) por la pipe0, que tambiï¿½n se usarï¿½ para devolver ACKs con o sin payload.
                                             // En modo PRX (recepcion), TX_ADDR no se utiliza para enviar ACKs, por lo que puede omitirse en el coche, ya que nunca entra en modo PTX (transmision).
                                             // En modo PTX (transmision), TX_ADDR es utilizado para enviar la informacion y RX_ADDR_P0 para recibirla por ACKs. Por lo que ambas deben coincidir (en el mando).
 	
@@ -95,8 +96,7 @@ void thread__SendData_RF_TX(void *argument)
     //Status right
     if (TM_NRF24L01_GetStatus() != 0x0E)
     {
-        strncpy(detalleError, "RF Error. Restart!", sizeof(detalleError) - 1);
-        osThreadFlagsSet(id_thread__app_main, FLAG__ERROR); //revisarNAK error permanente. Por mucho que lo aceptes, se volvera a generar (hasta que la conexion vuelva).
+        push_error(MODULE__RF, ERR_CODE__INITIALIZATION, 0); //revisarNAK error permanente. Por mucho que lo aceptes, se volvera a generar (hasta que la conexion vuelva).
     }
     
     //Debug status
@@ -164,17 +164,17 @@ void thread__SendData_RF_TX(void *argument)
         #else //Aplicacion
         
         //Esperamos a recibir un comando
-        if (osMessageQueueGet(id_queue__nRF_TX_Data, &nRF_data, NULL, osWaitForever) == osOK)
+        if (osMessageQueueGet(id_queue__nRF_TX_Data, &nRF_data_transmitted, NULL, osWaitForever) == osOK)
         {
             /* Display on DEBUG */
             printf("\nPinging at %d: \n", HAL_GetTick());
-            printf("Command: %d\n", nRF_data.command);
-            printf("Auxiliar data: %d\n", nRF_data.auxiliar_data);
+            printf("Command: %d\n", nRF_data_transmitted.command);
+            printf("Auxiliar data: %d\n", nRF_data_transmitted.auxiliar_data);
             
             //Rellenamos los datos de salida con los del mensaje recibido
-            dataOut[nRF_DATA__COMMAND]        = (uint8_t) (nRF_data.command);
-            dataOut[nRF_DATA__AUX_DATA_LOW]   = (uint8_t) (nRF_data.auxiliar_data);         // Byte bajo
-            dataOut[nRF_DATA__AUX_DATA_HIGH]  = (uint8_t) (nRF_data.auxiliar_data >> 8);    // Byte alto
+            dataOut[nRF_DATA__COMMAND]        = (uint8_t) (nRF_data_transmitted.command);
+            dataOut[nRF_DATA__AUX_DATA_LOW]   = (uint8_t) (nRF_data_transmitted.auxiliar_data);         // Byte bajo
+            dataOut[nRF_DATA__AUX_DATA_HIGH]  = (uint8_t) (nRF_data_transmitted.auxiliar_data >> 8);    // Byte alto
 
             //Transmitimos los datos
             TM_NRF24L01_Transmit(dataOut, sizeof(dataOut));
@@ -205,10 +205,19 @@ void thread__GetData_RF_TX (void *no_argument)
                 //Si en modo TX: se activara si recibe ACK Payload. (mando)
 
             if (NRF_IRQ.F.DataSent)  /* Check if transmitted OK (received ack)*/
-            { 		
-                printf("IRQ: ACK Received\n");		
-                /* Save transmission status */
-                transmissionStatus = TM_NRF24L01_Transmit_Status_Ok;
+            { 	
+                //Si se recuperan comunicaciones
+                if (transmissionStatus == TM_NRF24L01_Transmit_Status_Lost)	
+                {
+                    printf("IRQ: ACK Received\n");	
+
+                    //Mandamos flag de recuperacion de comunciaciones para que vuelva la conexion
+                    osThreadFlagsSet(id_thread__app_main , FLAG__RF_COMMS_RESTORED);
+
+                    /* Save transmission status */
+                    transmissionStatus = TM_NRF24L01_Transmit_Status_Ok;
+
+                }
                 
                 //printf("STATUS FIFO in Data Sent %d\n", TM_NRF24L01_GetFIFOStatus());
             }
@@ -223,16 +232,15 @@ void thread__GetData_RF_TX (void *no_argument)
                 
                 /* Mandamos flag de ERROR */
                 #ifndef TEST_RF //Aplicacion
-                    strncpy(detalleError, "RF Lost max ACK", sizeof(detalleError) - 1);
-                    osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);                     
-                //Error permanente. Por mucho que lo aceptes, se volverá a generar (hasta que la conexion vuelva).
+                    push_error(MODULE__RF, ERR_CODE__RF_COMMS_LOST, 0);                    
+                //Error permanente. Por mucho que lo aceptes, se volvera a generar (hasta que la conexion vuelva).
                 // Basicamente porque esta todo el rato intentando transmitir entonces se esta generando todo el rato de nuevo
                 #endif
             }
             
             /* If data is ready on NRF24L01+*/
-                //Si en modo RX: se activará si recibe correctamente datos normales (coche)
-                //Si en modo TX: se activará si recibe correctamente ACK Payload (mando)
+                //Si en modo RX: se activarï¿½ si recibe correctamente datos normales (coche)
+                //Si en modo TX: se activarï¿½ si recibe correctamente ACK Payload (mando)
             if (NRF_IRQ.F.DataReady)  //Recibo ACKs de payload
             {
                 printf("IRQ: Data Ready IRQ\n");
@@ -276,9 +284,24 @@ void thread__GetData_RF_TX (void *no_argument)
 }
 
 void Init_RF_TX(void) {
-    id_queue__nRF_TX_Data = osMessageQueueNew(MAX_RF_MESS_QUEUE, sizeof(nRF_data_transmitted_t), NULL);     //Cola de mensajes para gestionar el envio de RF
-    id_thread__SendData_RF_TX = osThreadNew (thread__SendData_RF_TX, NULL, NULL);             //Hilo para gestionar el envio de datos
-    id_thread__GetData_RF_TX = osThreadNew (thread__GetData_RF_TX, NULL, NULL);                //Hilo para gestionar la recepcion de datos
+    if (id_queue__nRF_TX_Data == NULL)
+        id_queue__nRF_TX_Data = osMessageQueueNew(MAX_RF_MESS_QUEUE, sizeof(nRF_data_transmitted_t), NULL);     //Cola de mensajes para gestionar el envio de RF
+    
+    if (id_thread__SendData_RF_TX == NULL)
+        id_thread__SendData_RF_TX = osThreadNew (thread__SendData_RF_TX, NULL, NULL);             //Hilo para gestionar el envio de datos
+    
+    if (id_thread__GetData_RF_TX == NULL)
+        id_thread__GetData_RF_TX = osThreadNew (thread__GetData_RF_TX, NULL, NULL);                //Hilo para gestionar la recepcion de datos
+
+    //Gestion de errores
+    if (id_queue__nRF_TX_Data == NULL)
+        push_error (MODULE__RF, ERR_CODE__QUEUE, 0);
+
+    if (id_thread__SendData_RF_TX == NULL)
+        push_error (MODULE__RF, ERR_CODE__THREAD, 0);
+    
+    if (id_thread__GetData_RF_TX == NULL)
+        push_error (MODULE__RF, ERR_CODE__THREAD, 1);
 }
 
 

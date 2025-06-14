@@ -1,6 +1,7 @@
 #include "flash.h"
 #include "Driver_SPI.h"
 #include "app_main.h"
+#include "errors.h"
 /*
 Flash memory is a device that operates via SPI.
 D1 - input (MOSI)
@@ -93,13 +94,11 @@ void Init_FlashControl (void) {
 		id_thread__flash = osThreadNew(thread__flash, NULL, NULL); 
 	if (id_flash_commands_queue == NULL)
 	{
-      	strncpy(detalleError, "MSG QUEUE ERROR FLASH", sizeof(detalleError) - 1);
-        osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
+		push_error(MODULE__FLASH, ERR_CODE__QUEUE, 0);
 	}
 	if (id_thread__flash == NULL)
 	{
-       	strncpy(detalleError, "THREAD ERROR FLASH", sizeof(detalleError) - 1);
-       	osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
+       	push_error(MODULE__FLASH, ERR_CODE__THREAD, 0);
 	}
 }
 

@@ -35,8 +35,8 @@ extern char consumo_S [80];
 extern uint8_t  get_button (void);
 
 extern bool LEDrun;
-extern char lcd_text[2][20+1];
-extern char rtc_date_time[2][20+1];
+extern char lcd_text[2][LCD_MAX_CHARACTERS+1];
+extern char rtc_date_time[RTC_MAX][LCD_MAX_CHARACTERS+1];
 extern osThreadId_t TID_Display;
 
 // Local variables.

@@ -1,6 +1,7 @@
 #include "RTC.h"
 #include "cmsis_os2.h"                  // ::CMSIS:RTOS2a
 #include "app_main.h"
+#include "errors.h"
 
 #define FLAG_RTC                0x02
 
@@ -17,6 +18,7 @@ static RTC_TimeTypeDef hor;
 
 //vairables locales
 struct tm horaSNTP;
+osThreadId_t id_thread__RTC_Update = NULL;
 
 //Variable de la hora y fecha para el LCD
 char rtc_date_time[RTC_MAX][LCD_MAX_CHARACTERS+1];	//maximo de caracteres + EOS
@@ -186,5 +188,9 @@ static void thread__RTC_Update (void *no_argument) {
 
 void Init_RTC_Update (void)
 {
-    osThreadNew(thread__RTC_Update, NULL, NULL);
+  if (id_thread__RTC_Update == NULL)
+    id_thread__RTC_Update = osThreadNew(thread__RTC_Update, NULL, NULL);
+
+  if (id_thread__RTC_Update == NULL)
+    push_error(MODULE__RTC, ERR_CODE__THREAD, 0);
 }
