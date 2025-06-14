@@ -14,6 +14,7 @@
 #include "sensor_AS5600.h"
 #include "direction_control.h"
 #include "flash.h"
+#include "errors.h"
 
 #define NUM_MAX_MUESTRA_CONSUMO     10      //Buffer circular de consumo (memoria flash)
 #define MAX_RANGE_DISTANCE          500     //Definir el valor en sensor que significa minima distancia
@@ -22,11 +23,18 @@
 
 //Variables globales
 osThreadId_t id_thread__app_main;
-char detalleError[20] = {0};
+char detalleError[LCD_MAX_CHARACTERS] = {0};
+char moduloError[LCD_MAX_CHARACTERS] = {0};
 app_state_t app_state = FIRST_APP_STAGE;
 
+//Variables locales
+//Variables para guardar las medidas del consumo (y la hora) y mostrarlas en LCD tras obtenerse de flash
+float medidas_consumo[NUM_MAX_MUESTRA_CONSUMO];
+char horas_consumo[NUM_MAX_MUESTRA_CONSUMO][FLASH_NUM_CHAR_HORA];
+uint8_t numero_muestra = 0; //Numero de muestra actual a mostrar, se reinicia al entrar al modo de mostrar consumos
+
 //Message to nRF queue
-nRF_data_transmitted_t nRF_data = {0};
+nRF_data_transmitted_t nRF_data_transmitted = {0};
 
 //Message to flash queue (tanto para enviar como para recibir datos)
 MSGQUEUE_FLASH_t flash_msg_data;
@@ -42,6 +50,7 @@ lineas_distancia_t calcularLineasDistancia (uint16_t distancia);
 void Send_CMD_StateChange (app_state_t app_state);
 void Send_CMD_LowPower(void);
 void activeControls (bool ask_distance, bool ask_consumption);
+void lcd_update_state(app_state_t app_state);
 
 //Funcion principal - control del automata y el LCD
 void thread__app_main_control (void *no_argument)
@@ -51,11 +60,6 @@ void thread__app_main_control (void *no_argument)
     //Variables locales para guardar el consumo y la hora en flash (se envian en la cola de mensajes junto al comando)
     float flash_consumo_tx; //revisar NAK buscar consumo_rx
     char flash_hora_tx[FLASH_NUM_CHAR_HORA];
-
-    //Variables para guardar las medidas del consumo (y la hora) y mostrarlas en LCD tras obtenerse de flash
-    float medidas_consumo[NUM_MAX_MUESTRA_CONSUMO];
-    char horas_consumo[NUM_MAX_MUESTRA_CONSUMO][FLASH_NUM_CHAR_HORA];
-    uint8_t numero_muestra = 0; //Numero de muestra actual a mostrar, se reinicia al entrar al modo de mostrar consumos
 
     //Variables para controlar el LCD en modo marcha atras
     lineas_distancia_t lineas_prev = LCD_LINE__NO_LINE;
@@ -74,8 +78,8 @@ void thread__app_main_control (void *no_argument)
     leds_activate_mask &= ~GET_MASK_LED(LED_RED);
     
     //Mostramos por el LCD que estamos en modo normal de funcionamiento
-    LCD_write (LCD_LINE__ONE, "State: Normal");
-    LCD_write (LCD_LINE__TWO, "Initializing...");
+    app_state = FIRST_APP_STAGE;
+    lcd_update_state(app_state);
 
     state_enter = false;
     
@@ -111,49 +115,97 @@ void thread__app_main_control (void *no_argument)
             flash_msg_data.hour = flash_hora_tx;
             
             //Mandamos el mensaje
-            if (osMessageQueuePut(id_flash_commands_queue, &flash_msg_data, NULL, 500) != osOK)
+            if (osMessageQueuePut(id_flash_commands_queue, &flash_msg_data, NULL, 100) != osOK)
             {
-                strncpy(detalleError, "MSG QUEUE ERROR FLASH", sizeof(detalleError) - 1);
-                osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
+                push_error(ERR_CODE__QUEUE, MODULE__FLASH, 0);
             }
         }
 
-        if (flags & FLAG__ERROR) //Flag de error
+        if (flags & FLAG__RF_LOST_COMMS_ERROR)
         {
-            //Paramos todos los controles
-            Stop_askConsumptionControl();
-            Stop_askDistanceControl();
-            
-            leds_activate_mask |= GET_MASK_LED(LED_GREEN);
-            leds_activate_mask |= GET_MASK_LED(LED_BLUE);
-            leds_activate_mask |= GET_MASK_LED(LED_RED);
+            if (!state_error)
+            {
+                //El coche y el mando se mantiene en el mismo estado, solo esta intentando recuperar comunicaciones
 
-            state_error = true;
-            LCD_write(LCD_LINE__ONE, "ERROR...");
-            LCD_write(LCD_LINE__TWO, detalleError); //detalleError es una variable global que se actualiza siempre que haya un error (prevalece el ultimo)
+                //Estado de los leds de error
+                leds_activate_mask |= GET_MASK_LED(LED_GREEN);
+                leds_activate_mask |= GET_MASK_LED(LED_BLUE);
+                leds_activate_mask |= GET_MASK_LED(LED_RED);
+
+                //flag de error activo
+                state_error = true;
+
+                //Actualizamos LCD con detalle de error
+                LCD_write(LCD_LINE__ONE, moduloError);
+                LCD_write(LCD_LINE__TWO, detalleError); //detalleError es una variable global que se actualiza siempre que haya un error (prevalece el ultimo)
+            }
+        }
+        if (flags & FLAG__DRIVER_ERROR) //Flag de error de driver -> ERROR CATASTROFICO, se desactivan controles y no se permite aceptar el error
+        {
+            if (!state_error)
+            {
+                //Desactivamos todos los controles
+                activeControls(false, false);    //desactivamos Distancia, desactivamos Consumo
+                
+                //Mandamos al coche al estado inicial para que consuma menos recursos.
+                app_state = FIRST_APP_STAGE;
+                Send_CMD_StateChange(app_state);
+
+                //Estado de los leds de error
+                leds_activate_mask |= GET_MASK_LED(LED_GREEN);
+                leds_activate_mask |= GET_MASK_LED(LED_BLUE);
+                leds_activate_mask |= GET_MASK_LED(LED_RED);
+
+                //flag de error activo
+                state_error = true;
+
+                //Actualizamos LCD con detalle de error
+                LCD_write(LCD_LINE__ONE, moduloError);
+                LCD_write(LCD_LINE__TWO, detalleError); //detalleError es una variable global que se actualiza siempre que haya un error (prevalece el ultimo)
+            }
         }
         
-        if (flags & FLAG__PRESS_CENTER) //Se sale del estado de error tras presionar el boton central - se vuelve al inicio
+        if (flags & FLAG__RF_COMMS_RESTORED)
         {
             if (state_error)
             {
-                state_error = false;
-                app_state = FIRST_APP_STAGE;
-                
-                //ESTADO INICIAL
-                //Inicializamos controles iniciales
-                Init_askConsumptionControl();
-                
+                //Los controles ya estan activados segun el estado en el que estemos (consumo siempre esta activo asi que siempre intenta comunicar)
+
                 //Mostramos estado inicial de LEDs
                 leds_activate_mask |= GET_MASK_LED(LED_GREEN);
                 leds_activate_mask &= ~GET_MASK_LED(LED_BLUE);
                 leds_activate_mask &= ~GET_MASK_LED(LED_RED);
-                
-                //Mostramos por el LCD que estamos en modo normal de funcionamiento
-                LCD_write (LCD_LINE__ONE, "State: Normal");
-                state_enter = false;
+
+                //Mostramos por pantalla el estado donde estamos
+                lcd_update_state(app_state);
+
+                state_error = false;
             }
         }
+        // if (flags & FLAG__PRESS_CENTER) //Se sale del estado de error tras presionar el boton central 
+        // {
+        //     if (state_error)
+        //     {
+        //         state_error = false;
+        //         app_state = FIRST_APP_STAGE;
+
+        //         //Mandamos el estado inicial al coche
+        //         Send_CMD_StateChange(app_state);
+                
+        //         //ESTADO INICIAL
+        //         //Inicializamos controles iniciales
+        //         activeControls(false, true);    //desactivamos Distancia, activamos Consumo
+                
+        //         //Mostramos estado inicial de LEDs
+        //         leds_activate_mask |= GET_MASK_LED(LED_GREEN);
+        //         leds_activate_mask &= ~GET_MASK_LED(LED_BLUE);
+        //         leds_activate_mask &= ~GET_MASK_LED(LED_RED);
+                
+        //         //Mostramos por el LCD que estamos en modo normal de funcionamiento
+        //         LCD_write (LCD_LINE__ONE, "State: Normal");
+        //         state_enter = false;
+        //     }
+        // }
         
         if (flags & FLAG__ENTER_LOW_POWER)
         {
@@ -164,7 +216,7 @@ void thread__app_main_control (void *no_argument)
 /*****************************************************************************************************************************/
         
 /************Comienzo de control de los estados*******************************************************************************/
-        if (!state_error)
+        if (!state_error)       //Solo se tiene en cuenta si no hay errores pendientes
         {
             switch (app_state)
             {
@@ -234,16 +286,15 @@ void thread__app_main_control (void *no_argument)
                         leds_activate_mask &= ~GET_MASK_LED(LED_BLUE);
                         leds_activate_mask |= GET_MASK_LED(LED_RED);
                         
-                        //Mostramos por el LCD que estamos en modo de bajo consumo
-                        LCD_write (1, "State: Back Gear");
-                        
                         //Creamos el hilo de solicitud de distancia cada x tiempo que mandara comando de solicitud de distancia
                         activeControls(true, true);    //activamos Distancia, activamos Consumo
+
+                        //Mostramos por el LCD que estamos en modo de bajo consumo
+                        LCD_write (LCD_LINE__ONE, "State: Back Gear");
                         
                         state_enter = false;
                     }
                     
-                    osDelay (1000); //Espera 1 segundo para visualizar que se entra al estado de marcha atras
                     if (flags & FLAG__MOSTRAR_DISTANCIA) //Flag enviado desde nRF TX tras recibir la distancia
                     {
                         //Se muestra la distancia por el LCD
@@ -267,10 +318,9 @@ void thread__app_main_control (void *no_argument)
                         flash_msg_data.hour = &horas_consumo[0][0];     //puntero a las horas del consumo que se mostraran en lcd y flash
                         
                         //Cargar los datos de la flash
-                        if (osMessageQueuePut(id_flash_commands_queue, &flash_msg_data, NULL, 500) != osOK)
+                        if (osMessageQueuePut(id_flash_commands_queue, &flash_msg_data, NULL, 100) != osOK)
                         {
-                            strncpy(detalleError, "MSG QUEUE ERROR APP", sizeof(detalleError) - 1);
-                            osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
+                            push_error(MODULE__APP, ERR_CODE__QUEUE, 0);
                         }
                         
                         //Desactivamos todos los controles de otros estados
@@ -295,10 +345,6 @@ void thread__app_main_control (void *no_argument)
                     //Flag que se activara cuando los consumos esten listos para mostrar la primera muestra
                     if (flags & FLAG__CONSUMO_READY_FLASH)
                     {
-                        //revisar NAK antes de pulsaba RIGHT
-                        //Mostramos en la linea 1 del LCD que estamos en el modo de mostrar consumo
-                        LCD_write (LCD_LINE__ONE, "State: Consumption    ");
-
                         //Reiniciamos la muestra seleccionada
                         numero_muestra = 0;
 
@@ -383,6 +429,32 @@ void activeControls (bool ask_distance, bool ask_consumption)
     #endif
 }
 
+//Gestion del LCD tras entrar a un estado
+void lcd_update_state(app_state_t app_state)
+{
+    switch (app_state)
+    {
+        case APP_STATE__NORMAL:
+            LCD_write (LCD_LINE__ONE, "State: Normal");
+            break;
+        case APP_STAGE__LOW_POWER:
+            LCD_write (LCD_LINE__ONE, "State: Low Power");
+            break;
+        case APP_STAGE__BACK_GEAR:
+            LCD_write (LCD_LINE__ONE, "State: Back Gear");
+            osDelay(1000); //Espera 1 segundo para visualizar que se entra al estado de marcha atras
+            break;
+        case APP_STAGE__MOSTRAR_CONSUMO: //Lo mas seguro es que flash ya se haya leido si es que da error
+            //Mostramos en la linea 1 del LCD que estamos en el modo de mostrar consumo
+            LCD_write (LCD_LINE__ONE, "State: Consumption    ");
+            //Reiniciamos la muestra seleccionada
+            numero_muestra = 0;
+            //Mostramos por el LCD la muestra indicada
+            LCD_mostrarConsumo(numero_muestra, medidas_consumo[numero_muestra]);
+            break;
+    }
+}
+
 /**
  * @brief Calcula el número de líneas de advertencia que deben mostrarse en el display
  *        en función de la distancia detectada por un sensor.
@@ -422,26 +494,25 @@ lineas_distancia_t calcularLineasDistancia(uint16_t distancia)
 }
 
 
-//Utilizado para habilitar y deshabilitar controles en el coche (distancia)
+//Utilizado para habilitar y deshabilitar controles en el coche (distancia, bajo consumo)
 void Send_CMD_StateChange (app_state_t app_state)
 {
     #ifndef RF_NO_ACTIVE
     if (app_state == APP_STAGE__BACK_GEAR)  //Modo marcha atras. (empleado para saber el sentido de los servos y desactivar distancia)
     {
-        nRF_data.command = nRF_CMD__BACK_GEAR_MODE;
+        nRF_data_transmitted.command = nRF_CMD__BACK_GEAR_MODE;
     }
     else if (app_state == APP_STAGE__LOW_POWER) //Modo bajo consumo
     {
-        nRF_data.command = nRF_CMD__LOW_POWER;
+        nRF_data_transmitted.command = nRF_CMD__LOW_POWER;
     }
     else    //Cualquier otro estado implica modo normal de funcionamiento en coche
     {
-        nRF_data.command = nRF_CMD__NORMAL_MODE; //Modo normal de funcionamiento. (empleado para saber el sentido de los servos y desactivar distancia)
+        nRF_data_transmitted.command = nRF_CMD__NORMAL_MODE; //Modo normal de funcionamiento. (empleado para saber el sentido de los servos y desactivar distancia)
     }
-    if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, 1000) != osOK)
+    if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data_transmitted, NULL, 100) != osOK)
     {
-        strncpy(detalleError, "MSG QUEUE ERROR RF", sizeof(detalleError) - 1);
-        osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
+        push_error(MODULE__APP, ERR_CODE__QUEUE, 1)
     }
     #endif
 }
@@ -449,11 +520,10 @@ void Send_CMD_StateChange (app_state_t app_state)
 void Send_CMD_LowPower(void) //revisar creo que se hace arriba
 {
     #ifndef RF_NO_ACTIVE
-    nRF_data.command = nRF_CMD__LOW_POWER;
-    if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, 1000) != osOK)
+    nRF_data_transmitted.command = nRF_CMD__LOW_POWER;
+    if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRFnRF_data_transmitted_data, NULL, 100) != osOK)
     {
-        strncpy(detalleError, "MSG QUEUE ERROR RF", sizeof(detalleError) - 1);
-        osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
+        push_error(MODULE__APP, ERR_CODE__QUEUE, 2);
     }
     #endif
 }

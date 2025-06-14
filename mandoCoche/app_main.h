@@ -2,8 +2,9 @@
 #define __APP_MAIN_H
 
 #include "cmsis_os2.h"
+#include "lcd.h"
 
-//Flags to thread__joystick_control
+//Flags (eventos) to thread__app_main_control
 #define FLAG__PRESS_UP              0x0001
 #define FLAG__PRESS_DOWN            0x0002
 #define FLAG__PRESS_RIGHT           0x0004
@@ -15,7 +16,9 @@
 #define FLAG__ENTER_LOW_POWER       0x0100
 #define FLAG__CONSUMO_EN_FLASH      0x0200
 #define FLAG__CONSUMO_READY_FLASH   0x0400
-#define FLAG__ERROR                 0x0800
+#define FLAG__RF_LOST_COMMS_ERROR   0x0800
+#define FLAG__RF_COMMS_RESTORED     0x1000
+#define FLAG__DRIVER_ERROR          0x2000
 
 #define FLAG__MAIN_CONTROL  (FLAG__PRESS_UP             | \
                              FLAG__PRESS_DOWN           | \
@@ -28,7 +31,9 @@
                              FLAG__ENTER_LOW_POWER      | \
                              FLAG__CONSUMO_EN_FLASH     | \
                              FLAG__CONSUMO_READY_FLASH  | \
-                             FLAG__ERROR                )
+                             FLAG__RF_LOST_COMMS_ERROR  | \
+                             FLAG__RF_COMMS_RESTORED    | \
+                             FLAG__DRIVER_ERROR         )
 
 typedef enum
 {
@@ -42,7 +47,8 @@ typedef enum
 #define MAX_APP_STATE       APP_STAGE__MOSTRAR_CONSUMO
 
 extern osThreadId_t id_thread__app_main;
-extern char detalleError[20];
+extern char detalleError[LCD_MAX_CHARACTERS];
+extern char moduloError[LCD_MAX_CHARACTERS];
 extern app_state_t app_state;
 
 void Init_AllAppThreads(void);
