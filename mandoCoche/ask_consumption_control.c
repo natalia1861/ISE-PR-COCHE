@@ -16,13 +16,13 @@ void thread__askConsumptionControl (void *no_argument)
     {
         //Manda comando de preguntar consumo al coche
         nRF_data_transmitted.command = nRF_CMD__ASK_CONSUMPTION;
-        if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data_transmitted, NULL, osWaitForever) != osOK)
+        if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data_transmitted, NULL, DRIVER_TIME_WAIT) != osOK)
         {
             push_error(MODULE__ASK_CONSUMPTION, ERR_CODE__QUEUE, 0);
         }
         //Manda comando para recibir el consumo del coche
         nRF_data_transmitted.command = nRF_CMD__RECIEVE_CONSUMPTION;
-        if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data_transmitted, NULL, osWaitForever) != osOK)
+        if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data_transmitted, NULL, DRIVER_TIME_WAIT) != osOK)
         {
             push_error(MODULE__ASK_CONSUMPTION, ERR_CODE__QUEUE, 1);
         }

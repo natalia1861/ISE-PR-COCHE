@@ -66,8 +66,9 @@ void thread__app_main_control (void *no_argument)
     lineas_distancia_t lineas_actuales = LCD_LINE__NO_LINE;
 
     //Flags internas para el automata
-    uint8_t state_enter = true;
-    uint8_t state_error = false;
+    bool state_enter = true;
+    bool state_error = false;
+    bool state_comms_lost = false;
     
     //Inicializamos el LCD
     LCD_start();
@@ -90,7 +91,7 @@ void thread__app_main_control (void *no_argument)
         
 /************Flags comunes a todos los estados*************************************************/
         
-        if (flags & FLAG__PRESS_UP) //Pulsaci�n arriba joystick
+        if (flags & FLAG__PRESS_UP) //Pulsacion arriba joystick
         {
             LCD_clean();
             app_state = (app_state == MAX_APP_STATE) ? FIRST_APP_STAGE : (app_state_t) (app_state + 1);
@@ -107,7 +108,7 @@ void thread__app_main_control (void *no_argument)
             
             //Actualizamos Web revisar NAK unicamente actualizar cuando el valor cambie? revisar refresco de web
             sprintf(consumo_S, "%.2f", flash_consumo_tx);
-            //revisar NAK mandar flag a web?�?
+            //revisar NAK mandar flag a web??
 
             //Anadimos en el mensaje de la cola los valores a a�adir y el comando de a�adir Consumo en flash
             flash_msg_data.command = FLASH_CMD__ADD_CONSUMPTION;
@@ -121,9 +122,9 @@ void thread__app_main_control (void *no_argument)
             }
         }
 
-        if (flags & FLAG__RF_LOST_COMMS_ERROR)
+        if (flags & (FLAG__RF_LOST_COMMS_ERROR | FLAG__DIR_MAG_NOT_PRES))       //Si hay perdida de comunicaciones
         {
-            if (!state_error)
+            if (!state_comms_lost)
             {
                 //El coche y el mando se mantiene en el mismo estado, solo esta intentando recuperar comunicaciones
 
@@ -133,13 +134,32 @@ void thread__app_main_control (void *no_argument)
                 leds_activate_mask |= GET_MASK_LED(LED_RED);
 
                 //flag de error activo
-                state_error = true;
+                state_comms_lost = true;
 
                 //Actualizamos LCD con detalle de error
                 LCD_write(LCD_LINE__ONE, moduloError);
                 LCD_write(LCD_LINE__TWO, detalleError); //detalleError es una variable global que se actualiza siempre que haya un error (prevalece el ultimo)
             }
         }
+        
+        if (flags & (FLAG__RF_COMMS_RESTORED | FLAG__DIR_MAG_DETECTED))     //Comunicaciones recuperadas
+        {
+            if (state_comms_lost)
+            {
+                //Los controles ya estan activados segun el estado en el que estemos (consumo siempre esta activo asi que siempre intenta comunicar)
+
+                //Mostramos estado inicial de LEDs
+                leds_activate_mask |= GET_MASK_LED(LED_GREEN);
+                leds_activate_mask &= ~GET_MASK_LED(LED_BLUE);
+                leds_activate_mask &= ~GET_MASK_LED(LED_RED);
+
+                //Mostramos por pantalla el estado donde estamos
+                lcd_update_state(app_state);
+
+                state_comms_lost = false;
+            }
+        }
+
         if (flags & FLAG__DRIVER_ERROR) //Flag de error de driver -> ERROR CATASTROFICO, se desactivan controles y no se permite aceptar el error
         {
             if (!state_error)
@@ -162,24 +182,6 @@ void thread__app_main_control (void *no_argument)
                 //Actualizamos LCD con detalle de error
                 LCD_write(LCD_LINE__ONE, moduloError);
                 LCD_write(LCD_LINE__TWO, detalleError); //detalleError es una variable global que se actualiza siempre que haya un error (prevalece el ultimo)
-            }
-        }
-        
-        if (flags & FLAG__RF_COMMS_RESTORED)
-        {
-            if (state_error)
-            {
-                //Los controles ya estan activados segun el estado en el que estemos (consumo siempre esta activo asi que siempre intenta comunicar)
-
-                //Mostramos estado inicial de LEDs
-                leds_activate_mask |= GET_MASK_LED(LED_GREEN);
-                leds_activate_mask &= ~GET_MASK_LED(LED_BLUE);
-                leds_activate_mask &= ~GET_MASK_LED(LED_RED);
-
-                //Mostramos por pantalla el estado donde estamos
-                lcd_update_state(app_state);
-
-                state_error = false;
             }
         }
         // if (flags & FLAG__PRESS_CENTER) //Se sale del estado de error tras presionar el boton central 
@@ -216,7 +218,7 @@ void thread__app_main_control (void *no_argument)
 /*****************************************************************************************************************************/
         
 /************Comienzo de control de los estados*******************************************************************************/
-        if (!state_error)       //Solo se tiene en cuenta si no hay errores pendientes
+        if ((!state_error) && (!state_comms_lost))       //Solo se tiene en cuenta si no hay errores pendientes
         {
             switch (app_state)
             {
@@ -391,12 +393,9 @@ void Init_AllAppThreads(void)
     Init_LedsControl();         //Leds
     Init_RTC_Update();          //RTC
     Init_JoystickControl();     //Joystick
-    
-    #ifndef RF_NO_ACTIVE
     Init_RF_TX();               //Radiofrecuencia
     Init_VelocityCointrol();    //Velocidad / presion
     Init_DirectionControl();    //Direccion / marchas
-    #endif
     
     Init_FlashControl();        //Flash
     
@@ -409,7 +408,6 @@ void Init_AllAppThreads(void)
 
 void activeControls (bool ask_distance, bool ask_consumption)
 {
-    #ifndef RF_NO_ACTIVE
     if (ask_distance)
     {
         Init_askDistanceControl();
@@ -426,7 +424,6 @@ void activeControls (bool ask_distance, bool ask_consumption)
     {
         Stop_askConsumptionControl();
     }
-    #endif
 }
 
 //Gestion del LCD tras entrar a un estado
@@ -497,7 +494,6 @@ lineas_distancia_t calcularLineasDistancia(uint16_t distancia)
 //Utilizado para habilitar y deshabilitar controles en el coche (distancia, bajo consumo)
 void Send_CMD_StateChange (app_state_t app_state)
 {
-    #ifndef RF_NO_ACTIVE
     if (app_state == APP_STAGE__BACK_GEAR)  //Modo marcha atras. (empleado para saber el sentido de los servos y desactivar distancia)
     {
         nRF_data_transmitted.command = nRF_CMD__BACK_GEAR_MODE;
@@ -512,18 +508,15 @@ void Send_CMD_StateChange (app_state_t app_state)
     }
     if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data_transmitted, NULL, 100) != osOK)
     {
-        push_error(MODULE__APP, ERR_CODE__QUEUE, 1)
+        push_error(MODULE__APP, ERR_CODE__QUEUE, 1);
     }
-    #endif
 }
 
 void Send_CMD_LowPower(void) //revisar creo que se hace arriba
 {
-    #ifndef RF_NO_ACTIVE
     nRF_data_transmitted.command = nRF_CMD__LOW_POWER;
-    if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRFnRF_data_transmitted_data, NULL, 100) != osOK)
+    if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data_transmitted, NULL, 100) != osOK)
     {
         push_error(MODULE__APP, ERR_CODE__QUEUE, 2);
     }
-    #endif
 }

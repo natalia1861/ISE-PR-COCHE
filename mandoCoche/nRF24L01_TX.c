@@ -226,16 +226,20 @@ void thread__GetData_RF_TX (void *no_argument)
             if (NRF_IRQ.F.MaxRT) 
             {
                 printf("IRQ: Max RT IRQ\n");
-    
-                /* Save transmission status */
-                transmissionStatus = TM_NRF24L01_Transmit_Status_Lost;
                 
-                /* Mandamos flag de ERROR */
-                #ifndef TEST_RF //Aplicacion
-                    push_error(MODULE__RF, ERR_CODE__RF_COMMS_LOST, 0);                    
-                //Error permanente. Por mucho que lo aceptes, se volvera a generar (hasta que la conexion vuelva).
-                // Basicamente porque esta todo el rato intentando transmitir entonces se esta generando todo el rato de nuevo
+                if (transmissionStatus == TM_NRF24L01_Transmit_Status_Ok)   //Si venimos de que las transmisiones eran correctas
+                {
+                    /* Save transmission status */
+                    transmissionStatus = TM_NRF24L01_Transmit_Status_Lost;
+
+                    /* Mandamos flag de ERROR */
+                    #ifndef TEST_RF //Aplicacion
+                    #ifndef RF_NO_ACTIVE
+                        push_error(MODULE__RF, ERR_CODE__RF_COMMS_LOST, 0);                    
+                    //Error permanente. Se genera una unica vez hasta que la conexion vuelva, donde se aceptara el solo
                 #endif
+                #endif
+                }
             }
             
             /* If data is ready on NRF24L01+*/
@@ -277,7 +281,7 @@ void thread__GetData_RF_TX (void *no_argument)
                 //printf("FIFO RX after read: %d\n", TM_NRF24L01_RxFifoEmpty());
             }
         
-            /* Go back to RX mode to get lower consumption*/
+            /* Go back to RX mode to get lower consumption & clean interruptions*/
             TM_NRF24L01_PowerUpRx();
         }
     }

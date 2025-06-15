@@ -3,6 +3,8 @@
 
 #include "app_main.h"
 
+#define DRIVER_TIME_WAIT            1000        //Time to wait in driver tasks (threads, queues, timers initializations, etc) (ms)
+
 typedef enum
 {
     ERR_CODE__RF_COMMS_LOST         = 0,

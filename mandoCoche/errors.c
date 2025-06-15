@@ -4,30 +4,30 @@
 
 //Texto que se muestra por pantalla asociado a los codigos de errores definidos
 char *strErrorDescription[MAX_ERROR_NUM] =
-{  //01234567890123456789
-    "ERR COMMS RF        ",         //ERR_CODE__RF_COMMS_LOST
-    "ERR THREAD          ",         //ERR_CODE__THREAD_NOT_CREATED
-    "ERR QUEUE           ",         //ERR_CODE__QUEUE_NOT_CREATED
-    "ERR TIMER           ",         //ERR_CODE__TIMER_NOT_CREATED
-    "ERR MAGNET DETEC    ",         //ERR_CODE__MAGNET_NOT_PRESENT
-    "ERR INIT            ",
+{  //0123456789012345
+    "ERR COMMS RF    ",  //ERR_CODE__RF_COMMS_LOST
+    "ERR THREAD      ",  //ERR_CODE__THREAD_NOT_CREATED
+    "ERR QUEUE       ",  //ERR_CODE__QUEUE_NOT_CREATED
+    "ERR TIMER       ",  //ERR_CODE__TIMER_NOT_CREATED
+    "ERR MAGNET DET  ",  //ERR_CODE__MAGNET_NOT_PRESENT
+    "ERR INIT        ",  //ERR_CODE__INITIALIZATION
 };
 
 char *strErrorModules[MODULE__MAX_MODULES] =
 {
-   //01234567890123456789
-    "Mod: RF             ",  // MODULE__RF
-    "Mod: RTC            ",  // MODULE__RTC
-    "Mod: LCD            ",  // MODULE__LCD
-    "Mod: Consmp         ",  // MODULE__ASK_CONSUMPTION
-    "Mod: Dir            ",  // MODULE__DIRECTION
-    "Mod: Vel            ",  // MODULE__VELOCITY
-    "Mod: Dist           ",  // MODULE__ASK_DISTANCE
-    "Mod: Joy            ",  // MODULE__JOYSTICK
-    "Mod: Alarm          ",  // MODULE__ALARM
-    "Mod: Web            ",  // MODULE__WEB
-    "Mod: APP            ",  // MODULE__APP
-    "Mod: Flash          ",  // MODULE__FLASH
+   //0123456789012345
+    "Mod: RF         ",  // MODULE__RF
+    "Mod: RTC        ",  // MODULE__RTC
+    "Mod: LCD        ",  // MODULE__LCD
+    "Mod: Consmp     ",  // MODULE__ASK_CONSUMPTION
+    "Mod: Dir        ",  // MODULE__DIRECTION
+    "Mod: Vel        ",  // MODULE__VELOCITY
+    "Mod: Dist       ",  // MODULE__ASK_DISTANCE
+    "Mod: Joy        ",  // MODULE__JOYSTICK
+    "Mod: Alarm      ",  // MODULE__ALARM
+    "Mod: Web        ",  // MODULE__WEB
+    "Mod: APP        ",  // MODULE__APP
+    "Mod: Flash      ",  // MODULE__FLASH
 };
 
 void push_error(uint8_t module_type, uint8_t error_code, uint8_t error_detail)
@@ -68,6 +68,7 @@ void push_error(uint8_t module_type, uint8_t error_code, uint8_t error_detail)
         break;
 
     case ERR_CODE__MAGNET_NOT_PRESENT: //revisar falta gestionar cuando se haga lo de detectar el iman
+        osThreadFlagsSet(id_thread__app_main, FLAG__DIR_MAG_NOT_PRES);
         break;
     default:
         break;

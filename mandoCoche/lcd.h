@@ -3,7 +3,7 @@
 
 #include "Driver_SPI.h"
 
-#define LCD_MAX_CHARACTERS          25 //REVISAR COMPROBAR
+#define LCD_MAX_CHARACTERS          17 //REVISAR COMPROBAR
 
 typedef enum
 {

@@ -34,7 +34,7 @@ void thread__VelocityControl (void *no_argument)
     nRF_data_transmitted.command = nRF_CMD__VELOCITY;   //Se incluye el comando de velocidad
     marcha_prev = getPedal();
     nRF_data_transmitted.auxiliar_data = marcha_prev;
-    if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data_transmitted, NULL, osWaitForever) != osOK)   //Se a�ade a la cola de envio de RF
+    if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data_transmitted, NULL, DRIVER_TIME_WAIT) != osOK)   //Se incorpora a la cola de envio de RF
     {
         push_error(MODULE__VELOCITY, ERR_CODE__QUEUE, 0);
     }
@@ -43,7 +43,7 @@ void thread__VelocityControl (void *no_argument)
     {
         #ifdef VELOCITY_TEST //TEST
         velocidad = velocidad + 1;
-        if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data_transmitted, NULL, osWaitForever) != osOK)   //Se añade a la cola de envio de RF
+        if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data_transmitted, NULL, DRIVER_TIME_WAIT) != osOK)   //Se añade a la cola de envio de RF
         {
             push_error(MODULE__VELOCITY, ERR_CODE__QUEUE, 1);
         }
@@ -57,7 +57,7 @@ void thread__VelocityControl (void *no_argument)
 
                 #ifndef TEST_SERVOS
                 //printf("Marcha: %d\n", marcha);
-                if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data_transmitted, NULL, osWaitForever) != osOK)   //Se añade a la cola de envio de RF
+                if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data_transmitted, NULL, DRIVER_TIME_WAIT) != osOK)   //Se añade a la cola de envio de RF
                 {
                     push_error(MODULE__VELOCITY, ERR_CODE__QUEUE, 2);
                 }

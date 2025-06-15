@@ -69,7 +69,7 @@ static void W25Q16_WritePage_Clean (uint32_t page, uint16_t offset, uint32_t siz
 static void write_enable (void);                       // Habilita escritura
 static void write_disable (void);                      // Deshabilita escritura
 
-static uint32_t bytesToWrite (uint32_t size, uint32_t offset); // Caculo de bytes �tiles en pagina
+static uint32_t bytesToWrite (uint32_t size, uint32_t offset); // Caculo de bytes utiles en pagina
 static void erase_usable_memory (void);                         // Borra la memoria que usaremos
 
 //Funciones para bajo consumo (no se emplean)
@@ -120,7 +120,7 @@ static void thread__flash (void *argument) {
 	#endif
 
  	 while (1) {
-		if (osMessageQueueGet(id_flash_commands_queue, &flash_msg_rec, NULL, osWaitForever)==osOK) {
+		if (osMessageQueueGet(id_flash_commands_queue, &flash_msg_rec, NULL, osWaitForever) == osOK) {	
 			switch (flash_msg_rec.command) 
 			{
 				case FLASH_CMD__ADD_CONSUMPTION:
@@ -137,6 +137,10 @@ static void thread__flash (void *argument) {
                     erase_usable_memory();	//Borra la memoria usada
 				break;
 			}
+		}
+		else
+		{
+			//revisar error
 		}
 	}
 }
@@ -262,7 +266,7 @@ static void W25Q16_WriteInstruction(uint8_t val)
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_RESET);
 	//send address and data
 	SPIdrv->Send(&val, 1);
-	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, osWaitForever);
+	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, DRIVER_TIME_WAIT);
 	//CS high
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_SET);
 }
@@ -291,9 +295,9 @@ static uint16_t W25Q16_ReadID(uint8_t number_id)
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_RESET);
 	 //send address and data
 	SPIdrv->Send(&instuction, 1);
-	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, osWaitForever);
+	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, DRIVER_TIME_WAIT);
 	SPIdrv->Receive(&rx_data, 3); //revisar quizas es 4 (no usamos la funcion, asi que nos da igual)
-  	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, osWaitForever);
+  	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, DRIVER_TIME_WAIT);
   	//CS high
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_SET);
 
@@ -322,11 +326,12 @@ static void W25Q16_Read (uint32_t startPage, uint8_t offset, uint32_t size, uint
   
   //CS low
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_RESET);
-	//send address and data
+
+  //send address and data
 	SPIdrv->Send(tData, 4);
-	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, osWaitForever);
+	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, DRIVER_TIME_WAIT);
 	SPIdrv->Receive(rData, size);
-  osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, osWaitForever);
+  	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, DRIVER_TIME_WAIT);
 
   //CS high
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_SET);
@@ -358,9 +363,9 @@ static void W25Q16_FastRead (uint32_t startPage, uint8_t offset, uint32_t size, 
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_RESET);
 	//send address and data
 	SPIdrv->Send(tData, 5);
-	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, osWaitForever);
+	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, DRIVER_TIME_WAIT);
 	SPIdrv->Receive(rData, size);
-  	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, osWaitForever);
+  	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, DRIVER_TIME_WAIT);
 
   //CS high
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_SET);
@@ -410,7 +415,7 @@ static void W25Q16_Erase_64kBlock (uint16_t numBlock)
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_RESET);
 	//send address and data
 	SPIdrv->Send(tData, 4);
-	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, osWaitForever);
+	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, DRIVER_TIME_WAIT);
 	//CS high
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_SET);
 	
@@ -440,7 +445,7 @@ static void W25Q16_Erase_Sector (uint16_t numSector)
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_RESET);
 	//send address and data
 	SPIdrv->Send(tData, 4);
-	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, osWaitForever);
+	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, DRIVER_TIME_WAIT);
 	//CS high
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_SET);
 	
@@ -516,9 +521,9 @@ static void W25Q16_WritePage_Clean (uint32_t page, uint16_t offset, uint32_t siz
        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_RESET);
        //send address and data
        SPIdrv->Send(tData, 100);
-       osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, osWaitForever);
+       osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, DRIVER_TIME_WAIT);
        SPIdrv->Send(tData+100, bytesToSend-100);
-       osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, osWaitForever);
+       osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, DRIVER_TIME_WAIT);
       //CS high
        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_SET);
 		} else {
@@ -526,7 +531,7 @@ static void W25Q16_WritePage_Clean (uint32_t page, uint16_t offset, uint32_t siz
        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_RESET);
        //send address and data
        SPIdrv->Send(tData, bytesToSend);
-       osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, osWaitForever);
+       osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, DRIVER_TIME_WAIT);
        //CS high
        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_SET);
 		}

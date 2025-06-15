@@ -5,6 +5,20 @@
 #include <stdio.h>
 #include <math.h> 
 #include "direction_control.h"
+#include "errors.h"
+
+/**
+ * Este sensor puede comenzar a operar con sus valores de configuración por defecto,
+ * por lo que la lectura del registro CONF (0x07–0x08) es opcional.
+ *
+ * - El AS5600 inicia en modo normal con filtros y rangos preconfigurados.
+ * - No es necesario configurar CONF para obtener lecturas válidas de ángulo.
+ * - Sin embargo, puede leerse para diagnóstico, depuración o personalización:
+ *     - Filtrado de salida
+ *     - Histéresis
+ *     - Modos de energía
+ *
+ */
 
 #define I2C_TX_RX                   0x0CU   //Raw angle
 #define AS5600_I2C_ADDRESS_SLAVE    0x36    // Direccion I2C del AS560
@@ -42,9 +56,9 @@
 #define UMBRAL_BAJO_GRADOS 100
 #define UMBRAL_ALTO_GRADOS 300
 
+//Thread
 osThreadId_t id_sensor_AS5600;                        // thread id
 void sensor_AS5600_Thread(void *argument);            // thread function
-
 osMessageQueueId_t id_volante_MsgQueue;
 
 //I2C (1)
@@ -67,28 +81,26 @@ bool start = false;
 float angle_deg = 0;//Valor que devuelve la funci�n de que grados gira
 float angle_send = 0;
 
-//Para saber donde se encuentra 0� y 360� respecto al offset
+//Para saber donde se encuentra 0 grados y 360 grados respecto al offset
 uint16_t MAX_GIRO_DERECHA = 0;
 uint16_t MAX_GIRO_IZQUIERDA = 0;
 
 //PRUEBAS
 uint8_t modo = IDEAL;
-//uint16_t giro = CENTRO;
 
-int as5600_init(void)
+AS5600_status_t as5600_init(void)
 {
     I2Cdrv-> Initialize     (I2C_TX_RX_Callback);
     I2Cdrv-> PowerControl   (ARM_POWER_FULL);
     I2Cdrv-> Control        (ARM_I2C_BUS_SPEED, ARM_I2C_BUS_SPEED_STANDARD);
     I2Cdrv-> Control        (ARM_I2C_BUS_CLEAR, 0);
 
-    uint8_t content[2];
-    uint32_t flags;
-
-    I2Cdrv->MasterReceive(AS5600_I2C_ADDRESS_SLAVE, &content[1], 1, false);
-    flags = osThreadFlagsWait(I2C_TX_RX, osFlagsWaitAny, osWaitForever);
+    // Verificamos si el imán está presente antes de iniciar
+    if (!as5600_isMagnetDetected()) {
+        return AS5600_MAGNET_NOT_DETECTED;  // Puedes definir este código como -1 o el valor que prefieras
+    }
   
-    return 0;
+    return AS5600_OK;
 }
 
 AS5600_status_t as5600_readout(float* read_angle){
@@ -101,25 +113,30 @@ AS5600_status_t as5600_readout(float* read_angle){
     uint16_t rest = 0;
     uint16_t angle_first = 0;
 
+    // Verificamos si el imán está presente antes de iniciar
+    if (!as5600_isMagnetDetected()) {
+        return AS5600_MAGNET_NOT_DETECTED;  // Puedes definir este código como -1 o el valor que prefieras
+    }
+    
     //First data is trash
     if (!start)
     {
       // Enviar direccion de lectura
       I2Cdrv->MasterTransmit(AS5600_I2C_ADDRESS_SLAVE, &reg, 1, true);
-      flags = osThreadFlagsWait(I2C_TX_RX, osFlagsWaitAny, osWaitForever);
+      flags = osThreadFlagsWait(I2C_TX_RX, osFlagsWaitAny, DRIVER_TIME_WAIT);
 
       // Recibir datos
       I2Cdrv->MasterReceive(AS5600_I2C_ADDRESS_SLAVE, content_rx, 2, false);
-      flags = osThreadFlagsWait(I2C_TX_RX, osFlagsWaitAny, osWaitForever);
+      flags = osThreadFlagsWait(I2C_TX_RX, osFlagsWaitAny, DRIVER_TIME_WAIT);
     }
     
     // Se envia comando de lectura de angulo raw
     I2Cdrv->MasterTransmit(AS5600_I2C_ADDRESS_SLAVE, &reg, 1, true);
-    flags = osThreadFlagsWait(I2C_TX_RX, osFlagsWaitAny, osWaitForever);
+    flags = osThreadFlagsWait(I2C_TX_RX, osFlagsWaitAny, DRIVER_TIME_WAIT);
 
     // Recibir datos
     I2Cdrv->MasterReceive(AS5600_I2C_ADDRESS_SLAVE, content_rx, 2, false);
-    flags = osThreadFlagsWait(I2C_TX_RX, osFlagsWaitAny, osWaitForever);
+    flags = osThreadFlagsWait(I2C_TX_RX, osFlagsWaitAny, DRIVER_TIME_WAIT);
 
     //Angulo ente 0 y 4095
     angle_raw = (content_rx[0] << 8) | content_rx[1];
@@ -210,30 +227,39 @@ void I2C_TX_RX_Callback(uint32_t flags)
   }
 }
 
-//Funcionq que comprueba que el angulo este presente porque puede leer angulo cuando el iman no lo esta. revisar NAK
-bool as5600_isMagnetDetected(void) 
+/**
+ * @brief Comprueba si el imán está presente frente al sensor AS5600.
+ *
+ * El AS5600 puede devolver lecturas de ángulo aunque el imán no esté presente.
+ * Este método revisa el bit 5 (MD - Magnet Detected) del registro de estado (0x0B)
+ * para confirmar que el imán está correctamente posicionado.
+ *
+ * @return true si el imán está presente, false en caso contrario o error de comunicación.
+ */
+bool as5600_isMagnetDetected(void)
 {
-    uint8_t reg = AS5600_STATUS_REG;
-    uint8_t status_sen = 0;
-    
-    // Escribir la direccion del registro que queremos leer
-    if (I2Cdrv->MasterTransmit(AS5600_I2C_ADDRESS_SLAVE, &reg, 1, false) != ARM_DRIVER_OK) 
-    {
-        return false; // Error de transmisi�n
-    }
+    uint8_t reg = AS5600_STATUS_REG;      // Dirección del registro STATUS (0x0B)
+    uint8_t status = 0;
+    uint32_t flags;
 
-    // Leer 1 byte desde el registro
-    if (I2Cdrv->MasterReceive(AS5600_I2C_ADDRESS_SLAVE, &status_sen, 1, false) != ARM_DRIVER_OK) 
-    {
-        return false; // Error de recepcion
-    }
+    // Escribir la dirección del registro que se desea leer
+    if (I2Cdrv->MasterTransmit(AS5600_I2C_ADDRESS_SLAVE, &reg, 1, true) != ARM_DRIVER_OK)
+        return false;
 
-    // Verificar bit 5 del registro de estado (MD - Magnet Detected)
-    if ((status_sen & (1 << 5)) != 0) 
-    {
-        return true;  // Im�n presente
-    } else 
-    {
-        return false; // Im�n no detectado
-    }
+    // Esperar a que termine la transmisión
+    flags = osThreadFlagsWait(I2C_TX_RX, osFlagsWaitAny, DRIVER_TIME_WAIT);
+    if (!(flags & I2C_TX_RX))
+        return false;
+
+    // Leer el contenido del registro STATUS
+    if (I2Cdrv->MasterReceive(AS5600_I2C_ADDRESS_SLAVE, &status, 1, false) != ARM_DRIVER_OK)
+        return false;
+
+    // Esperar a que termine la recepción
+    flags = osThreadFlagsWait(I2C_TX_RX, osFlagsWaitAny, DRIVER_TIME_WAIT);
+    if (!(flags & I2C_TX_RX))
+        return false;
+
+    // Bit 5 indica si el imán está detectado (MD = 1)
+    return (status & (GET_BIT_MASK(MD_BIT))) != 0;
 }
