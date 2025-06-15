@@ -2,6 +2,7 @@
 #include "cmsis_os2.h"                  // ::CMSIS:RTOS2
 #include "VL53L0X.h"
 #include "i2c.h"
+#include "errors.h"
 
 //El valor de distancia  se actualiza en el coche cada DISTANCE_UPDATE_TIME, pero se envia a RF segun cada cuanto tiempo pregunte el mando (mirar en ask_distance_control)
 #define DISTANCE_UPDATE_TIME                 100 //ms
@@ -27,7 +28,7 @@ void thread__distance_control (void *no_argument)
         #ifdef DISTANCIA_TEST
         distancia = (distancia == 5000) ? 0 : distancia + 50;
         #else
-        distancia = (uint16_t) ((readRangeContinuousMillimeters(&sensor1)*myscale)-myoffset);
+        distancia = (uint16_t) ((readRangeContinuousMillimeters(&sensor1)*myscale)-myoffset); //Lee la distancia en mm
         #endif
         osDelay(DISTANCE_UPDATE_TIME);
     }
@@ -59,7 +60,7 @@ void Stop_DistanceControl (void)
 
 void Init_SensorDistancia(void)
 {
-    MX_I2C2_Init();             //Inicializa el periférico I2C2 del STM32          
+    MX_I2C2_Init();             //Inicializa el perifï¿½rico I2C2 del STM32          
     HAL_I2C_MspInit(&hi2c2);
     InitVL53(&sensor1);
 }

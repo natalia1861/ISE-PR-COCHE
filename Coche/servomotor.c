@@ -6,7 +6,7 @@
  Datos tecnicos:
  - El servomor funciona con una frecuencia de 50Hz
  - Para controlarlo, se va cambiando el periodo del pulso
-Servomotor de direccion (180) -> Izquierda - 2ms (180º) Centro - 1.5ms (90º) Izquierda 1ms (0º)
+Servomotor de direccion (180) -> Izquierda - 2ms (180ï¿½) Centro - 1.5ms (90ï¿½) Izquierda 1ms (0ï¿½)
 Servomotor de velocidad (360) -> Girar hacia un lado max -> 2ms. Parado -> 1.5ms. Girar hacia el otro lado max -> 1ms
 
  */
@@ -16,9 +16,9 @@ Servomotor de velocidad (360) -> Girar hacia un lado max -> 2ms. Parado -> 1.5ms
 #define MAX_DIRECTION_PWM               2000
 #define MIDDLE_DIRECTION_PWM            ((MIN_DIRECTION_PWM + MAX_DIRECTION_PWM)/2)
 
-//valores que significa cada max y min de PWM respecto al angulo
-#define MIN_ANGLE                       0
-#define MAX_ANGLE                       180
+//valores que significa cada max y min de PWM respecto al angulo revisar NAK
+#define MIN_ANGLE                       45
+#define MAX_ANGLE                       135
 
 //Valores que significa cada max y min de PWM respecto a la velocidad - 2 marchas posibles. 0 - no velocidad
 #define MIN_VELOCITY                    SM_MARCHA_0
@@ -191,7 +191,7 @@ void setMotorSpeed(speed_marchas_t speed) {
     
     if (speed == MIN_VELOCITY) 
     {
-        // Vehi­culo parado
+        // Vehiculo parado
         pulse_left = MIDDLE_DIRECTION_PWM;
         pulse_right = MIDDLE_DIRECTION_PWM;
     } else {
@@ -216,23 +216,3 @@ void setMotorSpeed(speed_marchas_t speed) {
     __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_4, pulse_right); //Se actualiza la rueda derecha
 }
 
-//Funciones para tests
-
-// Funcion para detener el motor (parada) - no se usa
-void stop_motor(void) {
-  // El valor de PWM correspondiente a la parada (velocidad 3) es el punto medio
-  uint16_t stopPulse = (MIN_DIRECTION_PWM + MAX_DIRECTION_PWM) / 2; // 1500us (parada)
-  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, stopPulse);
-}
-
-// Funcion para avanzar (maxima velocidad) - no se usa
-void move_forward(void) {
-  // El valor de PWM correspondiente a la velocidad maxima (2) es 2000us
-  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, MAX_DIRECTION_PWM); // 2000us (avance maximo)
-}
-
-// Funcion para moverse hacia atras (maxima velocidad en reversa) - no se usa
-void move_reverse(void) {
-  // El valor de PWM correspondiente a la velocidad maxima en reversa (2) es 1000us
-  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, MIN_DIRECTION_PWM); // 1000us (reversa maxima)
-}

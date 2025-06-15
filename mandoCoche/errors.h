@@ -13,6 +13,7 @@ typedef enum
     ERR_CODE__TIMER                 = 3,
     ERR_CODE__MAGNET_NOT_PRESENT    = 4,
     ERR_CODE__INITIALIZATION        = 5,
+    ERR_CODE__DATA_CORRUPT          = 6,
     MAX_ERROR_NUM
 } error_codes_t;
 

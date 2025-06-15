@@ -17,6 +17,7 @@
 #include "errors.h"
 
 #define NUM_MAX_MUESTRA_CONSUMO     10      //Buffer circular de consumo (memoria flash)
+#define MAX_DISTANCE_DRIVER         9000    //A partir de aqui dara error (teoricamente 63490)
 #define MAX_RANGE_DISTANCE          500     //Definir el valor en sensor que significa minima distancia
 #define MIN_RANGE_DISTANCE          0       //Definir el valor en sensor que significa maxima distancia
 #define DISTANCE_SENSIBILITY        25
@@ -102,10 +103,9 @@ void thread__app_main_control (void *no_argument)
         if (flags & FLAG__CONSUMO_EN_FLASH)
         {
             //Actualizamos las variables de envio
-            flash_consumo_tx = (float) ((float) nRF_data_received_mando.consumo / 1000); //Guardamos el ultimo valor recibido desde el coche del consumo
+            flash_consumo_tx = (float) nRF_data_received_mando.consumo / 1000.0f; //Guardamos el ultimo valor recibido desde el coche del consumo (el consumo se recibe como 1234 significando 1.234 A)
             memcpy(flash_hora_tx, rtc_date_time[RTC_HOUR], FLASH_NUM_CHAR_HORA); //Guardamos el valor actual de la hora en el mensaje de envio hacia flash (HH:MM:SS, 8 char)
-            //revisar debuggear que caracteres se meten, deben ser HH:MM:SS
-            
+
             //Actualizamos Web revisar NAK unicamente actualizar cuando el valor cambie? revisar refresco de web
             sprintf(consumo_S, "%.2f", flash_consumo_tx);
             //revisar NAK mandar flag a web??
@@ -160,7 +160,7 @@ void thread__app_main_control (void *no_argument)
             }
         }
 
-        if (flags & FLAG__DRIVER_ERROR) //Flag de error de driver -> ERROR CATASTROFICO, se desactivan controles y no se permite aceptar el error
+        if (flags & FLAG__DRIVER_ERROR) //Flag de error de driver -> ERROR CATASTROFICO, se desactivan controles y no se permite aceptar el error. Solo se sale reiniciando
         {
             if (!state_error)
             {
@@ -299,14 +299,21 @@ void thread__app_main_control (void *no_argument)
                     
                     if (flags & FLAG__MOSTRAR_DISTANCIA) //Flag enviado desde nRF TX tras recibir la distancia
                     {
-                        //Se muestra la distancia por el LCD
-                        if (lineas_prev != (lineas_actuales = calcularLineasDistancia(nRF_data_received_mando.distancia)))
+                        if (nRF_data_received_mando.distancia >= MAX_DISTANCE_DRIVER)
                         {
-                            LCD_mostrarLineasDistancia(lineas_actuales);
-                            lineas_prev = lineas_actuales;
+                            push_error(MODULE__ASK_DISTANCE, ERR_CODE__DATA_CORRUPT, 0)
                         }
-                        //Se pasa distancia por Web
-                        sprintf(distancia_S,"%02d", nRF_data_received_mando.distancia);
+                        else
+                        {
+                            //Se muestra la distancia por el LCD
+                            if (lineas_prev != (lineas_actuales = calcularLineasDistancia(nRF_data_received_mando.distancia)))
+                            {
+                                LCD_mostrarLineasDistancia(lineas_actuales);
+                                lineas_prev = lineas_actuales;
+                            }
+                            //Se pasa distancia por Web
+                            sprintf(distancia_S,"%02d", nRF_data_received_mando.distancia);
+                        }
 
                     }
                     break;

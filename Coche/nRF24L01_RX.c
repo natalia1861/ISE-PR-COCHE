@@ -144,23 +144,23 @@ void thread__transmissor_RF_RX(void *argument)
                         setMotorSpeed((speed_marchas_t) nRF_data_received_coche.velocidad);
                         printf("Comando velocidad\n");
                         break;
-                    case nRF_CMD__DIRECTION:        //Comando para cambiar la direccion del servo delantero
+                    case nRF_CMD__DIRECTION:        //Comando para cambiar la direccion del servo delantero (angulo de 0 a 65535 significando 0.00 a 655.355 grados)
                         nRF_data_received_coche.direccion = GET_NRF_AUX_DATA(dataIn);
                         setServoAngle((float) ((float) nRF_data_received_coche.direccion / 100)); //El valor se obtiene como un float representado por uint16_t con 2 decimales (recibimos valores de 000 a 65535, que representan 0.00 a 655.35 grados)
                         printf("Comando direccion\n");
                         break;
 
-                    case nRF_CMD__ASK_DISTANCE:     //Comando para preguntar por la distancia
-                        dataOut[nRF_DATA__COMMAND] = nRF_CMD__ASK_DISTANCE;                 //Se incluye  el comando de recibir consumo como respuesta
+                    case nRF_CMD__ASK_DISTANCE:     //Comando para preguntar por la distancia -> Se pasa directamente el valor obtenido (0 - 8589)
+                        dataOut[nRF_DATA__COMMAND] = nRF_CMD__ASK_DISTANCE;                 //Se incluye  el comando de recibir distancia como respuesta
                         dataOut[nRF_DATA__AUX_DATA_LOW] = (uint8_t) distancia;              //Se incluye  el valor de distancia (low byte)
                         dataOut[nRF_DATA__AUX_DATA_HIGH] = (uint8_t) (distancia >> 8);      //Se incluye  el valor de distancia (high byte)
                         TM_NRF24L01_WriteAckPayload(NRF_IRQ.F.RX_P_NO, dataOut, sizeof(dataOut)); //Se incluyen datos al ACK PAYLOAD
                         printf("Comando: ask Distancia\n");
                         break;
-                    case nRF_CMD__ASK_CONSUMPTION:        //Comando para preguntar por el consumo
-                        dataOut[nRF_DATA__COMMAND] = nRF_CMD__ASK_CONSUMPTION;
-                        dataOut[nRF_DATA__AUX_DATA_LOW] = (uint8_t) consumption;            //Se incluye el valor de distancia (low byte)
-                        dataOut[nRF_DATA__AUX_DATA_HIGH] = (uint8_t) (consumption >> 8);    //Se incluye el valor de distancia (high byte)
+                    case nRF_CMD__ASK_CONSUMPTION:        //Comando para preguntar por el consumo (se pasa como un uint16_t (float con 3 decimales -> ver funcion getConsumo() en consumo_control.c))
+                        dataOut[nRF_DATA__COMMAND] = nRF_CMD__ASK_CONSUMPTION;              //Se incluye  el comando de recibir consumo como respuesta
+                        dataOut[nRF_DATA__AUX_DATA_LOW] =  (uint8_t) consumption;           //Se incluye el valor de consumo (low byte)
+                        dataOut[nRF_DATA__AUX_DATA_HIGH] = (uint8_t) (consumption >> 8);    //Se incluye el valor de consumo (high byte)
                         TM_NRF24L01_WriteAckPayload(NRF_IRQ.F.RX_P_NO, dataOut, sizeof(dataOut)); //Se incluyen datos al ACK PAYLOAD
                         printf("Comando: ask Distancia\n");
                         break;

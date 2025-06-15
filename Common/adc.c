@@ -6,7 +6,7 @@
  * En el mando se encuentra el ADC de presion (asociado a la galga). Utilizamos el ADC1 canal 13 pin PC0
  * En el coche se encuentra el ADC de consumo. Utilizamos el ADC1 canal 10 pin PC3.
 
- Se podria haber decidido usar el mismo ADC, canal y pin para ambos, pero se decidio asi­ para poder distinguir bien cada cosa.
+ Se podria haber decidido usar el mismo ADC, canal y pin para ambos, pero se decidio asiï¿½ para poder distinguir bien cada cosa.
 */
 
 #define RESOLUTION_12B 4096U
@@ -162,9 +162,10 @@ float getConsumo(void) //revisarNAK
 {
     float corriente_Consumo =0; 
 
-    //2.5V tenemos 150mA
-	//adc_valor es x
-    corriente_Consumo = ADC_in(CH0_CONSUMO)*0.2;
+  //Midiendo consumo observamos que para un valor maximo daba picos de hasta 600mA. Por lo que ajustamos para que 600mA fueran 3V.
+  //Asi pues: x * 3 /0.6 = x * 0.2 = valor de corriente de consumo
+
+  corriente_Consumo = ADC_in(CH0_CONSUMO)*0.2;
  	return corriente_Consumo;
 	//printf("Corriente: %.2f\n", corriente_Consumo);
 }

@@ -11,6 +11,7 @@ char *strErrorDescription[MAX_ERROR_NUM] =
     "ERR TIMER       ",  //ERR_CODE__TIMER_NOT_CREATED
     "ERR MAGNET DET  ",  //ERR_CODE__MAGNET_NOT_PRESENT
     "ERR INIT        ",  //ERR_CODE__INITIALIZATION
+    "ERR DATA CORRUPT",  //ERR_CODE__DATA_CORRUPT
 };
 
 char *strErrorModules[MODULE__MAX_MODULES] =
