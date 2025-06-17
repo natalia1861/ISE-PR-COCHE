@@ -120,7 +120,8 @@ static void thread__flash (void *argument) {
 	#endif
 
  	 while (1) {
-		if (osMessageQueueGet(id_flash_commands_queue, &flash_msg_rec, NULL, osWaitForever) == osOK) {	
+		if (osMessageQueueGet(id_flash_commands_queue, &flash_msg_rec, NULL, osWaitForever) == osOK) 
+		{	
 			switch (flash_msg_rec.command) 
 			{
 				case FLASH_CMD__ADD_CONSUMPTION:
@@ -140,7 +141,7 @@ static void thread__flash (void *argument) {
 		}
 		else
 		{
-			//revisar error
+			push_error(MODULE__FLASH, ERR_CODE__QUEUE, 1);
 		}
 	}
 }
@@ -187,7 +188,7 @@ static void test_write_read (void)
 }
 
 /**
- * @brief Inicializa los pines y configuraci�n del SPI para la memoria Flash W25Q16.
+ * @brief Inicializa los pines y configuracion del SPI para la memoria Flash W25Q16.
 */
 
 static void W25Q16_Init_SPI(void)
@@ -581,30 +582,6 @@ static void addConsumption(uint8_t position, float* consumption, char* hour)
  *** flash_msg_data.consumption = medidas_consumo;   ->> float medidas_consumo[NUM_MAX_MUESTRA_CONSUMO];					//puntero a las medidas del consumo que se mostraran en lcd y flash
  *** flash_msg_data.hour = &horas_consumo[0][0];   	 ->> char horas_consumo[FLASH_NUM_CHAR_HORA][NUM_MAX_MUESTRA_CONSUMO];	//puntero a las horas del consumo que se mostraran en lcd y flash
  */
-
- //revisar NAK eliminar y probar
- 
-//static void getAllConsumptions(float *consumptions, char hour[][FLASH_NUM_CHAR_HORA])
-//{
-//    uint8_t flash_data[HORA_SIZE_BYTES + CONSUMPTION_SIZE_BYTES];
-//    char horas[MAX_CONSUMPTION_DATA][FLASH_NUM_CHAR_HORA];
-//    &horas[0][0] = hour;
-//	//Se lee sector por sector (los primeros 10, donde deberian estar todos los consumos y horas) y
-//	//se van copiando 1 a 1 al array apuntado por el mensaje.
-//    for (uint8_t position = 0; position < MAX_CONSUMPTION_DATA; position++) 
-//    {
-//        // Leer los 4 bytes de la memoria flash
-//        W25Q16_FastRead(position * PAGES_FOR_SECTOR, 0, sizeof(flash_data), flash_data);
-
-//		// Copiar la hora en la fila correspondiente
-//        memcpy(horas[position], flash_data, HORA_SIZE_BYTES);
-
-//        // Copiar el float al array de consumos
-//        memcpy(&consumptions[position], &flash_data[HORA_SIZE_BYTES], CONSUMPTION_SIZE_BYTES);
-    //}
-//}
-
-
 static void getAllConsumptions(float *consumptions, char *hours)
 {
     uint8_t flash_data[FLASH_NUM_CHAR_HORA + sizeof(float)];

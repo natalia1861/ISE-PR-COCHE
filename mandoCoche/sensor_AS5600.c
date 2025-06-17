@@ -67,7 +67,7 @@ static ARM_DRIVER_I2C *I2Cdrv = &Driver_I2C1;
 
 //Funciones internas
 void I2C_TX_RX_Callback(uint32_t flags);
-bool as5600_isMagnetDetected(void);       //No se utiliza - revisar NAK
+bool as5600_isMagnetDetected(void);
 
 //Variables globales para el control de angulo y vueltas
 uint16_t angle_offset = 0; //valor que toma como inicial y lo inicia a 180�

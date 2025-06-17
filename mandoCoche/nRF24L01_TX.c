@@ -62,7 +62,7 @@ uint8_t dataIn[nRF_DATA_LENGTH] = {0};
 #define IRQ_PIN     GPIO_PIN_3
 
 /* NRF transmission status */
-TM_NRF24L01_Transmit_Status_t transmissionStatus;
+TM_NRF24L01_Transmit_Status_t transmissionStatus = TM_NRF24L01_Transmit_Status_Ok;
 TM_NRF24L01_IRQ_t NRF_IRQ;
 
 nRF_data_received_mando_t nRF_data_received_mando;
@@ -80,7 +80,7 @@ void thread__SendData_RF_TX(void *argument)
 	TM_NRF24L01_Init(15, 32);
 	
 	/* Set 2MBps data rate and -18dBm output power */
-	TM_NRF24L01_SetRF(TM_NRF24L01_DataRate_2M, TM_NRF24L01_OutputPower_M18dBm);
+	TM_NRF24L01_SetRF(TM_NRF24L01_DataRate_2M, TM_NRF24L01_OutputPower_0dBm);
 	
 	/* Set my address, 5 bytes */
 	//TM_NRF24L01_SetMyAddress(MyAddress); //Se utilizaba para tener una pipe por donde transmitia el PTX y otra por donde transmitia PRX
@@ -96,7 +96,7 @@ void thread__SendData_RF_TX(void *argument)
     //Status right
     if (TM_NRF24L01_GetStatus() != 0x0E)
     {
-        push_error(MODULE__RF, ERR_CODE__INITIALIZATION, 0); //revisarNAK error permanente. Por mucho que lo aceptes, se volvera a generar (hasta que la conexion vuelva).
+        push_error(MODULE__RF, ERR_CODE__INITIALIZATION, 0); //Error permanente de driver. Se necesia reiniciar el sistema. Modulo de RF erroneo
     }
     
     //Debug status

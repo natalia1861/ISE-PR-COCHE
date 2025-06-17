@@ -14,7 +14,7 @@
 
 #include "stm32f4xx_hal.h"              // Keil::Device:STM32Cube HAL:Common
 #include "nak_led.h"                  // ::Board Support:LED
-#include "pot.h"
+//#include "pot.h"                    //Revisar Diria que Web ya no lo va a usar
 #include "lcd.h"
 #include "RTC.h"
 #include "gpio.h"

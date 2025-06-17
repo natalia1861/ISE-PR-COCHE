@@ -39,11 +39,11 @@ uint16_t ADC_in (uint32_t channel) {
 
   if (channel == 0)
   {
-    valor = 1243* ADC_getVoltage(&adchandle1, 10);
+    valor = 1000* ADC_getVoltage(&adchandle1, 10);
   }
   else if (channel == 1)
   {
-      valor = 1243* ADC_getVoltage(&adchandle2, 13);
+      valor = 1000* ADC_getVoltage(&adchandle2, 13);
   }
   return ((uint16_t)valor);
 }
@@ -158,13 +158,13 @@ void Init_ADC1_presion(void)
 }
 
 //Funcion que devuelve directamente el consumo en mA
-float getConsumo(void) //revisarNAK
+float getConsumo(void) 
 {
     float corriente_Consumo =0; 
 
   //Midiendo consumo observamos que para un valor maximo daba picos de hasta 600mA. Por lo que ajustamos para que 600mA fueran 3V.
   //Asi pues: x * 3 /0.6 = x * 0.2 = valor de corriente de consumo
-
+ 
   corriente_Consumo = ADC_in(CH0_CONSUMO)*0.2;
  	return corriente_Consumo;
 	//printf("Corriente: %.2f\n", corriente_Consumo);

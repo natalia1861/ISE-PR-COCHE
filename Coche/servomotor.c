@@ -6,7 +6,7 @@
  Datos tecnicos:
  - El servomor funciona con una frecuencia de 50Hz
  - Para controlarlo, se va cambiando el periodo del pulso
-Servomotor de direccion (180) -> Izquierda - 2ms (180�) Centro - 1.5ms (90�) Izquierda 1ms (0�)
+Servomotor de direccion (180) -> Izquierda - 2ms (180 grados) Centro - 1.5ms (90 grados) Izquierda 1ms (0 grados)
 Servomotor de velocidad (360) -> Girar hacia un lado max -> 2ms. Parado -> 1.5ms. Girar hacia el otro lado max -> 1ms
 
  */
@@ -16,9 +16,10 @@ Servomotor de velocidad (360) -> Girar hacia un lado max -> 2ms. Parado -> 1.5ms
 #define MAX_DIRECTION_PWM               2000
 #define MIDDLE_DIRECTION_PWM            ((MIN_DIRECTION_PWM + MAX_DIRECTION_PWM)/2)
 
-//valores que significa cada max y min de PWM respecto al angulo revisar NAK
-#define MIN_ANGLE                       45
-#define MAX_ANGLE                       135
+//El angulo se limita a 135 grados y 225 grados. Siendo 180 el primer angulo recibido
+#define MIDDLE_ANGLE                    180
+#define MIN_ANGLE                       (MIDDLE_ANGLE - MIDDLE_ANGLE/4)
+#define MAX_ANGLE                       (MIDDLE_ANGLE + MIDDLE_ANGLE/4)
 
 //Valores que significa cada max y min de PWM respecto a la velocidad - 2 marchas posibles. 0 - no velocidad
 #define MIN_VELOCITY                    SM_MARCHA_0
@@ -93,7 +94,7 @@ static void initPinPE9(void){ //Pin salida PE9 TIM1
 
 // Funcion para establecer el angulo del servomotor
 void setServoAngle(float angle) {
-  // Asegurarse de que el ángulo esta dentro del rango permitido
+  // Asegurarse de que el angulo esta dentro del rango permitido
   if (angle < MIN_ANGLE) angle = MIN_ANGLE;
   if (angle > MAX_ANGLE) angle = MAX_ANGLE;
 

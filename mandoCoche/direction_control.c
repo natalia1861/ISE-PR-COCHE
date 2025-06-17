@@ -18,7 +18,7 @@
 osThreadId_t id_thread__DirectionControl = NULL;
 
 //Web
-char direccion_S[80];       //Variable de direccion para Web revisar NAK falta comentar
+char direccion_S[80]; 
 
 void thread__direction_control(void *no_argument)
 {
@@ -47,7 +47,7 @@ void thread__direction_control(void *no_argument)
             push_error(MODULE__DIRECTION, ERR_CODE__QUEUE, 0);
         }
         #else   //Aplicacion
-        if (as5600_readout(&direction) == AS5600_MAGNET_NOT_DETECTED) //revisar funcion para enviar errores, sobre todo con lectura de iman
+        if (as5600_readout(&direction) == AS5600_MAGNET_NOT_DETECTED) //Si el iman NO se ha detectado
         {
             if (magnet_detected)    //Si venimos de que se detectaba error, se lanza de nuevo
             {

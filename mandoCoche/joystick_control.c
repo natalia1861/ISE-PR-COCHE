@@ -84,6 +84,5 @@ void Init_JoystickControl (void)
 
     if (id_thread__joystick_control == NULL)
         push_error(MODULE__JOYSTICK, ERR_CODE__THREAD, 0);
-
 }
 
