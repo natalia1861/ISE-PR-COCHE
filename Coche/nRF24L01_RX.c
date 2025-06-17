@@ -86,8 +86,8 @@ void thread__transmissor_RF_RX(void *argument)
 	/* NRF24L01 goes to RX mode by default */
 	TM_NRF24L01_Init(15, 32);
 	
-	/* Set RF settings, Data rate to 2Mbps, Output power to -18dBm */
-	TM_NRF24L01_SetRF(TM_NRF24L01_DataRate_2M, TM_NRF24L01_OutputPower_M18dBm);
+	/* Set RF settings, Data rate to 2Mbps, Output power to 0 dBm */
+	TM_NRF24L01_SetRF(TM_NRF24L01_DataRate_2M, TM_NRF24L01_OutputPower_0dBm);
 	
 	/* Set my address, 5 bytes */
 	//TM_NRF24L01_SetMyAddress(MyAddress); //Se utilizaba para tener la transmision de TX por un lado y la de RX por otro

@@ -164,8 +164,12 @@ float getConsumo(void)
 
   //Midiendo consumo observamos que para un valor maximo daba picos de hasta 600mA. Por lo que ajustamos para que 600mA fueran 3V.
   //Asi pues: x * 3 /0.6 = x * 0.2 = valor de corriente de consumo
- 
-  corriente_Consumo = ADC_in(CH0_CONSUMO)*0.2;
+	//3V se devuelven como 3000 (mV).
+	//3000 (mV) * 0.2 = 600mA
+	//30 mV se devuelven como 0.3*1000 = 30 (mV)
+	//MAX: 3V -> 600mA
+  corriente_Consumo = (float) ADC_in(CH0_CONSUMO)*0.30f; //ADC_in devuelve el valor en mV
+	//Corriente consumo deberia estar en mA. Rango de 0-600mA
  	return corriente_Consumo;
 	//printf("Corriente: %.2f\n", corriente_Consumo);
 }

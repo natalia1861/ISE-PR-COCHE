@@ -2,7 +2,6 @@
 #include "cmsis_os2.h"                  // ::CMSIS:RTOS2
 #include "VL53L0X.h"
 #include "i2c.h"
-#include "errors.h"
 
 //El valor de distancia  se actualiza en el coche cada DISTANCE_UPDATE_TIME, pero se envia a RF segun cada cuanto tiempo pregunte el mando (mirar en ask_distance_control)
 #define DISTANCE_UPDATE_TIME                 100 //ms
