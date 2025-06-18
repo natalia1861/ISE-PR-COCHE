@@ -232,7 +232,6 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin) {
 }
 
 void Init_RF_RX(void) {
-    INITIALIZE_LEDS();
     id_thread__RF_RX = osThreadNew (thread__transmissor_RF_RX, NULL, NULL);
     if (id_thread__RF_RX == NULL)
     {

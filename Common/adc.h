@@ -17,6 +17,7 @@ typedef enum
 } marchas_t;
 
 void ADC1_pins_F429ZI_config(void);
+void ADC1_pins_PC0_config(void);
 void Init_ADC1_consumo (void);
 void Init_ADC1_presion(void);
 

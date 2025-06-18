@@ -1,9 +1,13 @@
 #include "gpio.h"
 #include "nRF24L01_RX.h"
-//#include "modo_sleep.h"
+#include "modo_sleep.h"
+#include "app_main.h"
+#include "cmsis_os2.h"                          // CMSIS RTOS header file
 
 	/**** Pulsador ****/
 static GPIO_InitTypeDef  GPIO_InitStruct;
+
+extern osThreadId_t id_thread__app_main;
 
 void init_pulsador(void){
 	__HAL_RCC_GPIOC_CLK_ENABLE();
@@ -45,6 +49,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
         __HAL_PWR_CLEAR_FLAG(PWR_FLAG_SB);
     }
     ETH_PhyExitFromPowerDownMode();
+    osThreadFlagsSet(id_thread__app_main,FLAG_STATE_NORMAL);
   }
   if (GPIO_Pin == GPIO_PIN_3) 
   {

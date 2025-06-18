@@ -1,6 +1,9 @@
 #include "cmsis_os2.h"                          // CMSIS RTOS header file
 #include "modo_sleep.h"
- 
+#include "nRF24L01_RX.h"
+#include "adc.h"
+#include "tm_stm32_nrf24l01.h"
+
 RTC_HandleTypeDef RTCHandle;
 
 void HAL_SYSTICK_Callback(void)
@@ -12,7 +15,7 @@ void SleepMode_Measure(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct;
 
-  /* Disable USB Clock */
+//  /* Disable USB Clock */
   __HAL_RCC_USB_OTG_FS_CLK_DISABLE();
 
   /* Disable Ethernet Clock */
@@ -20,51 +23,68 @@ void SleepMode_Measure(void)
 
   /* Configure all GPIO as analog to reduce current consumption on non used IOs */
   /* Enable GPIOs clock */
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
-  __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOD_CLK_ENABLE();
-  __HAL_RCC_GPIOE_CLK_ENABLE();
-  __HAL_RCC_GPIOF_CLK_ENABLE();
-  __HAL_RCC_GPIOG_CLK_ENABLE();
-  __HAL_RCC_GPIOH_CLK_ENABLE();
-  __HAL_RCC_GPIOI_CLK_ENABLE();
-  __HAL_RCC_GPIOJ_CLK_ENABLE();
-  __HAL_RCC_GPIOK_CLK_ENABLE();
+//  __HAL_RCC_GPIOA_CLK_ENABLE();
+//  __HAL_RCC_GPIOB_CLK_ENABLE();
+//  __HAL_RCC_GPIOC_CLK_ENABLE();
+//  __HAL_RCC_GPIOD_CLK_ENABLE();
+//  __HAL_RCC_GPIOE_CLK_ENABLE();
+//  __HAL_RCC_GPIOF_CLK_ENABLE();
+//  __HAL_RCC_GPIOG_CLK_ENABLE();
+//  __HAL_RCC_GPIOH_CLK_ENABLE();
+//  __HAL_RCC_GPIOI_CLK_ENABLE();
+//  __HAL_RCC_GPIOJ_CLK_ENABLE();
+//  __HAL_RCC_GPIOK_CLK_ENABLE();
 
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Pin = GPIO_PIN_All;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct); 
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
-  HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
-  HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
-  HAL_GPIO_Init(GPIOH, &GPIO_InitStruct); 
-  HAL_GPIO_Init(GPIOI, &GPIO_InitStruct);
-  HAL_GPIO_Init(GPIOJ, &GPIO_InitStruct); 
-  HAL_GPIO_Init(GPIOK, &GPIO_InitStruct);
+//  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+//  GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
+//  GPIO_InitStruct.Pull = GPIO_NOPULL;
+//  GPIO_InitStruct.Pin = GPIO_PIN_All;
+//  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct); 
+//  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+//  //HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+//  //HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+//  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+//  HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
+//  //HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
+//  HAL_GPIO_Init(GPIOH, &GPIO_InitStruct); 
+//  HAL_GPIO_Init(GPIOI, &GPIO_InitStruct);
+//  HAL_GPIO_Init(GPIOJ, &GPIO_InitStruct); 
+//  HAL_GPIO_Init(GPIOK, &GPIO_InitStruct);
 
-  /* Disable GPIOs clock */
+//  //Excluimos los pines de radiofrecuencia
+//  GPIO_InitStruct.Pin = GPIO_PIN_All & ~(GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_0);
+//  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+//  
+//  GPIO_InitStruct.Pin = GPIO_PIN_All & ~(GPIO_PIN_6 | GPIO_PIN_7 );
+//  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+//  
+//  GPIO_InitStruct.Pin = GPIO_PIN_All & ~(GPIO_PIN_3);
+//  HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
+
+//  /* Disable GPIOs clock */
   __HAL_RCC_GPIOA_CLK_DISABLE();
   __HAL_RCC_GPIOB_CLK_DISABLE();
-  __HAL_RCC_GPIOC_CLK_DISABLE();
-  __HAL_RCC_GPIOD_CLK_DISABLE();
+  //__HAL_RCC_GPIOC_CLK_DISABLE();
+  //__HAL_RCC_GPIOD_CLK_DISABLE();
   __HAL_RCC_GPIOE_CLK_DISABLE();
   __HAL_RCC_GPIOF_CLK_DISABLE();
-  __HAL_RCC_GPIOG_CLK_DISABLE();
+  //__HAL_RCC_GPIOG_CLK_DISABLE();
   __HAL_RCC_GPIOH_CLK_DISABLE();
   __HAL_RCC_GPIOI_CLK_DISABLE();
   __HAL_RCC_GPIOJ_CLK_DISABLE();
   __HAL_RCC_GPIOK_CLK_DISABLE();
 
+//  TM_NRF24L01_InitPins();
+//  ADC1_pins_PC0_config();
+//  Init_ADC1_consumo();
+
   /* Configure user Button */
   //BSP_PB_Init(BUTTON_KEY, BUTTON_MODE_EXTI);
   //BOTON AZUL
   __HAL_RCC_GPIOC_CLK_ENABLE();
+//  __HAL_RCC_SYSCFG_CLK_ENABLE();
+//  __HAL_RCC_SPI3_CLK_ENABLE();
+//  __HAL_RCC_ADC1_CLK_ENABLE();
   
     /* Configure Button pin as input with External interrupt */
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
@@ -73,8 +93,8 @@ void SleepMode_Measure(void)
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
   
     /* Enable and set Button EXTI Interrupt to the lowest priority */
-  //HAL_NVIC_SetPriority(EXTI15_10_IRQn, 2, 0);
-  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0x0F, 0x00);
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 2, 0);
+  //HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0x0F, 0x00);
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
   /* Suspend Tick increment to prevent wakeup by Systick interrupt. 
@@ -327,4 +347,5 @@ HAL_StatusTypeDef HAL_ETH_WritePHYRegister(ETH_HandleTypeDef *heth, uint16_t PHY
 
   /* Return function status */
   return HAL_OK;
+
 }
