@@ -76,11 +76,7 @@ void ADC1_pins_PC3_config(void)
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 }
-void ADC1_pins_F429ZI_config(void)
-{
-    ADC1_pins_PC0_config();
-    ADC1_pins_PC3_config();
-  }
+
 /**
   * @brief Initialize the ADC to work with single conversions. 12 bits resolution, software start, 1 conversion
   * @param ADC handle
@@ -151,10 +147,36 @@ void Init_ADC1_consumo (void)
     ADC_Init_Single_Conversion(&adchandle1,ADC1);
 }
 
+void DeInit_ADC1_consumo(void)
+{
+    // Detener la conversión y deshabilitar el ADC1
+    HAL_ADC_Stop(&adchandle1);
+    HAL_ADC_DeInit(&adchandle1);  // Desinicializar el ADC1
+
+    // Deshabilitar el reloj del ADC1
+    __HAL_RCC_ADC1_CLK_DISABLE();
+
+    // Deshabilitar los pines de ADC1 utilizados (PC0 en este caso)
+    HAL_GPIO_DeInit(GPIOC, GPIO_PIN_0);  // Deshabilitar el pin PC0 (ADC1_IN10)
+}
+
 void Init_ADC1_presion(void)
 {
     ADC1_pins_PC3_config();
     ADC_Init_Single_Conversion(&adchandle2,ADC1);
+}
+
+void DeInit_ADC1_presion(void)
+{
+    // Detener la conversión y deshabilitar el ADC1
+    HAL_ADC_Stop(&adchandle2);
+    HAL_ADC_DeInit(&adchandle2);  // Desinicializar el ADC1 para el canal de presión
+
+    // Deshabilitar el reloj del ADC1
+    __HAL_RCC_ADC1_CLK_DISABLE();
+
+    // Deshabilitar los pines de ADC1 utilizados (PC3 en este caso)
+    HAL_GPIO_DeInit(GPIOC, GPIO_PIN_3);  // Deshabilitar el pin PC3 (ADC1_IN13)
 }
 
 //Funcion que devuelve directamente el consumo en mA
@@ -203,6 +225,3 @@ marchas_t getPedal(void)
 
     return marcha;
 }
-
-
-

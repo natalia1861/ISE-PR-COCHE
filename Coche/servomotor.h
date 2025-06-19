@@ -11,6 +11,7 @@ typedef enum
 } speed_marchas_t;
 
 void Init_Servomotors (void);
+void DeInit_Servomotors(void);
 void setMotorSpeed(speed_marchas_t speed);
 void setServoAngle(float angle);
 

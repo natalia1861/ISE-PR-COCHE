@@ -157,7 +157,7 @@ void thread__transmissor_RF_RX(void *argument)
                         TM_NRF24L01_WriteAckPayload(NRF_IRQ.F.RX_P_NO, dataOut, sizeof(dataOut)); //Se incluyen datos al ACK PAYLOAD
                         printf("Comando: ask Distancia\n");
                         break;
-                    case nRF_CMD__ASK_CONSUMPTION:        //Comando para preguntar por el consumo (se pasa como un uint16_t (float con 3 decimales -> ver funcion getConsumo() en consumo_control.c))
+                    case nRF_CMD__ASK_CONSUMPTION:        //Comando para preguntar por el consumo (se pasa como un uint16_t (float con 2 decimales -> ver funcion getConsumo() en consumo_control.c))
                         dataOut[nRF_DATA__COMMAND] = nRF_CMD__ASK_CONSUMPTION;              //Se incluye  el comando de recibir consumo como respuesta
                         dataOut[nRF_DATA__AUX_DATA_LOW] =  (uint8_t) consumption;           //Se incluye el valor de consumo (low byte)
                         dataOut[nRF_DATA__AUX_DATA_HIGH] = (uint8_t) (consumption >> 8);    //Se incluye el valor de consumo (high byte)

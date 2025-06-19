@@ -55,6 +55,25 @@ void Init_Servomotors (void)
     initPinPD15();
 }
 
+void DeInit_Servomotors(void)
+{
+    // Detener PWM de los servomotores de dirección (TIM1)
+    HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
+    __HAL_RCC_TIM1_CLK_DISABLE();  // Deshabilitar el reloj del TIM1
+
+    // Detener PWM de los servomotores de velocidad (TIM3 y TIM4)
+    HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_1);
+    __HAL_RCC_TIM3_CLK_DISABLE();  // Deshabilitar el reloj del TIM3
+
+    HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_4);
+    __HAL_RCC_TIM4_CLK_DISABLE();  // Deshabilitar el reloj del TIM4
+
+    // Deshabilitar los pines de salida
+    HAL_GPIO_DeInit(GPIOE, GPIO_PIN_9);  // Deshabilitar pin PE9 (TIM1)
+    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_6);  // Deshabilitar pin PA6 (TIM3)
+    HAL_GPIO_DeInit(GPIOD, GPIO_PIN_15); // Deshabilitar pin PD15 (TIM4)
+}
+
 /*
 Funcion que inicializa el timer 1 para PWM
 APB2 = 168MHz - SystemCoreClock

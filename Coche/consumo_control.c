@@ -31,3 +31,13 @@ void Init_GetConsumption(void)
         }
     }
 }
+
+void DeInit_GetConsumption(void)
+{
+    DeInit_ADC1_consumo();
+    if (id_thread__GetConsumption != NULL)
+    {
+        osThreadTerminate(id_thread__GetConsumption);
+        id_thread__GetConsumption = NULL;
+    }
+}
