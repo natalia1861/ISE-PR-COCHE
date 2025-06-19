@@ -186,7 +186,7 @@ static void thread__RTC_Update (void *no_argument) {
         #endif
         
         #ifdef TEST_DISTANCIA
-        nRF_data_received_mando.distancia = (nRF_data_received_mando.distancia >= 500) ? 0 : nRF_data_received_mando.distancia + 50;
+        nRF_data_received_mando.distancia = (nRF_data_received_mando.distancia <= 0) ? 500 : nRF_data_received_mando.distancia - 50;
         //Mandamos flag a app_main de que el consumo fue actualizado para guardarse en flash y mandarse a web
         osThreadFlagsSet(id_thread__app_main, FLAG__MOSTRAR_DISTANCIA);
         #endif

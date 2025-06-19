@@ -51,7 +51,7 @@ lineas_distancia_t calcularLineasDistancia (uint16_t distancia);
 
 //Funciones locales
 void Send_CMD_StateChange (app_state_t app_state);
-void activeControls (bool ask_distance, bool ask_consumption, bool alarma_control);
+void activeControls (bool ask_distance, bool ask_consumption, bool alarma_control, bool direction_control, bool velocity_control);
 void lcd_update_state(app_state_t app_state);
 
 //Funcion principal - control del automata y el LCD
@@ -70,7 +70,8 @@ void thread__app_main_control (void *no_argument)
     //Flags internas para el automata
     bool state_enter = true;
     bool state_error = false;
-    bool state_comms_lost = false;
+    bool state_comms_rf_lost = false;
+    bool state_magnet_lost = false;
     
     //Inicializamos el LCD
     LCD_start();
@@ -98,13 +99,12 @@ void thread__app_main_control (void *no_argument)
         flags = osThreadFlagsWait(FLAG__MAIN_CONTROL, osFlagsWaitAny, osWaitForever);
         
 /************Flags comunes de gestion de errores*************************************************/
-
-        if (flags & (FLAG__RF_LOST_COMMS_ERROR | FLAG__DIR_MAG_NOT_PRES))       //Si hay perdida de comunicaciones
+        if (flags & FLAG__RF_LOST_COMMS_ERROR)
         {
-            if (!state_comms_lost)      //Si venimos de estado de comunicaciones
+            if (!state_comms_rf_lost)      //Si venimos de estado de comunicaciones
             {
                 //Activamos consumo para que al menos cada segundo el mando intente comunicar con el coche. El resto se desactiva ya que puede quedar pillado en algun estado molesto (alarma a tope)
-                activeControls(false, true, false);    //desactivamos Distancia, activamos Consumo, desactivamos Alarma
+                activeControls(false, true, false, true, true);    //desactivamos Distancia, activamos Consumo, desactivamos Alarma, desactivamos Direcion, desactivamos Velocidad
 
                 //Estado de los leds de error
                 leds_activate_mask |= GET_MASK_LED(LED_GREEN);
@@ -112,7 +112,27 @@ void thread__app_main_control (void *no_argument)
                 leds_activate_mask |= GET_MASK_LED(LED_RED);
 
                 //flag de error activo
-                state_comms_lost = true;
+                state_comms_rf_lost = true;
+
+                //Actualizamos LCD con detalle de error
+                LCD_write(LCD_LINE__ONE, moduloError);
+                LCD_write(LCD_LINE__TWO, detalleError); //detalleError es una variable global que se actualiza siempre que haya un error (prevalece el ultimo)
+            }
+        }
+        if (flags & (FLAG__DIR_MAG_NOT_PRES))       //Si hay perdida de comunicaciones
+        {
+            if (!state_magnet_lost)      //Si venimos de estado de comunicaciones
+            {
+                //Activamos consumo para que al menos cada segundo el mando intente comunicar con el coche. El resto se desactiva ya que puede quedar pillado en algun estado molesto (alarma a tope)
+                activeControls(false, true, false, true, false);    //desactivamos Distancia, activamos Consumo, desactivamos Alarma, activamos Direcion, desactivamos Velocidad
+
+                //Estado de los leds de error
+                leds_activate_mask |= GET_MASK_LED(LED_GREEN);
+                leds_activate_mask |= GET_MASK_LED(LED_BLUE);
+                leds_activate_mask |= GET_MASK_LED(LED_RED);
+
+                //flag de error activo
+                state_magnet_lost = true;
 
                 //Actualizamos LCD con detalle de error
                 LCD_write(LCD_LINE__ONE, moduloError);
@@ -120,22 +140,42 @@ void thread__app_main_control (void *no_argument)
             }
         }
         
-        if (flags & (FLAG__RF_COMMS_RESTORED | FLAG__DIR_MAG_DETECTED))     //Comunicaciones recuperadas -> Se vuelve a entrar al estado donde estabamos
+        if (flags & FLAG__RF_COMMS_RESTORED)
         {
-            if (state_comms_lost)   //Si venimos de estado de perdida de comunicaciones
+            if (state_comms_rf_lost)   //Si venimos de estado de perdida de comunicaciones
             {
-                // //Los controles ya estan activados segun el estado en el que estemos (consumo siempre esta activo asi que siempre intenta comunicar)
+                //Los controles ya estan activados segun el estado en el que estemos (consumo siempre esta activo asi que siempre intenta comunicar)
+                state_comms_rf_lost = false;       //Desactivamos flag de perdida de comunicaciones
+                
+                if (!state_magnet_lost)     //Si no hay error de iman
+                {
+                    state_enter = true;
+                }
+                else    //Si hay error de iman no detectado
+                {
+                    state_magnet_lost = false;      //Para que se trate el error de nuevo
+                    push_error(MODULE__DIRECTION, ERR_CODE__MAGNET_NOT_PRESENT, 1);
+                }
+            } 
+        }
 
-                // //Mostramos estado inicial de LEDs
-                // leds_activate_mask |= GET_MASK_LED(LED_GREEN);
-                // leds_activate_mask &= ~GET_MASK_LED(LED_BLUE);
-                // leds_activate_mask &= ~GET_MASK_LED(LED_RED);
-
-                // //Mostramos por pantalla el estado donde estamos
-                // lcd_update_state(app_state);
-                state_comms_lost = false;       //Desactivamos flag de perdida de comunicaciones
-                state_enter = true;             //Activamos flag de enter para volver a entrar al estado que corresponda
-            }
+        if (flags & FLAG__DIR_MAG_DETECTED)
+        {
+            if (state_magnet_lost)   //Si venimos de estado de perdida de comunicaciones
+            {
+                //Los controles ya estan activados segun el estado en el que estemos (consumo siempre esta activo asi que siempre intenta comunicar)
+                state_magnet_lost = false;       //Desactivamos flag de perdida de comunicaciones
+                
+                if (!state_comms_rf_lost)   //Si no hay error de RF
+                {
+                    state_enter = true;
+                }
+                else        //Si hay error de RF
+                {
+                    state_comms_rf_lost = false;        //Para que se trate el error de nuevo
+                    push_error(MODULE__RF, ERR_CODE__RF_COMMS_LOST, 1);
+                }
+            } 
         }
 
         if (flags & FLAG__DRIVER_ERROR) //Flag de error de driver -> ERROR CATASTROFICO, se desactivan controles y no se permite aceptar el error. Solo se sale reiniciando. Aprende a programar si da este error
@@ -143,7 +183,7 @@ void thread__app_main_control (void *no_argument)
             if (!state_error)       //Si venimos de estado de "no error"
             {
                 //Desactivamos todos los controles
-                activeControls(false, false, false);    //desactivamos Distancia, desactivamos Consumo, desactivamos Alarma
+                activeControls(false, false, false, false, false);    //desactivamos Distancia, desactivamos Consumo, desactivamos Alarma
                 
                 //Mandamos al coche al estado bajo consumo para que consuma menos recursos.
                 app_state = APP_STAGE__LOW_POWER;
@@ -166,7 +206,7 @@ void thread__app_main_control (void *no_argument)
 /*****************************************************************************************************************************/
         
 /************Comienzo de control de los estados*******************************************************************************/
-        if ((!state_error) && (!state_comms_lost))       //Solo se tiene en cuenta si no hay errores pendientes (tanto Driver como perdida de comunicaciones)
+        if ((!state_error) && (!state_comms_rf_lost) && (!state_magnet_lost))       //Solo se tiene en cuenta si no hay errores pendientes (tanto Driver como perdida de comunicaciones)
         {
             //Flags comunes a todos los estados
             if (flags & FLAG__PRESS_UP) //Pulsacion arriba joystick
@@ -206,10 +246,12 @@ void thread__app_main_control (void *no_argument)
                 }
             }
             
-            if (flags & FLAG__ENTER_LOW_POWER)  //Entramos/salimos del modo bajo consumo (se puede como por pulsador azul como joystick)
+            if (flags & FLAG__ENTER_LOW_POWER)  //Entramos/salimos del modo bajo consumo (se entra con el pulsador azul)
             {
-                app_state = (app_state == APP_STAGE__LOW_POWER) ? APP_STATE__NORMAL : APP_STAGE__LOW_POWER;
-                Send_CMD_StateChange(app_state);
+                LCD_clean();
+                //app_state = (app_state == APP_STAGE__LOW_POWER) ? APP_STATE__NORMAL : APP_STAGE__LOW_POWER;
+                app_state = APP_STAGE__LOW_POWER;
+                state_enter = true;
             }
             
             //Automata de control
@@ -219,7 +261,7 @@ void thread__app_main_control (void *no_argument)
                     if (state_enter)
                     {
                         //Desactivamos todos los controles de otros estados
-                        activeControls(false, true, false);    //desactivamos Distancia, activamos Consumo, desactivamos Alarma
+                        activeControls(false, true, false, true, true);    //desactivamos Distancia, activamos Consumo, desactivamos Alarma
                         
                         //Enviamos el estado al coche para habilitar/deshabilitar controles
                         Send_CMD_StateChange(app_state);
@@ -247,7 +289,7 @@ void thread__app_main_control (void *no_argument)
                     if (state_enter)
                     {
                         //Desactivamos todos los controles de otros estados
-                        activeControls(false, true, false);    //desactivamos Distancia, activamos Consumo, desactivamos Alarma
+                        activeControls(false, true, false, false, false);    //desactivamos Distancia, activamos Consumo, desactivamos Alarma, desactivamos Direcion, desactivamos Velocidad
                         
                         //Enviamos el estado al coche para habilitar/deshabilitar controles
                         Send_CMD_StateChange(app_state);
@@ -281,7 +323,7 @@ void thread__app_main_control (void *no_argument)
                         leds_activate_mask |= GET_MASK_LED(LED_RED);
                         
                         //Creamos el hilo de solicitud de distancia cada x tiempo que mandara comando de solicitud de distancia
-                        activeControls(true, true, true);    //activamos Distancia, activamos Consumo, activamos Alarma
+                        activeControls(true, true, true, true, true);    //activamos Distancia, activamos Consumo, activamos Alarma
 
                         //Mostramos por el LCD que estamos en modo de bajo consumo
                         LCD_write (LCD_LINE__ONE, "State: Back Gear");
@@ -289,6 +331,10 @@ void thread__app_main_control (void *no_argument)
                         state_enter = false;
 
                         osDelay(1000); //Espera 1 segundo para visualizar que se entra al estado de marcha atras
+
+                        //Motramos la primera iteraccion (porque cuando volvemos de error, hasta que no cambien no se hace)
+                        lineas_actuales = calcularLineasDistancia(nRF_data_received_mando.distancia);
+                        LCD_mostrarLineasDistancia(lineas_actuales);
                     }
                     
                     if (flags & FLAG__MOSTRAR_DISTANCIA) //Flag enviado desde nRF TX tras recibir la distancia
@@ -303,6 +349,7 @@ void thread__app_main_control (void *no_argument)
                             if (lineas_prev != (lineas_actuales = calcularLineasDistancia(nRF_data_received_mando.distancia)))
                             {
                                 LCD_mostrarLineasDistancia(lineas_actuales);
+                                osThreadFlagsSet(id_thread__AlarmaControl, SET_ALARM_FLAG(lineas_actuales));
                                 lineas_prev = lineas_actuales;
                             }
                             //Se pasa distancia por Web
@@ -327,7 +374,7 @@ void thread__app_main_control (void *no_argument)
                         }
                         
                         //Desactivamos todos los controles de otros estados
-                        activeControls(false, false, false);    //desactivamos Distancia, activamos Consumo, desactivamos Alarma
+                        activeControls(false, false, false, true, true);    //desactivamos Distancia, activamos Consumo, desactivamos Alarma
                         
                         //Enviamos el estado al coche para habilitar/deshabilitar controles
                         Send_CMD_StateChange(app_state);
@@ -395,19 +442,19 @@ void Init_AllAppThreads(void)
     Init_RTC_Update();          //RTC
     Init_JoystickControl();     //Joystick
     Init_RF_TX();               //Radiofrecuencia
-    Init_VelocityCointrol();    //Velocidad / presion
+    Init_VelocityControl();    //Velocidad / presion
     Init_DirectionControl();    //Direccion / marchas
     init_pulsador();            //Pulsador azul
     Init_FlashControl();        //Flash
     
     //ESTADO INICIAL
-    activeControls(false, true, false);    //desactivamos Distancia, activamos Consumo, desactivamos Alarma
+    activeControls(false, true, false, true, true);    //desactivamos Distancia, activamos Consumo, desactivamos Alarma
 }
 
 //Funcion para activar/ desactivar los controles de pregunta/ respuesta del coche (Control de distancia y Control de consumo).
 //En caso de que ya esten activos/ desactivados no se hace nada (gestion interna de creacion de threads)
 
-void activeControls (bool ask_distance, bool ask_consumption, bool alarma_control)
+void activeControls (bool ask_distance, bool ask_consumption, bool alarma_control, bool direction_control, bool velocity_control)
 {
     if (ask_distance)
     {
@@ -432,6 +479,22 @@ void activeControls (bool ask_distance, bool ask_consumption, bool alarma_contro
     else
     {
         Deinit_AlarmaControl();
+    }
+    if (direction_control)
+    {
+        Init_DirectionControl();
+    }
+    else
+    {
+        DeInit_DirectionControl();
+    }
+    if (velocity_control)
+    {
+        Init_VelocityControl();
+    }
+    else
+    {
+        DeInit_VelocityControl();
     }
 }
 
@@ -462,15 +525,15 @@ void lcd_update_state(app_state_t app_state)
 }
 
 /**
- * @brief Calcula el número de líneas de advertencia que deben mostrarse en el display
- *        en función de la distancia detectada por un sensor.
+ * @brief Calcula el numero de li�neas de advertencia que deben mostrarse en el display
+ *        en funcion de la distancia detectada por un sensor.
  *
- *        Cuanto menor sea la distancia, más líneas se muestran (hasta un máximo de 3).
- *        Si el objeto está demasiado lejos, no se muestra ninguna línea.
- *        Si está demasiado cerca, se muestran las 3 líneas.
+ *        Cuanto menor sea la distancia, mas li�neas se muestran (hasta un maximo de 3).
+ *        Si el objeto esta demasiado lejos, no se muestra ninguna li�nea.
+ *        Si esta demasiado cerca, se muestran las 3 li�neas.
  *
  * @param distancia  Valor de distancia medido (0 a 500 en mm), donde 0 es muy cerca y 500 muy lejos.
- * @return lineas_distancia_t  Número de líneas a mostrar (0 a 3).
+ * @return lineas_distancia_t  Numero de lineas a mostrar (0 a 3).
  */
 
 lineas_distancia_t calcularLineasDistancia(uint16_t distancia)

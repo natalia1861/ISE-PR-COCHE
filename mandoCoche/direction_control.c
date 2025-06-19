@@ -99,3 +99,12 @@ void Init_DirectionControl (void)       //Se inicia el control de deteccion y en
         }
     }
 }
+
+void DeInit_DirectionControl (void)
+{
+    if (id_thread__DirectionControl != NULL)
+    {
+        osThreadTerminate(id_thread__DirectionControl);
+        id_thread__DirectionControl = NULL;
+    }
+}

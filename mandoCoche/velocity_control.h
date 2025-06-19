@@ -7,6 +7,7 @@
 
 extern osThreadId_t id_thread__velocityControl;
 
-void Init_VelocityCointrol (void);
+void Init_VelocityControl (void);
+void DeInit_VelocityControl (void);
 
 #endif

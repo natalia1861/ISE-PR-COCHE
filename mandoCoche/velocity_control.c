@@ -78,11 +78,20 @@ void thread__VelocityControl (void *no_argument)
     }
 }
 
-void Init_VelocityCointrol (void)
+void Init_VelocityControl (void)
 {
     if (id_thread__velocityControl == NULL)
         id_thread__velocityControl = osThreadNew(thread__VelocityControl, NULL, NULL);
     
     if (id_thread__velocityControl == NULL)
         push_error(MODULE__VELOCITY, ERR_CODE__THREAD, 0);
+}
+
+void DeInit_VelocityControl (void)
+{
+    if (id_thread__velocityControl != NULL)
+    {
+        osThreadTerminate(id_thread__velocityControl);
+        id_thread__velocityControl = NULL;
+    }
 }

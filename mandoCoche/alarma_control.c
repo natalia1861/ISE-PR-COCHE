@@ -62,7 +62,6 @@ void Init_PWM_Alarma(void)
   	sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
 	sConfigOC.Pulse = (htim3.Init.Period + 1) / 2;  // 50% duty = 250
 	HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_3);
-	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
 }
 
 void PWM_AlarmDeactivate ()
@@ -87,6 +86,7 @@ void thread__AlarmaControl(void *no_argument)
 
 		if (flags & FLAG_DIST_ALTA)
 		{
+            osTimerStop(id_timer__AlarmaTono);
 		    if (osTimerStart(id_timer__AlarmaTono, BEEP_LENTO_MS) != osOK)
 			{
 				push_error(MODULE__ALARM, ERR_CODE__TIMER, 2);
@@ -95,6 +95,7 @@ void thread__AlarmaControl(void *no_argument)
 
 		if (flags & FLAG_DIST_MEDIA)
 		{
+            osTimerStop(id_timer__AlarmaTono);
 		    if (osTimerStart(id_timer__AlarmaTono, BEEP_MEDIO_MS) != osOK)
 			{
 				push_error(MODULE__ALARM, ERR_CODE__TIMER, 3);
@@ -103,6 +104,7 @@ void thread__AlarmaControl(void *no_argument)
 
 		if (flags & FLAG_DIST_BAJA)
 		{
+            osTimerStop(id_timer__AlarmaTono);
 		    if (osTimerStart(id_timer__AlarmaTono, BEEP_RAPIDO_MS) != osOK)
 			{
 				push_error(MODULE__ALARM, ERR_CODE__TIMER, 4);
@@ -111,6 +113,7 @@ void thread__AlarmaControl(void *no_argument)
 
 		if (flags & FLAG_DEACTIVATE_ALARM)		//Desactivar alarma de control
 		{
+            osTimerStop(id_timer__AlarmaTono);
 			PWM_AlarmDeactivate();
 			tono_on = false;
 		}
@@ -145,7 +148,7 @@ void Init_AlarmaControl (void)
 
 	//Se crea el timer de Control
 	if (id_timer__AlarmaTono == NULL)
-		id_timer__AlarmaTono = osTimerNew(Timer__AlarmaTono, osTimerOnce, NULL, NULL);
+		id_timer__AlarmaTono = osTimerNew(Timer__AlarmaTono, osTimerPeriodic, NULL, NULL);
 	
 	if (id_thread__AlarmaControl == NULL)
 	{
@@ -156,15 +159,11 @@ void Init_AlarmaControl (void)
 	{
 		push_error(MODULE__ALARM, ERR_CODE__TIMER, 0);
 	}
-
-	if (osTimerStart(id_timer__AlarmaTono, BEEP_LENTO_MS) != osOK)
-	{
-		push_error(MODULE__ALARM, ERR_CODE__TIMER, 1);
-	}
 }
 
 void Deinit_AlarmaControl (void)
 {
+    PWM_AlarmDeactivate();
 	if (id_thread__AlarmaControl != NULL)
     {
 		osThreadTerminate(id_thread__AlarmaControl);

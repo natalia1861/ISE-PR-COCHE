@@ -6,5 +6,6 @@
 extern osThreadId_t id_thread__DirectionControl;
 
 void Init_DirectionControl (void);
+void DeInit_DirectionControl (void);
 
 #endif
