@@ -6,7 +6,7 @@
  Datos tecnicos:
  - El servomor funciona con una frecuencia de 50Hz
  - Para controlarlo, se va cambiando el periodo del pulso
-Servomotor de direccion (180) -> Izquierda - 2ms (180º) Centro - 1.5ms (90º) Izquierda 1ms (0º)
+Servomotor de direccion (180) -> Izquierda - 2ms (180 grados) Centro - 1.5ms (90 grados) Izquierda 1ms (0 grados)
 Servomotor de velocidad (360) -> Girar hacia un lado max -> 2ms. Parado -> 1.5ms. Girar hacia el otro lado max -> 1ms
 
  */
@@ -16,9 +16,11 @@ Servomotor de velocidad (360) -> Girar hacia un lado max -> 2ms. Parado -> 1.5ms
 #define MAX_DIRECTION_PWM               2000
 #define MIDDLE_DIRECTION_PWM            ((MIN_DIRECTION_PWM + MAX_DIRECTION_PWM)/2)
 
-//valores que significa cada max y min de PWM respecto al angulo
-#define MIN_ANGLE                       0
-#define MAX_ANGLE                       180
+//El angulo se limita a 135 grados y 225 grados. Siendo 180 el primer angulo recibido
+#define MIDDLE_ANGLE                    180
+#define MIN_ANGLE                       (MIDDLE_ANGLE - MIDDLE_ANGLE/4)
+#define MAX_ANGLE                       (MIDDLE_ANGLE + MIDDLE_ANGLE/4)
+#define DIRECTION_SENSIBILITY           2   //2 grados = THRESHOLD en mando para enviar datos
 
 //Valores que significa cada max y min de PWM respecto a la velocidad - 2 marchas posibles. 0 - no velocidad
 #define MIN_VELOCITY                    SM_MARCHA_0
@@ -52,6 +54,25 @@ void Init_Servomotors (void)
     //Init servomotor de velocidad rueda derecha
     initTim4PWM();
     initPinPD15();
+}
+
+void DeInit_Servomotors(void)
+{
+    // Detener PWM de los servomotores de direcciï¿½n (TIM1)
+    HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
+    __HAL_RCC_TIM1_CLK_DISABLE();  // Deshabilitar el reloj del TIM1
+
+    // Detener PWM de los servomotores de velocidad (TIM3 y TIM4)
+    HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_1);
+    __HAL_RCC_TIM3_CLK_DISABLE();  // Deshabilitar el reloj del TIM3
+
+    HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_4);
+    __HAL_RCC_TIM4_CLK_DISABLE();  // Deshabilitar el reloj del TIM4
+
+    // Deshabilitar los pines de salida
+    HAL_GPIO_DeInit(GPIOE, GPIO_PIN_9);  // Deshabilitar pin PE9 (TIM1)
+    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_6);  // Deshabilitar pin PA6 (TIM3)
+    HAL_GPIO_DeInit(GPIOD, GPIO_PIN_15); // Deshabilitar pin PD15 (TIM4)
 }
 
 /*
@@ -93,9 +114,9 @@ static void initPinPE9(void){ //Pin salida PE9 TIM1
 
 // Funcion para establecer el angulo del servomotor
 void setServoAngle(float angle) {
-  // Asegurarse de que el Ã¡ngulo esta dentro del rango permitido
-  if (angle < MIN_ANGLE) angle = MIN_ANGLE;
-  if (angle > MAX_ANGLE) angle = MAX_ANGLE;
+  // Asegurarse de que el angulo esta dentro del rango permitido
+  if (angle < (MIN_ANGLE + DIRECTION_SENSIBILITY)) angle = MIN_ANGLE;
+  if (angle > (MAX_ANGLE - DIRECTION_SENSIBILITY)) angle = MAX_ANGLE;
 
   // Calcular el valor del pulso PWM correspondiente al angulo (de 1000 a 2000)
   uint16_t pulse = MIN_DIRECTION_PWM + ((uint32_t)(angle - MIN_ANGLE) * (MAX_DIRECTION_PWM - MIN_DIRECTION_PWM)) / (MAX_ANGLE - MIN_ANGLE);
@@ -191,7 +212,7 @@ void setMotorSpeed(speed_marchas_t speed) {
     
     if (speed == MIN_VELOCITY) 
     {
-        // Vehi­culo parado
+        // Vehiculo parado
         pulse_left = MIDDLE_DIRECTION_PWM;
         pulse_right = MIDDLE_DIRECTION_PWM;
     } else {
@@ -216,23 +237,3 @@ void setMotorSpeed(speed_marchas_t speed) {
     __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_4, pulse_right); //Se actualiza la rueda derecha
 }
 
-//Funciones para tests
-
-// Funcion para detener el motor (parada) - no se usa
-void stop_motor(void) {
-  // El valor de PWM correspondiente a la parada (velocidad 3) es el punto medio
-  uint16_t stopPulse = (MIN_DIRECTION_PWM + MAX_DIRECTION_PWM) / 2; // 1500us (parada)
-  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, stopPulse);
-}
-
-// Funcion para avanzar (maxima velocidad) - no se usa
-void move_forward(void) {
-  // El valor de PWM correspondiente a la velocidad maxima (2) es 2000us
-  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, MAX_DIRECTION_PWM); // 2000us (avance maximo)
-}
-
-// Funcion para moverse hacia atras (maxima velocidad en reversa) - no se usa
-void move_reverse(void) {
-  // El valor de PWM correspondiente a la velocidad maxima en reversa (2) es 1000us
-  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, MIN_DIRECTION_PWM); // 1000us (reversa maxima)
-}

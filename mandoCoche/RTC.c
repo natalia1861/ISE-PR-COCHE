@@ -1,6 +1,8 @@
 #include "RTC.h"
 #include "cmsis_os2.h"                  // ::CMSIS:RTOS2a
 #include "app_main.h"
+#include "errors.h"
+#include "nRF24L01_TX.h"
 
 #define FLAG_RTC                0x02
 
@@ -17,14 +19,15 @@ static RTC_TimeTypeDef hor;
 
 //vairables locales
 struct tm horaSNTP;
+osThreadId_t id_thread__RTC_Update = NULL;
 
 //Variable de la hora y fecha para el LCD
 char rtc_date_time[RTC_MAX][LCD_MAX_CHARACTERS+1];	//maximo de caracteres + EOS
 
 //timers
 static osTimerId_t tim_id_3min;	//timer sincronizacion cada 3 min
+static void Timer_Callback_3min (void *no_argument);
 
-static void Timer_Callback_3min (void);
 char hora[80];    //variable global usada en web
 char fecha[80];   //variable global usada en web
 
@@ -53,10 +56,9 @@ void init_RTC(void) {     //inicializa el RTC y configura una hora por defecto
    //Iniciamos el timer para volver a actualizar la hora con el servidor SNTP
   tim_id_3min = osTimerNew((osTimerFunc_t)&Timer_Callback_3min, osTimerPeriodic, NULL, NULL);
 	if (osTimerStart(tim_id_3min, 180000) != osOK)
-    {
-      //revisar anadir error
-        printf("Error Timer RTC");
-    }
+  {
+      push_error(MODULE__RTC, ERR_CODE__TIMER, 0);
+  }
 }
 
 //Anade una hora que se le especifica
@@ -68,10 +70,10 @@ void RTC_set_Time(uint8_t day, uint8_t month, uint8_t year, uint8_t hora, uint8_
 	
 	hor.Hours=hora;
 	hor.Minutes=minutos;
-  hor.Seconds=segundos;
-  hor.TimeFormat=RTC_HOURFORMAT_24;
+    hor.Seconds=segundos;
+    hor.TimeFormat=RTC_HOURFORMAT_24;
 	hor.DayLightSaving = RTC_DAYLIGHTSAVING_NONE ;
-  hor.StoreOperation = RTC_STOREOPERATION_RESET;
+    hor.StoreOperation = RTC_STOREOPERATION_RESET;
 	HAL_RTC_SetTime(&hrtc,&hor,RTC_FORMAT_BIN);
 }
 
@@ -130,12 +132,12 @@ void HAL_RTC_MspInit(RTC_HandleTypeDef *hrtc) {
 //SNTP
 //Funcion que actualiza el RTC con la hora del SNTP
 static void RTC_Set_Time_SNTP(void) {
-	fech.Year=horaSNTP.tm_year+1900-2000;
-	fech.Month=horaSNTP.tm_mon+1;
-	fech.Date=horaSNTP.tm_mday;
-	HAL_RTC_SetDate(&hrtc,&fech,RTC_FORMAT_BIN);
-	hor.Hours=horaSNTP.tm_hour+1;
-	hor.Minutes=horaSNTP.tm_min;
+    fech.Year=horaSNTP.tm_year+1900-2000;
+    fech.Month=horaSNTP.tm_mon+1;
+    fech.Date=horaSNTP.tm_mday;
+    HAL_RTC_SetDate(&hrtc,&fech,RTC_FORMAT_BIN);
+    hor.Hours=horaSNTP.tm_hour+2;
+    hor.Minutes=horaSNTP.tm_min;
     hor.Seconds=horaSNTP.tm_sec;
     hor.TimeFormat=RTC_HOURFORMAT_24;
 	hor.DayLightSaving = RTC_DAYLIGHTSAVING_NONE ;
@@ -164,23 +166,38 @@ static void sntp_time_callback (uint32_t time, uint32_t seconds_fraction) {
 }
 
 //Cada 3min se sincroniza la hora con el servidor SNTP
-static void Timer_Callback_3min (void) {
+static void Timer_Callback_3min (void *no_argument) {
 	 get_sntp_time();							
 }
 
 //HILO RTC
 static void thread__RTC_Update (void *no_argument) {
-	while (1) 
+	init_RTC();
+    while (1) 
     {
         /* Every 1000 ms */
         RTC_getTime_Date();
-		
         osDelay (1000);
+        
+        #ifdef TEST_CONSUMO
+        nRF_data_received_mando.consumo = (nRF_data_received_mando.consumo >= 3300) ? 0 : nRF_data_received_mando.consumo + 300;
+        //Mandamos flag a app_main de que el consumo fue actualizado para guardarse en flash y mandarse a web
+        osThreadFlagsSet(id_thread__app_main, FLAG__CONSUMO_EN_FLASH);
+        #endif
+        
+        #ifdef TEST_DISTANCIA
+        nRF_data_received_mando.distancia = (nRF_data_received_mando.distancia <= 0) ? 500 : nRF_data_received_mando.distancia - 50;
+        //Mandamos flag a app_main de que el consumo fue actualizado para guardarse en flash y mandarse a web
+        osThreadFlagsSet(id_thread__app_main, FLAG__MOSTRAR_DISTANCIA);
+        #endif
 	}
 }
 
 void Init_RTC_Update (void)
 {
-    init_RTC();
-    osThreadNew(thread__RTC_Update, NULL, NULL);
+  if (id_thread__RTC_Update == NULL)
+    id_thread__RTC_Update = osThreadNew(thread__RTC_Update, NULL, NULL);
+
+  if (id_thread__RTC_Update == NULL)
+    push_error(MODULE__RTC, ERR_CODE__THREAD, 0);
 }

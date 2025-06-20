@@ -3,6 +3,7 @@
 #include "nRF24L01_TX.h"
 #include "tm_stm32_nrf24l01.h"
 #include "app_main.h"
+#include "errors.h"
 
 #define GET_CONSUMPTION_TIME           1000     //El consumo se pide al coche cada segundo
 
@@ -10,22 +11,20 @@ osThreadId_t id_thread__askConsumptionControl = NULL;
 
 void thread__askConsumptionControl (void *no_argument)
 {
-    nRF_data_transmitted_t nRF_data; //Mensaje hacia RF para que envie el comando con los datos
+    nRF_data_transmitted_t nRF_data_transmitted; //Mensaje hacia RF para que envie el comando con los datos
     while (1)
     {
         //Manda comando de preguntar consumo al coche
-        nRF_data.command = nRF_CMD__ASK_CONSUMPTION;
-        if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, osWaitForever) != osOK)
+        nRF_data_transmitted.command = nRF_CMD__ASK_CONSUMPTION;
+        if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data_transmitted, NULL, DRIVER_TIME_WAIT) != osOK)
         {
-            strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
-            osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
+            push_error(MODULE__ASK_CONSUMPTION, ERR_CODE__QUEUE, 0);
         }
         //Manda comando para recibir el consumo del coche
-        nRF_data.command = nRF_CMD__RECIEVE_CONSUMPTION;
-        if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data, NULL, osWaitForever) != osOK)
+        nRF_data_transmitted.command = nRF_CMD__RECIEVE_CONSUMPTION;
+        if (osMessageQueuePut(id_queue__nRF_TX_Data, &nRF_data_transmitted, NULL, DRIVER_TIME_WAIT) != osOK)
         {
-            strncpy(detalleError, "MSG QUEUE ERROR        ", sizeof(detalleError) - 1);
-            osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
+            push_error(MODULE__ASK_CONSUMPTION, ERR_CODE__QUEUE, 1);
         }
         osDelay(GET_CONSUMPTION_TIME);
     }
@@ -37,11 +36,7 @@ void Init_askConsumptionControl (void) //Comienza el control de pregunta / respu
     {
         id_thread__askConsumptionControl = osThreadNew(thread__askConsumptionControl, NULL, NULL);
         if (id_thread__askConsumptionControl == NULL)
-        {
-            //Error
-            strncpy(detalleError, "THREAD CONSUMPTION ERROR", sizeof(detalleError) - 1);
-            osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
-        }
+            push_error(MODULE__ASK_CONSUMPTION, ERR_CODE__THREAD, 0);
     }
 }
 

@@ -14,7 +14,7 @@
 
 #include "stm32f4xx_hal.h"              // Keil::Device:STM32Cube HAL:Common
 #include "nak_led.h"                  // ::Board Support:LED
-#include "pot.h"
+//#include "pot.h"                    //Revisar Diria que Web ya no lo va a usar
 #include "lcd.h"
 #include "RTC.h"
 #include "gpio.h"
@@ -46,7 +46,7 @@ extern void     netDHCP_Notify (uint32_t if_num, uint8_t option, const uint8_t *
 
 extern bool LEDrun;
 extern bool lcd_stop;
-extern char lcd_text[2][20+1];
+extern char lcd_text[2][LCD_MAX_CHARACTERS+1];
 
 extern osThreadId_t TID_Display;
 extern osThreadId_t TID_Led;
@@ -54,7 +54,7 @@ extern osThreadId_t TID_Led;
 bool LEDrun;
 bool LED_Rrun;
 bool LED_Grun;
-char lcd_text[2][20+1] = { "LCD line 1",
+char lcd_text[2][LCD_MAX_CHARACTERS+1] = { "LCD line 1",
                            "LCD line 2" };
 
 /* Thread IDs */

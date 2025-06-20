@@ -1,9 +1,10 @@
 #include "joystick_control.h"
 #include "gpio.h"
 #include "app_main.h"
+#include "errors.h"
 
 //Thread
-osThreadId_t id_thread__joystick_control;
+osThreadId_t id_thread__joystick_control = NULL;
 void thread__Joystick_control (void *no_argument);
 
 //timer rebotes
@@ -78,6 +79,10 @@ void timer_pulsacion_larga_callback (void *arg) {
 
 void Init_JoystickControl (void)
 {
-    id_thread__joystick_control = osThreadNew(thread__Joystick_control, NULL, NULL);
+    if (id_thread__joystick_control == NULL)
+        id_thread__joystick_control = osThreadNew(thread__Joystick_control, NULL, NULL);
+
+    if (id_thread__joystick_control == NULL)
+        push_error(MODULE__JOYSTICK, ERR_CODE__THREAD, 0);
 }
 

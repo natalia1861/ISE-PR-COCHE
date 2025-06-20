@@ -1,6 +1,7 @@
 #include "flash.h"
 #include "Driver_SPI.h"
 #include "app_main.h"
+#include "errors.h"
 /*
 Flash memory is a device that operates via SPI.
 D1 - input (MOSI)
@@ -34,15 +35,15 @@ Por consiguiente, ocuparemos un total de 10 paginas, es decir, algo menos de un 
 //Datos para guardar consumo y hora
 #define MAX_CONSUMPTION_DATA			10			//Numero maximo de consumos que guardaremos
 #define CONSUMPTION_SIZE_BYTES			4			//Cada consumo ocupa 4 bytes (float)
-#define HORA_SIZE_BYTES					4			//Cada hora ocupa 8 char (HH:MM:SS)
+#define HORA_SIZE_BYTES					8			//Cada hora ocupa 8 char (bytes) (HH:MM:SS)
 
 //SPI
 extern ARM_DRIVER_SPI Driver_SPI4;					//Driver SPI4 externo
 static ARM_DRIVER_SPI* SPIdrv = &Driver_SPI4;		//Puntero al driver usado
 
 //Hilo y cola
-static osThreadId_t id_thread__flash;           //ID del hilo de Flash
-osMessageQueueId_t id_flash_commands_queue;     //Cola de mensajes para comandos de flash
+static osThreadId_t id_thread__flash = NULL;           //ID del hilo de Flash
+osMessageQueueId_t id_flash_commands_queue = NULL;     //Cola de mensajes para comandos de flash
 static void thread__flash (void *argument);          //Declaracion del hilo
 
 
@@ -68,7 +69,7 @@ static void W25Q16_WritePage_Clean (uint32_t page, uint16_t offset, uint32_t siz
 static void write_enable (void);                       // Habilita escritura
 static void write_disable (void);                      // Deshabilita escritura
 
-static uint32_t bytesToWrite (uint32_t size, uint32_t offset); // Caculo de bytes �tiles en pagina
+static uint32_t bytesToWrite (uint32_t size, uint32_t offset); // Caculo de bytes utiles en pagina
 static void erase_usable_memory (void);                         // Borra la memoria que usaremos
 
 //Funciones para bajo consumo (no se emplean)
@@ -81,25 +82,23 @@ static void addConsumption(uint8_t position, float *consumption, char* hora);
 static void getAllConsumptions(float *consumptions, char *hours);
 
 //Funciones para Tests
-static void leer_mem_entera(void);              // Lee los primeros 50 bytes para depuraci�n
+static void leer_mem_entera(uint8_t posicion);              // Lee los primeros 50 bytes para depuraci�n
 static void test_write_read(void);              // Prueba de escritura y lectura en bucle
 
 //Init flash
 void Init_FlashControl (void) {
   //const static osThreadAttr_t th_attr = {.stack_size = 7000};
-	if (id_flash_commands_queue != NULL)
+	if (id_flash_commands_queue == NULL)
 		id_flash_commands_queue = osMessageQueueNew(QUEUE_MAX, sizeof(MSGQUEUE_FLASH_t), NULL);
-	if (id_thread__flash != NULL)
-		id_thread__flash = osThreadNew(thread__flash, NULL, NULL); 
 	if (id_thread__flash == NULL)
-	{
-      	strncpy(detalleError, "MSG QUEUE ERROR FLASH", sizeof(detalleError) - 1);
-        osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
-	}
+		id_thread__flash = osThreadNew(thread__flash, NULL, NULL); 
 	if (id_flash_commands_queue == NULL)
 	{
-       	strncpy(detalleError, "THREAD ERROR FLASH", sizeof(detalleError) - 1);
-       	osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
+		push_error(MODULE__FLASH, ERR_CODE__QUEUE, 0);
+	}
+	if (id_thread__flash == NULL)
+	{
+       	push_error(MODULE__FLASH, ERR_CODE__THREAD, 0);
 	}
 }
 
@@ -121,7 +120,8 @@ static void thread__flash (void *argument) {
 	#endif
 
  	 while (1) {
-		if (osMessageQueueGet(id_flash_commands_queue, &flash_msg_rec, NULL, osWaitForever)==osOK) {
+		if (osMessageQueueGet(id_flash_commands_queue, &flash_msg_rec, NULL, osWaitForever) == osOK) 
+		{	
 			switch (flash_msg_rec.command) 
 			{
 				case FLASH_CMD__ADD_CONSUMPTION:
@@ -139,6 +139,10 @@ static void thread__flash (void *argument) {
 				break;
 			}
 		}
+		else
+		{
+			push_error(MODULE__FLASH, ERR_CODE__QUEUE, 1);
+		}
 	}
 }
 
@@ -153,13 +157,13 @@ static void erase_usable_memory (void)
 }
 
 /**
- * @brief Lee los primeros 50 bytes de la memoria para comprobar su contenido.
+ * @brief Lee los primeros 50 bytes de la memoria de la pagina que se le pasa para comprobar su contenido.
 */
 
-static void leer_mem_entera(void) 
+static void leer_mem_entera(uint8_t posicion) 
 {
 	uint8_t previousData[50];
-	W25Q16_FastRead(0, 0, 50, previousData);
+	W25Q16_FastRead(posicion * PAGES_FOR_SECTOR, 0, 50, previousData);
 	previousData[0] = 0x00;
 }
 
@@ -184,7 +188,7 @@ static void test_write_read (void)
 }
 
 /**
- * @brief Inicializa los pines y configuraci�n del SPI para la memoria Flash W25Q16.
+ * @brief Inicializa los pines y configuracion del SPI para la memoria Flash W25Q16.
 */
 
 static void W25Q16_Init_SPI(void)
@@ -263,7 +267,7 @@ static void W25Q16_WriteInstruction(uint8_t val)
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_RESET);
 	//send address and data
 	SPIdrv->Send(&val, 1);
-	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, osWaitForever);
+	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, DRIVER_TIME_WAIT);
 	//CS high
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_SET);
 }
@@ -292,9 +296,9 @@ static uint16_t W25Q16_ReadID(uint8_t number_id)
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_RESET);
 	 //send address and data
 	SPIdrv->Send(&instuction, 1);
-	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, osWaitForever);
+	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, DRIVER_TIME_WAIT);
 	SPIdrv->Receive(&rx_data, 3); //revisar quizas es 4 (no usamos la funcion, asi que nos da igual)
-  	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, osWaitForever);
+  	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, DRIVER_TIME_WAIT);
   	//CS high
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_SET);
 
@@ -323,11 +327,12 @@ static void W25Q16_Read (uint32_t startPage, uint8_t offset, uint32_t size, uint
   
   //CS low
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_RESET);
-	//send address and data
+
+  //send address and data
 	SPIdrv->Send(tData, 4);
-	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, osWaitForever);
+	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, DRIVER_TIME_WAIT);
 	SPIdrv->Receive(rData, size);
-  osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, osWaitForever);
+  	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, DRIVER_TIME_WAIT);
 
   //CS high
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_SET);
@@ -359,9 +364,9 @@ static void W25Q16_FastRead (uint32_t startPage, uint8_t offset, uint32_t size, 
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_RESET);
 	//send address and data
 	SPIdrv->Send(tData, 5);
-	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, osWaitForever);
+	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, DRIVER_TIME_WAIT);
 	SPIdrv->Receive(rData, size);
-  	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, osWaitForever);
+  	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, DRIVER_TIME_WAIT);
 
   //CS high
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_SET);
@@ -411,7 +416,7 @@ static void W25Q16_Erase_64kBlock (uint16_t numBlock)
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_RESET);
 	//send address and data
 	SPIdrv->Send(tData, 4);
-	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, osWaitForever);
+	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, DRIVER_TIME_WAIT);
 	//CS high
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_SET);
 	
@@ -441,7 +446,7 @@ static void W25Q16_Erase_Sector (uint16_t numSector)
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_RESET);
 	//send address and data
 	SPIdrv->Send(tData, 4);
-	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, osWaitForever);
+	osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, DRIVER_TIME_WAIT);
 	//CS high
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_SET);
 	
@@ -517,9 +522,9 @@ static void W25Q16_WritePage_Clean (uint32_t page, uint16_t offset, uint32_t siz
        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_RESET);
        //send address and data
        SPIdrv->Send(tData, 100);
-       osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, osWaitForever);
+       osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, DRIVER_TIME_WAIT);
        SPIdrv->Send(tData+100, bytesToSend-100);
-       osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, osWaitForever);
+       osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, DRIVER_TIME_WAIT);
       //CS high
        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_SET);
 		} else {
@@ -527,7 +532,7 @@ static void W25Q16_WritePage_Clean (uint32_t page, uint16_t offset, uint32_t siz
        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_RESET);
        //send address and data
        SPIdrv->Send(tData, bytesToSend);
-       osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, osWaitForever);
+       osThreadFlagsWait(TRANSFER_COMPLETE, osFlagsWaitAny, DRIVER_TIME_WAIT);
        //CS high
        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_SET);
 		}
@@ -577,30 +582,6 @@ static void addConsumption(uint8_t position, float* consumption, char* hour)
  *** flash_msg_data.consumption = medidas_consumo;   ->> float medidas_consumo[NUM_MAX_MUESTRA_CONSUMO];					//puntero a las medidas del consumo que se mostraran en lcd y flash
  *** flash_msg_data.hour = &horas_consumo[0][0];   	 ->> char horas_consumo[FLASH_NUM_CHAR_HORA][NUM_MAX_MUESTRA_CONSUMO];	//puntero a las horas del consumo que se mostraran en lcd y flash
  */
-
- //revisar NAK eliminar y probar
- 
-//static void getAllConsumptions(float *consumptions, char hour[][FLASH_NUM_CHAR_HORA])
-//{
-//    uint8_t flash_data[HORA_SIZE_BYTES + CONSUMPTION_SIZE_BYTES];
-//    char horas[MAX_CONSUMPTION_DATA][FLASH_NUM_CHAR_HORA];
-//    &horas[0][0] = hour;
-//	//Se lee sector por sector (los primeros 10, donde deberian estar todos los consumos y horas) y
-//	//se van copiando 1 a 1 al array apuntado por el mensaje.
-//    for (uint8_t position = 0; position < MAX_CONSUMPTION_DATA; position++) 
-//    {
-//        // Leer los 4 bytes de la memoria flash
-//        W25Q16_FastRead(position * PAGES_FOR_SECTOR, 0, sizeof(flash_data), flash_data);
-
-//		// Copiar la hora en la fila correspondiente
-//        memcpy(horas[position], flash_data, HORA_SIZE_BYTES);
-
-//        // Copiar el float al array de consumos
-//        memcpy(&consumptions[position], &flash_data[HORA_SIZE_BYTES], CONSUMPTION_SIZE_BYTES);
-    //}
-//}
-
-
 static void getAllConsumptions(float *consumptions, char *hours)
 {
     uint8_t flash_data[FLASH_NUM_CHAR_HORA + sizeof(float)];

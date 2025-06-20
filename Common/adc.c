@@ -6,7 +6,7 @@
  * En el mando se encuentra el ADC de presion (asociado a la galga). Utilizamos el ADC1 canal 13 pin PC0
  * En el coche se encuentra el ADC de consumo. Utilizamos el ADC1 canal 10 pin PC3.
 
- Se podria haber decidido usar el mismo ADC, canal y pin para ambos, pero se decidio asi­ para poder distinguir bien cada cosa.
+ Se podria haber decidido usar el mismo ADC, canal y pin para ambos, pero se decidio asiï¿½ para poder distinguir bien cada cosa.
 */
 
 #define RESOLUTION_12B 4096U
@@ -39,11 +39,11 @@ uint16_t ADC_in (uint32_t channel) {
 
   if (channel == 0)
   {
-    valor = 1243* ADC_getVoltage(&adchandle1, 10);
+    valor = 1000* ADC_getVoltage(&adchandle1, 10);
   }
   else if (channel == 1)
   {
-      valor = 1243* ADC_getVoltage(&adchandle2, 13);
+      valor = 1000* ADC_getVoltage(&adchandle2, 13);
   }
   return ((uint16_t)valor);
 }
@@ -76,11 +76,7 @@ void ADC1_pins_PC3_config(void)
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 }
-void ADC1_pins_F429ZI_config(void)
-{
-    ADC1_pins_PC0_config();
-    ADC1_pins_PC3_config();
-  }
+
 /**
   * @brief Initialize the ADC to work with single conversions. 12 bits resolution, software start, 1 conversion
   * @param ADC handle
@@ -145,26 +141,23 @@ float ADC_getVoltage(ADC_HandleTypeDef *hadc, uint32_t Channel)
 	return voltage;
 }
 	
-/* Example of using this code from a Thread 
-void Thread (void *argument) {
-  ADC_HandleTypeDef adchandle; //handler definition
-	ADC1_pins_F429ZI_config(); //specific PINS configuration
-	float value;
-	ADC_Init_Single_Conversion(&adchandle , ADC1); //ADC1 configuration
-  while (1) {
-    
-	  value=ADC_getVoltage(&adchandle , 10 ); //get values from channel 10->ADC123_IN10
-		value=ADC_getVoltage(&adchandle , 13 );
-		osDelay(1000);
-   
-  }
-}
-*/
-
 void Init_ADC1_consumo (void)
 {
     ADC1_pins_PC0_config();
     ADC_Init_Single_Conversion(&adchandle1,ADC1);
+}
+
+void DeInit_ADC1_consumo(void)
+{
+    // Detener la conversión y deshabilitar el ADC1
+    HAL_ADC_Stop(&adchandle1);
+    HAL_ADC_DeInit(&adchandle1);  // Desinicializar el ADC1
+
+    // Deshabilitar el reloj del ADC1
+    __HAL_RCC_ADC1_CLK_DISABLE();
+
+    // Deshabilitar los pines de ADC1 utilizados (PC0 en este caso)
+    HAL_GPIO_DeInit(GPIOC, GPIO_PIN_0);  // Deshabilitar el pin PC0 (ADC1_IN10)
 }
 
 void Init_ADC1_presion(void)
@@ -173,14 +166,32 @@ void Init_ADC1_presion(void)
     ADC_Init_Single_Conversion(&adchandle2,ADC1);
 }
 
+void DeInit_ADC1_presion(void)
+{
+    // Detener la conversión y deshabilitar el ADC1
+    HAL_ADC_Stop(&adchandle2);
+    HAL_ADC_DeInit(&adchandle2);  // Desinicializar el ADC1 para el canal de presión
+
+    // Deshabilitar el reloj del ADC1
+    __HAL_RCC_ADC1_CLK_DISABLE();
+
+    // Deshabilitar los pines de ADC1 utilizados (PC3 en este caso)
+    HAL_GPIO_DeInit(GPIOC, GPIO_PIN_3);  // Deshabilitar el pin PC3 (ADC1_IN13)
+}
+
 //Funcion que devuelve directamente el consumo en mA
-float getConsumo(void) //revisarNAK
+float getConsumo(void) 
 {
     float corriente_Consumo =0; 
 
-    //2.5V tenemos 150mA
-	//adc_valor es x
-    corriente_Consumo = ADC_in(CH0_CONSUMO)*0.15/2.5;
+  //Midiendo consumo observamos que para un valor maximo daba picos de hasta 600mA. Por lo que ajustamos para que 600mA fueran 3V.
+  //Asi pues: x * 3 /0.6 = x * 0.2 = valor de corriente de consumo
+	//3V se devuelven como 3000 (mV).
+	//3000 (mV) * 0.2 = 600mA
+	//30 mV se devuelven como 0.3*1000 = 30 (mV)
+	//MAX: 3V -> 600mA
+  corriente_Consumo = (float) ADC_in(CH0_CONSUMO)*0.30f; //ADC_in devuelve el valor en mV
+	//Corriente consumo deberia estar en mA. Rango de 0-600mA
  	return corriente_Consumo;
 	//printf("Corriente: %.2f\n", corriente_Consumo);
 }
@@ -214,6 +225,3 @@ marchas_t getPedal(void)
 
     return marcha;
 }
-
-
-

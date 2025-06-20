@@ -19,6 +19,7 @@
 #include "cmsis_os2.h"                  // ::CMSIS:RTOS2
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 /* Include my libraries here */
 #include "defines.h"
 //#include "tm_stm32_disco.h"
@@ -86,14 +87,14 @@ void thread__transmissor_RF_RX(void *argument)
 	/* NRF24L01 goes to RX mode by default */
 	TM_NRF24L01_Init(15, 32);
 	
-	/* Set RF settings, Data rate to 2Mbps, Output power to -18dBm */
-	TM_NRF24L01_SetRF(TM_NRF24L01_DataRate_2M, TM_NRF24L01_OutputPower_M18dBm);
+	/* Set RF settings, Data rate to 2Mbps, Output power to 0 dBm */
+	TM_NRF24L01_SetRF(TM_NRF24L01_DataRate_2M, TM_NRF24L01_OutputPower_0dBm);
 	
 	/* Set my address, 5 bytes */
 	//TM_NRF24L01_SetMyAddress(MyAddress); //Se utilizaba para tener la transmision de TX por un lado y la de RX por otro
 
 	/* Set TX address, and RX Pipe 0 address, 5 bytes */
-	TM_NRF24L01_SetTxAddress(TxAddress);    // Se configura la direcciÛn para recibir (RX_ADDR_P0) por la pipe0, que tambiÈn se usar· para devolver ACKs con o sin payload.
+	TM_NRF24L01_SetTxAddress(TxAddress);    // Se configura la direcciÔøΩn para recibir (RX_ADDR_P0) por la pipe0, que tambiÔøΩn se usarÔøΩ para devolver ACKs con o sin payload.
                                             // En modo PRX (recepcion), TX_ADDR no se utiliza para enviar ACKs, por lo que puede omitirse en el coche, ya que nunca entra en modo PTX (transmision).
                                             // En modo PTX (transmision), TX_ADDR es utilizado para enviar la informacion y RX_ADDR_P0 para recibirla por ACKs. Por lo que ambas deben coincidir (en el mando).
 	
@@ -119,8 +120,8 @@ void thread__transmissor_RF_RX(void *argument)
             TM_NRF24L01_Read_Interrupts(&NRF_IRQ);
 		
             /* If data is ready on NRF24L01+*/
-                //Si en modo RX: se activar· si recibe correctamente datos normales (coche)
-                //Si en modo TX: se activar· si recibe correctamente ACK Payload (mando)
+                //Si en modo RX: se activara si recibe correctamente datos normales (coche)
+                //Si en modo TX: se activara si recibe correctamente ACK Payload (mando)
             if (NRF_IRQ.F.DataReady) 
             {
                 printf("\nIRQ: Data Ready IRQ\n");
@@ -144,24 +145,24 @@ void thread__transmissor_RF_RX(void *argument)
                         setMotorSpeed((speed_marchas_t) nRF_data_received_coche.velocidad);
                         printf("Comando velocidad\n");
                         break;
-                    case nRF_CMD__DIRECTION:        //Comando para cambiar la direccion del servo delantero
+                    case nRF_CMD__DIRECTION:        //Comando para cambiar la direccion del servo delantero (angulo de 0 a 65535 significando 0.00 a 655.355 grados)
                         nRF_data_received_coche.direccion = GET_NRF_AUX_DATA(dataIn);
-                        setServoAngle((float) ((float) nRF_data_received_coche.direccion / 100)); //El valor se obtiene como un float representado por uint16_t con 2 decimales
+                        setServoAngle((float) ((float) nRF_data_received_coche.direccion / 100)); //El valor se obtiene como un float representado por uint16_t con 2 decimales (recibimos valores de 000 a 65535, que representan 0.00 a 655.35 grados)
                         printf("Comando direccion\n");
                         break;
 
-                    case nRF_CMD__ASK_DISTANCE:     //Comando para preguntar por la distancia
-                        dataOut[nRF_DATA__COMMAND] = nRF_CMD__ASK_DISTANCE;                 //Se aÒade el comando de recibir consumo como respuesta
-                        dataOut[nRF_DATA__AUX_DATA_LOW] = (uint8_t) distancia;              //Se aÒade el valor de distancia (low byte)
-                        dataOut[nRF_DATA__AUX_DATA_HIGH] = (uint8_t) (distancia >> 8);      //Se aÒade el valor de distancia (high byte)
-                        TM_NRF24L01_WriteAckPayload(NRF_IRQ.F.RX_P_NO, dataOut, sizeof(dataOut)); //Se aÒaden datos al ACK PAYLOAD
+                    case nRF_CMD__ASK_DISTANCE:     //Comando para preguntar por la distancia -> Se pasa directamente el valor obtenido (0 - 8589)
+                        dataOut[nRF_DATA__COMMAND] = nRF_CMD__ASK_DISTANCE;                 //Se incluye  el comando de recibir distancia como respuesta
+                        dataOut[nRF_DATA__AUX_DATA_LOW] = (uint8_t) distancia;              //Se incluye  el valor de distancia (low byte)
+                        dataOut[nRF_DATA__AUX_DATA_HIGH] = (uint8_t) (distancia >> 8);      //Se incluye  el valor de distancia (high byte)
+                        TM_NRF24L01_WriteAckPayload(NRF_IRQ.F.RX_P_NO, dataOut, sizeof(dataOut)); //Se incluyen datos al ACK PAYLOAD
                         printf("Comando: ask Distancia\n");
                         break;
-                    case nRF_CMD__ASK_CONSUMPTION:        //Comando para preguntar por el consumo
-                        dataOut[nRF_DATA__COMMAND] = nRF_CMD__ASK_CONSUMPTION;
-                        dataOut[nRF_DATA__AUX_DATA_LOW] = (uint8_t) consumption;            //Se aÒade el valor de distancia (low byte)
-                        dataOut[nRF_DATA__AUX_DATA_HIGH] = (uint8_t) (consumption >> 8);    //Se aÒade el valor de distancia (high byte)
-                        TM_NRF24L01_WriteAckPayload(NRF_IRQ.F.RX_P_NO, dataOut, sizeof(dataOut)); //Se aÒaden datos al ACK PAYLOAD
+                    case nRF_CMD__ASK_CONSUMPTION:        //Comando para preguntar por el consumo (se pasa como un uint16_t (float con 2 decimales -> ver funcion getConsumo() en consumo_control.c))
+                        dataOut[nRF_DATA__COMMAND] = nRF_CMD__ASK_CONSUMPTION;              //Se incluye  el comando de recibir consumo como respuesta
+                        dataOut[nRF_DATA__AUX_DATA_LOW] =  (uint8_t) consumption;           //Se incluye el valor de consumo (low byte)
+                        dataOut[nRF_DATA__AUX_DATA_HIGH] = (uint8_t) (consumption >> 8);    //Se incluye el valor de consumo (high byte)
+                        TM_NRF24L01_WriteAckPayload(NRF_IRQ.F.RX_P_NO, dataOut, sizeof(dataOut)); //Se incluyen datos al ACK PAYLOAD
                         printf("Comando: ask Distancia\n");
                         break;
                     case nRF_CMD__RECEIVE_DISTANCE:
@@ -175,7 +176,7 @@ void thread__transmissor_RF_RX(void *argument)
 
                 #else //TEST
                 /* Write ACK Payload into TX FIFO */
-                dataOut[0] = dataOut[0] +1; //Se aÒaden datos de payload (numero ascendente)
+                dataOut[0] = dataOut[0] +1; //Se aÔøΩaden datos de payload (numero ascendente)
                 printf("TX FIFO before: 0x%02X\n", TM_NRF24L01_TxFifoEmpty());
                 TM_NRF24L01_WriteAckPayload(NRF_IRQ.F.RX_P_NO, dataOut, sizeof(dataOut));
     
@@ -202,7 +203,7 @@ void thread__transmissor_RF_RX(void *argument)
                 printf("IRQ: Data Sent: ACK with payload sent correctly\n");
             }
             
-            //Maximo numero de reintentos - fallo en RF - se detectar· porque no se enviar· ACK asi que el mando se entera y lanza error
+            //Maximo numero de reintentos - fallo en RF - se detectarÔøΩ porque no se enviarÔøΩ ACK asi que el mando se entera y lanza error
             if (NRF_IRQ.F.MaxRT)
             {
                 printf("IRQ: Max RT\n");
@@ -232,10 +233,40 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin) {
 }
 
 void Init_RF_RX(void) {
-    INITIALIZE_LEDS();
-    id_thread__RF_RX = osThreadNew (thread__transmissor_RF_RX, NULL, NULL);
     if (id_thread__RF_RX == NULL)
     {
-        //Error revisar como mandar a RF
+        id_thread__RF_RX = osThreadNew (thread__transmissor_RF_RX, NULL, NULL);
+        if (id_thread__RF_RX == NULL)
+        {
+            //Error revisar como mandar a RF
+        }
     }
 }
+
+void DeInit_RF_RX(void) {
+    SPI_HandleTypeDef hspi3;
+    hspi3.Instance = SPI3;
+
+    // 1. Poner el m√≥dulo en Power Down primero (para evitar actividad durante la limpieza)
+    TM_NRF24L01_PowerDown();
+
+    // 2. Detener el hilo de RF
+    if (id_thread__RF_RX != NULL) {
+        osThreadTerminate(id_thread__RF_RX);
+        id_thread__RF_RX = NULL;
+    }
+
+    // 3. Deshabilitar interrupciones del pin IRQ y desconfigurar GPIO
+    HAL_NVIC_DisableIRQ(EXTI3_IRQn);
+    HAL_GPIO_DeInit(GPIOG, GPIO_PIN_3); // PG3 -> IRQ
+
+    // 4. Limpiar buffers por si luego se reusa
+    memset(dataIn, 0, sizeof(dataIn));
+    memset(dataOut, 0, sizeof(dataOut));
+
+    // 5. (Opcional) Liberar SPI si est√°s seguro que ya no se usar√°
+    HAL_SPI_DeInit(&hspi3);                 //La libreria TM no tiene un DeInit, se usa la de HAL
+    __HAL_RCC_SPI3_CLK_DISABLE();          // Apaga el SPI usado por nRF
+}
+
+

@@ -6,6 +6,7 @@
 extern uint16_t consumption;
 
 void Init_GetConsumption(void);
+void DeInit_GetConsumption(void);
 
 #endif
 
