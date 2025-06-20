@@ -11,7 +11,7 @@
 
 //#include "servomotor.h"
 
-#define DIRECTION_THRESHOLD                         0.5  //Sensibilidad para variar el valor guardado -> 0.5 grados
+#define DIRECTION_THRESHOLD                         2  //Sensibilidad para variar el valor guardado -> 2 grados
 #define DIRECTION_REFRESH                           100
 
 // Thread

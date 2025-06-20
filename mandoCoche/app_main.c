@@ -101,7 +101,7 @@ void thread__app_main_control (void *no_argument)
 /************Flags comunes de gestion de errores*************************************************/
         if (flags & FLAG__RF_LOST_COMMS_ERROR)
         {
-            if (!state_comms_rf_lost)      //Si venimos de estado de comunicaciones
+            if (!state_comms_rf_lost && app_state != APP_STAGE__LOW_POWER)      //Si venimos de estado de comunicaciones Y no estamos en modo bajo consumo (siempre pierde comms)
             {
                 //Activamos consumo para que al menos cada segundo el mando intente comunicar con el coche. El resto se desactiva ya que puede quedar pillado en algun estado molesto (alarma a tope)
                 activeControls(false, true, false, true, true);    //desactivamos Distancia, activamos Consumo, desactivamos Alarma, desactivamos Direcion, desactivamos Velocidad
@@ -157,6 +157,11 @@ void thread__app_main_control (void *no_argument)
                     push_error(MODULE__DIRECTION, ERR_CODE__MAGNET_NOT_PRESENT, 1);
                 }
             } 
+            else if (app_state == APP_STAGE__LOW_POWER)     //Si venimos de low power se restauran comunicaciones
+            {
+                app_state = APP_STATE__NORMAL;
+                state_enter = true;
+            }
         }
 
         if (flags & FLAG__DIR_MAG_DETECTED)
@@ -211,14 +216,15 @@ void thread__app_main_control (void *no_argument)
             //Flags comunes a todos los estados
             if (flags & FLAG__PRESS_UP) //Pulsacion arriba joystick
             {
-                LCD_clean();
-                app_state = (app_state >= MAX_APP_STATE) ? FIRST_APP_STAGE : (app_state_t) (app_state + 1);
-                state_enter = true;
+                if (app_state != APP_STAGE__LOW_POWER)
+                {
+                    app_state = (app_state == MAX_APP_STATE) ? FIRST_APP_STAGE : (app_state_t) (app_state + 1);
+                    state_enter = true;
+                }
             }
 
             if (flags & FLAG__PRESS_DOWN) //Pulsacion abajo joystick
             {
-                LCD_clean();
                 app_state = (app_state <= FIRST_APP_STAGE) ? MAX_APP_STATE : (app_state_t) (app_state - 1);
                 state_enter = true;
             }
@@ -248,7 +254,6 @@ void thread__app_main_control (void *no_argument)
             
             if (flags & FLAG__ENTER_LOW_POWER)  //Entramos/salimos del modo bajo consumo (se entra con el pulsador azul)
             {
-                LCD_clean();
                 //app_state = (app_state == APP_STAGE__LOW_POWER) ? APP_STATE__NORMAL : APP_STAGE__LOW_POWER;
                 app_state = APP_STAGE__LOW_POWER;
                 state_enter = true;
@@ -260,6 +265,7 @@ void thread__app_main_control (void *no_argument)
                 case APP_STATE__NORMAL:               
                     if (state_enter)
                     {
+                        LCD_clean();
                         //Desactivamos todos los controles de otros estados
                         activeControls(false, true, false, true, true);    //desactivamos Distancia, activamos Consumo, desactivamos Alarma
                         
@@ -288,6 +294,7 @@ void thread__app_main_control (void *no_argument)
                 case APP_STAGE__LOW_POWER:               
                     if (state_enter)
                     {
+                        LCD_clean();
                         //Desactivamos todos los controles de otros estados
                         activeControls(false, true, false, false, false);    //desactivamos Distancia, activamos Consumo, desactivamos Alarma, desactivamos Direcion, desactivamos Velocidad
                         
@@ -314,6 +321,7 @@ void thread__app_main_control (void *no_argument)
                 case APP_STAGE__BACK_GEAR:
                     if (state_enter)
                     {   
+                        LCD_clean();
                         //Enviamos el estado al coche para habilitar/deshabilitar controles
                         Send_CMD_StateChange(app_state);
                         
@@ -328,13 +336,14 @@ void thread__app_main_control (void *no_argument)
                         //Mostramos por el LCD que estamos en modo de bajo consumo
                         LCD_write (LCD_LINE__ONE, "State: Back Gear");
                         
-                        state_enter = false;
-
-                        osDelay(1000); //Espera 1 segundo para visualizar que se entra al estado de marcha atras
-
+                        //Espera 3 segundo para visualizar que se entra al estado de marcha atras
+                        osDelay(3000); 
+                        
                         //Motramos la primera iteraccion (porque cuando volvemos de error, hasta que no cambien no se hace)
                         lineas_actuales = calcularLineasDistancia(nRF_data_received_mando.distancia);
                         LCD_mostrarLineasDistancia(lineas_actuales);
+                        
+                        state_enter = false;
                     }
                     
                     if (flags & FLAG__MOSTRAR_DISTANCIA) //Flag enviado desde nRF TX tras recibir la distancia
@@ -362,6 +371,7 @@ void thread__app_main_control (void *no_argument)
                 case APP_STAGE__MOSTRAR_CONSUMO:
                     if (state_enter)
                     {
+                        LCD_clean();
                         //Pasamos un puntero hacia ambos arrays con todas las medidas de consumo y horas (las ultimas)
                         flash_msg_data.command = FLASH_CMD__GET_ALL_CONSUMPTION;
                         flash_msg_data.consumption = medidas_consumo;   //puntero a las medidas del consumo de flash que se mostraran en lcd y web
@@ -541,22 +551,22 @@ lineas_distancia_t calcularLineasDistancia(uint16_t distancia)
     float tramo;
     uint32_t lineas;
     
-    // Si la distancia es mayor o igual a 475 (muy lejos), no se muestra ninguna línea
+    // Si la distancia es mayor o igual a 475 (muy lejos), no se muestra ninguna linea
     if (distancia >= (MAX_RANGE_DISTANCE - DISTANCE_SENSIBILITY)) //distancia >= (500-25)
         return LCD_LINE__NO_LINE;
 
-    // Si la distancia es menor o igual a 25 (muy cerca), se muestran todas las líneas
+    // Si la distancia es menor o igual a 25 (muy cerca), se muestran todas las lineas
     if (distancia <= (MIN_RANGE_DISTANCE + DISTANCE_SENSIBILITY)) //distancia <= (0+25)
         return LCD_MAX_LINES;
 
-    // Se calcula el tamaño de cada tramo proporcional al número de líneas posibles
+    // Se calcula el tamano de cada tramo proporcional al numero de lineas posibles
     // Ej: 500 / 3 = ~166.67 unidades por tramo
     tramo = (float) (MAX_RANGE_DISTANCE - MIN_RANGE_DISTANCE) / (LCD_MAX_LINES - LCD_MIN_LINES);
     
-    // Se determina en qué tramo está la distancia (cuántas líneas "no" mostraría)
+    // Se determina en que tramo esta la distancia (cuantas lineas "no" mostrara)
     lineas = ((distancia - MIN_RANGE_DISTANCE) / tramo); //Ej distancia = 300; lineas = (300-0)/166.67 = 1.79 = 1
 
-    // Se invierte la relación para que menor distancia implique más líneas
+    // Se invierte la relacion para que menor distancia implique mas lineas
     lineas = (LCD_MAX_LINES - lineas); //Ej: lineas = 3-1 = 2
     
     return (lineas_distancia_t)lineas;

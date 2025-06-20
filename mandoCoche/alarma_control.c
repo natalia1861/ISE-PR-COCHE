@@ -111,13 +111,7 @@ void thread__AlarmaControl(void *no_argument)
 			}	
 		}
 
-		if (flags & FLAG_DEACTIVATE_ALARM)		//Desactivar alarma de control
-		{
-            osTimerStop(id_timer__AlarmaTono);
-			PWM_AlarmDeactivate();
-			tono_on = false;
-		}
-		if (flags & FLAG_TONO)	//Cambiar de estado entre tono y no tono
+        if (flags & FLAG_TONO)	//Cambiar de estado entre tono y no tono
 		{
 			if (tono_on)
 			{
@@ -130,6 +124,14 @@ void thread__AlarmaControl(void *no_argument)
 				tono_on = true;
 			}
 		}
+        
+		if (flags & FLAG_DEACTIVATE_ALARM)		//Desactivar alarma de control
+		{
+            osTimerStop(id_timer__AlarmaTono);
+			PWM_AlarmDeactivate();
+			tono_on = false;
+		}
+
 	}
 }
 
@@ -163,7 +165,6 @@ void Init_AlarmaControl (void)
 
 void Deinit_AlarmaControl (void)
 {
-    PWM_AlarmDeactivate();
 	if (id_thread__AlarmaControl != NULL)
     {
 		osThreadTerminate(id_thread__AlarmaControl);
@@ -175,4 +176,5 @@ void Deinit_AlarmaControl (void)
 		osTimerDelete(id_timer__AlarmaTono);
         id_timer__AlarmaTono = NULL;
     }
+    PWM_AlarmDeactivate();
 }

@@ -20,6 +20,7 @@ Servomotor de velocidad (360) -> Girar hacia un lado max -> 2ms. Parado -> 1.5ms
 #define MIDDLE_ANGLE                    180
 #define MIN_ANGLE                       (MIDDLE_ANGLE - MIDDLE_ANGLE/4)
 #define MAX_ANGLE                       (MIDDLE_ANGLE + MIDDLE_ANGLE/4)
+#define DIRECTION_SENSIBILITY           2   //2 grados = THRESHOLD en mando para enviar datos
 
 //Valores que significa cada max y min de PWM respecto a la velocidad - 2 marchas posibles. 0 - no velocidad
 #define MIN_VELOCITY                    SM_MARCHA_0
@@ -114,8 +115,8 @@ static void initPinPE9(void){ //Pin salida PE9 TIM1
 // Funcion para establecer el angulo del servomotor
 void setServoAngle(float angle) {
   // Asegurarse de que el angulo esta dentro del rango permitido
-  if (angle < MIN_ANGLE) angle = MIN_ANGLE;
-  if (angle > MAX_ANGLE) angle = MAX_ANGLE;
+  if (angle < (MIN_ANGLE + DIRECTION_SENSIBILITY)) angle = MIN_ANGLE;
+  if (angle > (MAX_ANGLE - DIRECTION_SENSIBILITY)) angle = MAX_ANGLE;
 
   // Calcular el valor del pulso PWM correspondiente al angulo (de 1000 a 2000)
   uint16_t pulse = MIN_DIRECTION_PWM + ((uint32_t)(angle - MIN_ANGLE) * (MAX_DIRECTION_PWM - MIN_DIRECTION_PWM)) / (MAX_ANGLE - MIN_ANGLE);
