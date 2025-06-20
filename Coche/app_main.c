@@ -78,11 +78,12 @@ void Init_AllAppThreads (void)
     
     //Inicializamos el resto de contoles
     Init_LedsControl();             //Control de los leds -> siempre activos  
+  
+    //Inicializamos distancia porque tarda 6 segundos aprox en funcionar
+    Init_SensorDistancia();  
 
     //Inicializamos el hilo principal
     id_thread__app_main = osThreadNew(thread__app_main, NULL, NULL);
-    //Inicializamos 1 vez el sensor distancia
-    Init_SensorDistancia();
     
     //Inicializamos controles / hilos
     activeCocheControls(true, true, false, true); //Activamos servos, activamos consumo, desactivamos distancia, activamos Radiofrecuencia

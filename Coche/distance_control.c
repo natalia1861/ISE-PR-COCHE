@@ -9,7 +9,7 @@
 #define myoffset        10                  //Offset aplicado al sensor distancia para calibracion
 #define myscale         1.05                //Factor de escala aplicado (ajusta la distancia medida si hay una relacion lineal diferente a 1:1)
 
-uint16_t distancia = 0; //Variable global de distancia
+uint16_t distancia = 500; //Variable global de distancia
 VL53L0X sensor1;
 
 extern I2C_HandleTypeDef hi2c2; //I2C2
@@ -18,9 +18,9 @@ osThreadId_t id_thread__DistanceControl = NULL;
 
 void thread__distance_control (void *no_argument)
 {
-    startContinuous(&sensor1,0); //Second parameter: x ms wait -> realiza medidas continuamente
-	osDelay(2000);  //Tiempo obligatorio de espera para configuracion
-    
+    //Inicializamos 1 vez el sensor distancia
+    startContinuous(&sensor1,0); //Second parameter: x ms wait -> realiza medidas continuamente 
+    osDelay(2000);
     for(;;)
     {
         //Obtener distancia del sensor distancia y actualizar variable global
@@ -36,6 +36,7 @@ void thread__distance_control (void *no_argument)
 //Inicializacion del control de distancia
 void Init_DistanceControl (void)
 {
+    distancia = 500; //Se inicializa alto para que los primeros mensajes que se envian no actua pitido ni lcd mal
     if (id_thread__DistanceControl == NULL)
     {
        id_thread__DistanceControl = osThreadNew(thread__distance_control, NULL, NULL);

@@ -3,6 +3,7 @@
 #include "modo_sleep.h"
 #include "app_main.h"
 #include "cmsis_os2.h"                          // CMSIS RTOS header file
+#include "distance_control.h"
 
 	/**** Pulsador ****/
 static GPIO_InitTypeDef  GPIO_InitStruct;
@@ -49,6 +50,11 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
         __HAL_PWR_CLEAR_FLAG(PWR_FLAG_SB);
     }
     ETH_PhyExitFromPowerDownMode();
+    
+    //Inicializamos distancia porque tarda 6 segundos aprox en funcionar
+    Init_SensorDistancia(); 
+    
+    //Volveos al estado normal del coche
     osThreadFlagsSet(id_thread__app_main,FLAG_STATE_NORMAL);
   }
   if (GPIO_Pin == GPIO_PIN_3) 
