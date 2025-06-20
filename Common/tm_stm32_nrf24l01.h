@@ -124,7 +124,7 @@ IRQ			Not used	Interrupt pin. Goes low when active. Pin functionality is active,
 
 /* Default SPI used */
 #ifndef NRF24L01_SPI
-#define NRF24L01_SPI				   SPI3
+#define NRF24L01_SPI				SPI3
 #define NRF24L01_SPI_PINS			TM_SPI_PinsPack_2
 #endif
 

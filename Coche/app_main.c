@@ -13,6 +13,9 @@
 app_coche_state_t app_coche_state;
 osThreadId_t id_thread__app_main;
 
+//Funciones internas
+void activeCocheControls (bool servomotores, bool consumo, bool distancia, bool radiofrecuencia);
+
 void thread__app_main (void *no_argument)
 {
     uint32_t flags;
@@ -23,9 +26,6 @@ void thread__app_main (void *no_argument)
     leds_activate_mask |= GET_MASK_LED(LED_GREEN);
     leds_activate_mask &= ~GET_MASK_LED(LED_BLUE);
     leds_activate_mask |= GET_MASK_LED(LED_RED);
-    
-    //Inicializamos controles
-    activeCocheControls(true, true, false); //Activamos servos, activamos consumo, desactivamos distancia
 
     for(;;)
     {
@@ -40,7 +40,7 @@ void thread__app_main (void *no_argument)
             leds_activate_mask |= GET_MASK_LED(LED_RED);
 
             //Activamos/ desactivamos controles
-            activeCocheControls(true, true, false); //Activamos servos, activamos consumo, desactivamos distancia
+            activeCocheControls(true, true, false, true); //Activamos servos, activamos consumo, desactivamos distancia, activamos radiofrecuencia
 
         }
         
@@ -52,7 +52,7 @@ void thread__app_main (void *no_argument)
             app_coche_state = STATE__BACK_GEAR;
             
             //Inicializamos control de distancia
-            activeCocheControls(true, true, true); //Activamos servos, activamos consumo, activamos distancia
+            activeCocheControls(true, true, true, true); //Activamos servos, activamos consumo, activamos distancia, activamos radiofrecuencia
         }
         if (flags & FLAG_STATE__LOW_POWER)
         {
@@ -62,12 +62,11 @@ void thread__app_main (void *no_argument)
             leds_activate_mask &= ~GET_MASK_LED(LED_RED);
 
             //Desactivamos todos los controles
-            activeCocheControls(false, false, false); //Desactivamos servos, desactivamos consumo, desactivamos distancia
+            activeCocheControls(false, false, false, false); //Desactivamos servos, desactivamos consumo, desactivamos distancia, , desactivamos radiofrecuencia
             
             //Entramos en modo bajo consumo
             SleepMode_Measure();
             ETH_PhyEnterPowerDownMode();
-          
         }
     }
 }
@@ -78,17 +77,18 @@ void Init_AllAppThreads (void)
     __HAL_RCC_PWR_CLK_ENABLE();
     
     //Inicializamos el resto de contoles
-    init_pulsador();                //Pulsador azul
-    Init_LedsControl();             //Control de los leds
-    Init_RF_RX();                   //Radiofrecuencia   
+    Init_LedsControl();             //Control de los leds -> siempre activos  
+
+    //Inicializamos el hilo principal
     id_thread__app_main = osThreadNew(thread__app_main, NULL, NULL);
-    // if (id_thread__app_main == NULL) revisar
-    // {
-        
-    // }
+    //Inicializamos 1 vez el sensor distancia
+    Init_SensorDistancia();
+    
+    //Inicializamos controles / hilos
+    activeCocheControls(true, true, false, true); //Activamos servos, activamos consumo, desactivamos distancia, activamos Radiofrecuencia
 }
 
-void activeCocheControls (bool servomotores, bool consumo, bool distancia)
+void activeCocheControls (bool servomotores, bool consumo, bool distancia, bool radiofrecuencia)
 {
     if (servomotores)
     {
@@ -113,5 +113,13 @@ void activeCocheControls (bool servomotores, bool consumo, bool distancia)
     else
     {
         Stop_DistanceControl();
+    }
+    if (radiofrecuencia)
+    {
+        Init_RF_RX();               //Se inicializan pines, sensor e hilo de control
+    }
+    else
+    {
+        DeInit_RF_RX();
     }
 }

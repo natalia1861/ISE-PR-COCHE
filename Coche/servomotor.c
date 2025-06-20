@@ -57,7 +57,7 @@ void Init_Servomotors (void)
 
 void DeInit_Servomotors(void)
 {
-    // Detener PWM de los servomotores de dirección (TIM1)
+    // Detener PWM de los servomotores de direcciï¿½n (TIM1)
     HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
     __HAL_RCC_TIM1_CLK_DISABLE();  // Deshabilitar el reloj del TIM1
 

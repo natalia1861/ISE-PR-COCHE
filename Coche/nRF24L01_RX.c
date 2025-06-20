@@ -19,6 +19,7 @@
 #include "cmsis_os2.h"                  // ::CMSIS:RTOS2
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 /* Include my libraries here */
 #include "defines.h"
 //#include "tm_stm32_disco.h"
@@ -232,9 +233,40 @@ void HAL_GPIO_EXTI_Callback_NRF(uint16_t GPIO_Pin) {
 }
 
 void Init_RF_RX(void) {
-    id_thread__RF_RX = osThreadNew (thread__transmissor_RF_RX, NULL, NULL);
     if (id_thread__RF_RX == NULL)
     {
-        //Error revisar como mandar a RF
+        id_thread__RF_RX = osThreadNew (thread__transmissor_RF_RX, NULL, NULL);
+        if (id_thread__RF_RX == NULL)
+        {
+            //Error revisar como mandar a RF
+        }
     }
 }
+
+void DeInit_RF_RX(void) {
+    SPI_HandleTypeDef hspi3;
+    hspi3.Instance = SPI3;
+
+    // 1. Poner el módulo en Power Down primero (para evitar actividad durante la limpieza)
+    TM_NRF24L01_PowerDown();
+
+    // 2. Detener el hilo de RF
+    if (id_thread__RF_RX != NULL) {
+        osThreadTerminate(id_thread__RF_RX);
+        id_thread__RF_RX = NULL;
+    }
+
+    // 3. Deshabilitar interrupciones del pin IRQ y desconfigurar GPIO
+    HAL_NVIC_DisableIRQ(EXTI3_IRQn);
+    HAL_GPIO_DeInit(GPIOG, GPIO_PIN_3); // PG3 -> IRQ
+
+    // 4. Limpiar buffers por si luego se reusa
+    memset(dataIn, 0, sizeof(dataIn));
+    memset(dataOut, 0, sizeof(dataOut));
+
+    // 5. (Opcional) Liberar SPI si estás seguro que ya no se usará
+    HAL_SPI_DeInit(&hspi3);                 //La libreria TM no tiene un DeInit, se usa la de HAL
+    __HAL_RCC_SPI3_CLK_DISABLE();          // Apaga el SPI usado por nRF
+}
+
+

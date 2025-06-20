@@ -59,7 +59,7 @@ void Stop_DistanceControl (void)
 
 void Init_SensorDistancia(void)
 {
-    MX_I2C2_Init();             //Inicializa el perif�rico I2C2 del STM32          
+    MX_I2C2_Init();             //Inicializa el periferico I2C2 del STM32          
     HAL_I2C_MspInit(&hi2c2);
     InitVL53(&sensor1);
 }
