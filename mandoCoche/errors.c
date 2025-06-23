@@ -69,10 +69,8 @@ void push_error(uint8_t module_type, uint8_t error_code, uint8_t error_detail)
     case ERR_CODE__QUEUE:
     case ERR_CODE__TIMER:
     case ERR_CODE__INITIALIZATION:
+    case ERR_CODE__DATA_CORRUPT:        //Algun dato se ha leido/ recibido erroneamente (sensor distancia error de comunicacion)
         osThreadFlagsSet(id_thread__app_main, FLAG__DRIVER_ERROR);
-        break;
-
-    case ERR_CODE__DATA_CORRUPT:        //Algun dato se ha leido/ recibido erroneamente
         break;
 
     default:

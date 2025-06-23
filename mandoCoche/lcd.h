@@ -3,7 +3,7 @@
 
 #include "Driver_SPI.h"
 
-#define LCD_MAX_CHARACTERS          17      //Maximo numero de caracteres en LCD
+#define LCD_MAX_CHARACTERS          18      //Maximo numero de caracteres en LCD (17 + \0)
 
 typedef enum
 {

@@ -253,7 +253,6 @@ void thread__app_main_control (void *no_argument)
             
             if (flags & FLAG__ENTER_LOW_POWER)  //Entramos/salimos del modo bajo consumo (se entra con el pulsador azul)
             {
-                //app_state = (app_state == APP_STAGE__LOW_POWER) ? APP_STATE__NORMAL : APP_STAGE__LOW_POWER;
                 app_state = APP_STAGE__LOW_POWER;
                 state_enter = true;
             }
