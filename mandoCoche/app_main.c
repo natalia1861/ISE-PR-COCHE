@@ -339,6 +339,7 @@ void thread__app_main_control (void *no_argument)
                         
                         //Motramos la primera iteraccion (porque cuando volvemos de error, hasta que no cambien no se hace)
                         lineas_actuales = calcularLineasDistancia(nRF_data_received_mando.distancia);
+                        LCD_clean();
                         LCD_mostrarLineasDistancia(lineas_actuales);
                         
                         state_enter = false;

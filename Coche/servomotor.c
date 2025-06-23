@@ -14,13 +14,22 @@ Servomotor de velocidad (360) -> Girar hacia un lado max -> 2ms. Parado -> 1.5ms
 //valores minimos y maximos que debera tener el duty segun el period configurado en PWM
 #define MIN_DIRECTION_PWM               1000    //Estos valores los obtenemos tras configurar el timer, ver funcion initTim1PWM
 #define MAX_DIRECTION_PWM               2000
-#define MIDDLE_DIRECTION_PWM            ((MIN_DIRECTION_PWM + MAX_DIRECTION_PWM)/2)
+#define MIDDLE_DIRECTION_PWM            ((MIN_DIRECTION_PWM + MAX_DIRECTION_PWM)/2)     //1500
 
-//El angulo se limita a 135 grados y 225 grados. Siendo 180 el primer angulo recibido
-#define MIDDLE_ANGLE                    180
-#define MIN_ANGLE                       (MIDDLE_ANGLE - MIDDLE_ANGLE/4)
-#define MAX_ANGLE                       (MIDDLE_ANGLE + MIDDLE_ANGLE/4)
+//Restriccion para el servomotor delantero (para que no haga un giro de 90 grados y el coche se quede chueco)
+#define ANGULAR_RESTR_PWM               250
+
+//Desde el iman se recibe un angulo entre 0-360 grados.
+//El servo, fisicamente funciona hasta 180 grados. En un rango de 1000-2000 en pulse.
+//Logicamente, se va a limitar entre 135 y 225 (90 grados) para evitar un giro excesivo.
+#define MIDDLE_ANGLE                    180                               //Angulo recibido desde web que implica la mitad
+#define MIN_ANGLE_LIMIT                 (MIDDLE_ANGLE - MIDDLE_ANGLE/3)   //Minimo angulo limitado 135  
+#define MAX_ANGLE_LIMIT                 (MIDDLE_ANGLE + MIDDLE_ANGLE/3)   //Maximo angulo limitado 225
+#define DIRECTION_ANGLE_RANGE           180   //El rango del servo sigue siendo de 180 grados (no de 90 grados como se limita de manera logica)
+
+
 #define DIRECTION_SENSIBILITY           2   //2 grados = THRESHOLD en mando para enviar datos
+#define COMPLETE_DIRECTION_RANGE        180
 
 //Valores que significa cada max y min de PWM respecto a la velocidad - 2 marchas posibles. 0 - no velocidad
 #define MIN_VELOCITY                    SM_MARCHA_0
@@ -115,11 +124,11 @@ static void initPinPE9(void){ //Pin salida PE9 TIM1
 // Funcion para establecer el angulo del servomotor
 void setServoAngle(float angle) {
   // Asegurarse de que el angulo esta dentro del rango permitido
-  if (angle < (MIN_ANGLE + DIRECTION_SENSIBILITY)) angle = MIN_ANGLE;
-  if (angle > (MAX_ANGLE - DIRECTION_SENSIBILITY)) angle = MAX_ANGLE;
+  if (angle < (MIN_ANGLE_LIMIT)) angle = MIN_ANGLE_LIMIT;   //135
+  if (angle > (MAX_ANGLE_LIMIT)) angle = MAX_ANGLE_LIMIT;   //225
 
   // Calcular el valor del pulso PWM correspondiente al angulo (de 1000 a 2000)
-  uint16_t pulse = MIN_DIRECTION_PWM + ((uint32_t)(angle - MIN_ANGLE) * (MAX_DIRECTION_PWM - MIN_DIRECTION_PWM)) / (MAX_ANGLE - MIN_ANGLE);
+  uint16_t pulse = (uint16_t) ((MIN_DIRECTION_PWM + ANGULAR_RESTR_PWM) + ((angle - MIN_ANGLE_LIMIT) * ((MAX_DIRECTION_PWM - ANGULAR_RESTR_PWM) - (MIN_DIRECTION_PWM + ANGULAR_RESTR_PWM)) / (MAX_ANGLE_LIMIT - MIN_ANGLE_LIMIT)));
 
   // Establecer el valor de comparacion (pulso) en el timer
   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pulse);
