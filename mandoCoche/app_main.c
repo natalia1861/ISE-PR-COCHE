@@ -18,7 +18,6 @@
 #include "gpio.h"
 #include "alarma_control.h"
 
-#define NUM_MAX_MUESTRA_CONSUMO     10      //Buffer circular de consumo (memoria flash)
 #define MAX_DISTANCE_DRIVER         9000    //A partir de aqui dara error (teoricamente 63490)
 #define MAX_RANGE_DISTANCE          500     //Definir el valor en sensor que significa minima distancia
 #define MIN_RANGE_DISTANCE          0       //Definir el valor en sensor que significa maxima distancia
@@ -535,12 +534,12 @@ void lcd_update_state(app_state_t app_state)
 }
 
 /**
- * @brief Calcula el numero de li­neas de advertencia que deben mostrarse en el display
+ * @brief Calcula el numero de liï¿½neas de advertencia que deben mostrarse en el display
  *        en funcion de la distancia detectada por un sensor.
  *
- *        Cuanto menor sea la distancia, mas li­neas se muestran (hasta un maximo de 3).
- *        Si el objeto esta demasiado lejos, no se muestra ninguna li­nea.
- *        Si esta demasiado cerca, se muestran las 3 li­neas.
+ *        Cuanto menor sea la distancia, mas liï¿½neas se muestran (hasta un maximo de 3).
+ *        Si el objeto esta demasiado lejos, no se muestra ninguna liï¿½nea.
+ *        Si esta demasiado cerca, se muestran las 3 liï¿½neas.
  *
  * @param distancia  Valor de distancia medido (0 a 500 en mm), donde 0 es muy cerca y 500 muy lejos.
  * @return lineas_distancia_t  Numero de lineas a mostrar (0 a 3).

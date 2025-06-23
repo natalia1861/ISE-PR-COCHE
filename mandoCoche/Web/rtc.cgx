@@ -1,11 +1,83 @@
 t <form>
 t <text>
-t <id>RTC_HORA</id>
-c y<value>%s</value>
+t <id>fecha0</id>
+c i 0 <value>%s</value>
 t </text>
 t <text>
-t <id>RTC_FECHA</id>
-c w<value>%s</value>
+t <id>consumo0</id>
+c z 0 <value>%s</value>
+t </text>
+t <text>
+t <id>fecha1</id>
+c i 1 <value>%s</value>
+t </text>
+t <text>
+t <id>consumo1</id>
+c z 1 <value>%s</value>
+t </text>
+t <text>
+t <id>fecha2</id>
+c i 2 <value>%s</value>
+t </text>
+t <text>
+t <id>consumo2</id>
+c z 2 <value>%s</value>
+t </text>
+t <text>
+t <id>fecha3</id>
+c i 3 <value>%s</value>
+t </text>
+t <text>
+t <id>consumo3</id>
+c z 3 <value>%s</value>
+t </text>
+t <text>
+t <id>fecha4</id>
+c i 4 <value>%s</value>
+t </text>
+t <text>
+t <id>consumo4</id>
+c z 4 <value>%s</value>
+t </text>
+t <text>
+t <id>fecha5</id>
+c i 5 <value>%s</value>
+t </text>
+t <text>
+t <id>consumo5</id>
+c z 5 <value>%s</value>
+t </text>
+t <text>
+t <id>fecha6</id>
+c i 6 <value>%s</value>
+t </text>
+t <text>
+t <id>consumo6</id>
+c z 6 <value>%s</value>
+t </text>
+t <text>
+t <id>fecha7</id>
+c i 7 <value>%s</value>
+t </text>
+t <text>
+t <id>consumo7</id>
+c z 7 <value>%s</value>
+t </text>
+t <text>
+t <id>fecha8</id>
+c i 8 <value>%s</value>
+t </text>
+t <text>
+t <id>consumo8</id>
+c z 8 <value>%s</value>
+t </text>
+t <text>
+t <id>fecha9</id>
+c i 9 <value>%s</value>
+t </text>
+t <text>
+t <id>consumo9</id>
+c z 9 <value>%s</value>
 t </text>
 t </form>
 .

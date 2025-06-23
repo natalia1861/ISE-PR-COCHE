@@ -4,6 +4,8 @@
 #include "cmsis_os2.h"
 #include "lcd.h"
 
+#define NUM_MAX_MUESTRA_CONSUMO     10      //Buffer circular de consumo (memoria flash)
+
 //Flags (eventos) to thread__app_main_control
 #define FLAG__PRESS_UP                      0x0001
 #define FLAG__PRESS_DOWN                    0x0002

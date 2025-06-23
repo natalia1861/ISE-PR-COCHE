@@ -14,6 +14,8 @@
 
 #include "nak_led.h"                  
 #include "rtc.h"
+#include "flash.h"
+#include "app_main.h"
 
 #define FLAG_SERVER 0x01
 
@@ -29,6 +31,14 @@ extern char marcha_S[80];
 extern char distancia_S[80];
 extern char direccion_S[80];
 extern char consumo_S [80];
+
+//from app_main.c
+extern float medidas_consumo[NUM_MAX_MUESTRA_CONSUMO];
+extern char horas_consumo[NUM_MAX_MUESTRA_CONSUMO][FLASH_NUM_CHAR_HORA];
+
+//local variables for print in web
+char consumo_flash_S[80];
+char hora_flash_S[9];
 
 // http_server.c
 //extern uint16_t AD_in (uint32_t ch);
@@ -437,6 +447,94 @@ uint32_t netCGI_Script (const char *env, char *buf, uint32_t buflen, uint32_t *p
 //      //len = (uint32_t)sprintf (buf, "<checkbox><id>button%c</id><on>%s</on></checkbox>",
 //      //                         env[1], (get_button () & (1 << (env[1]-'0'))) ? "true" : "false");
 //      break;
+     case 'i':
+        switch (env[2]) {
+        case '0':
+          snprintf(hora_flash_S, sizeof(hora_flash_S), "%.8s", horas_consumo[0]); // Limita a 8 caracteres
+          len = (uint32_t)sprintf (buf, &env[4], hora_flash_S );
+          break;
+        case '1':
+          snprintf(hora_flash_S, sizeof(hora_flash_S), "%.8s", horas_consumo[1]); // Limita a 8 caracteres
+          len = (uint32_t)sprintf (buf, &env[4], hora_flash_S );
+          break;
+				case '2':
+          snprintf(hora_flash_S, sizeof(hora_flash_S), "%.8s", horas_consumo[2]); // Limita a 8 caracteres
+          len = (uint32_t)sprintf (buf, &env[4], hora_flash_S );
+          break;
+        case '3':
+          snprintf(hora_flash_S, sizeof(hora_flash_S), "%.8s", horas_consumo[3]); // Limita a 8 caracteres
+          len = (uint32_t)sprintf (buf, &env[4], hora_flash_S );
+          break;
+        case '4':
+          snprintf(hora_flash_S, sizeof(hora_flash_S), "%.8s", horas_consumo[4]); // Limita a 8 caracteres
+          len = (uint32_t)sprintf (buf, &env[4], hora_flash_S );
+          break;
+        case '5':
+          snprintf(hora_flash_S, sizeof(hora_flash_S), "%.8s", horas_consumo[5]); // Limita a 8 caracteres
+          len = (uint32_t)sprintf (buf, &env[4], hora_flash_S );
+          break;
+				case '6':
+          snprintf(hora_flash_S, sizeof(hora_flash_S), "%.8s", horas_consumo[6]); // Limita a 8 caracteres
+          len = (uint32_t)sprintf (buf, &env[4], hora_flash_S );
+          break;
+        case '7':
+          snprintf(hora_flash_S, sizeof(hora_flash_S), "%.8s", horas_consumo[7]); // Limita a 8 caracteres
+          len = (uint32_t)sprintf (buf, &env[4], hora_flash_S );
+          break;
+        case '8':
+          snprintf(hora_flash_S, sizeof(hora_flash_S), "%.8s", horas_consumo[8]); // Limita a 8 caracteres
+          len = (uint32_t)sprintf (buf, &env[4], hora_flash_S );
+          break;
+        case '9':
+          snprintf(hora_flash_S, sizeof(hora_flash_S), "%.8s", horas_consumo[9]); // Limita a 8 caracteres
+          len = (uint32_t)sprintf (buf, &env[4], hora_flash_S );
+        break;
+      }
+      break;
+     case 'z':
+        switch (env[2]) {
+        case '0':
+          sprintf(consumo_flash_S,"%.2f mA", medidas_consumo[0]);
+          len = (uint32_t)sprintf (buf, &env[4], consumo_flash_S );
+          break;
+        case '1':
+          sprintf(consumo_flash_S,"%.2f mA", medidas_consumo[1]);
+          len = (uint32_t)sprintf (buf, &env[4], consumo_flash_S );
+          break;
+				case '2':
+          sprintf(consumo_flash_S,"%.2f mA", medidas_consumo[2]);
+          len = (uint32_t)sprintf (buf, &env[4], consumo_flash_S );
+          break;
+        case '3':
+          sprintf(consumo_flash_S,"%.2f mA", medidas_consumo[3]);
+          len = (uint32_t)sprintf (buf, &env[4], consumo_flash_S );
+          break;
+        case '4':
+          sprintf(consumo_flash_S,"%.2f mA", medidas_consumo[4]);
+          len = (uint32_t)sprintf (buf, &env[4], consumo_flash_S );
+          break;
+        case '5':
+          sprintf(consumo_flash_S,"%.2f mA", medidas_consumo[5]);
+          len = (uint32_t)sprintf (buf, &env[4], consumo_flash_S );
+          break;
+        case '6':
+          sprintf(consumo_flash_S,"%.2f mA", medidas_consumo[6]);
+          len = (uint32_t)sprintf (buf, &env[4], consumo_flash_S );
+          break;
+        case '7':
+          sprintf(consumo_flash_S,"%.2f mA", medidas_consumo[7]);
+          len = (uint32_t)sprintf (buf, &env[4], consumo_flash_S );
+          break;
+        case '8':
+          sprintf(consumo_flash_S,"%.2f mA", medidas_consumo[8]);
+          len = (uint32_t)sprintf (buf, &env[4], consumo_flash_S );
+          break;
+        case '9':
+          sprintf(consumo_flash_S,"%.2f mA", medidas_consumo[9]);
+          len = (uint32_t)sprintf (buf, &env[4], consumo_flash_S );
+          break;
+      }
+      break;
   }
   return (len);
 }
