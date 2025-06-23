@@ -3,8 +3,6 @@ t <script language=JavaScript type="text/javascript" src="xml_http.js"></script>
 t <script language=JavaScript type="text/javascript">
 # Define URL and refresh timeout
 t var formUpdate = new periodicObj("control.cgx",1000);
-t var distanciaPrevio = ""; // Variable para almacenar el valor previo 
-t var consumoPrevio = ""; // Variable para almacenar el valor previo 
 t function plotGraph() {
 # Obtenemos los valores
 t  distancia = document.getElementById("Distancia").value;
@@ -13,14 +11,6 @@ t  marcha = document.getElementById("Marcha").value;
 t  direccion = document.getElementById("Direccion").value;
 t  hora = document.getElementById("RTC_HORA").value;
 t  fecha = document.getElementById("RTC_FECHA").value;
-t  if (distancia != distanciaPrevio) {
-t    distanciaPrevio = distancia;
-t    addEventToHistory(" Distancia: " + distancia);
-t  }
-t  if (consumo != consumoPrevio) {
-t    consumoPrevio = consumo;
-t    addEventToHistory(" Consumo: " + consumo);
-t  }
 t }
 t function sendUpdate() {
 t    distancia = document.getElementById("Distancia");
@@ -35,14 +25,6 @@ t   contr_elTime = setTimeout(periodicUpdate, formUpdate.period);
 t  }
 t  else
 t   clearTimeout(contr_elTime);
-t }
-t function addEventToHistory(event) {
-t  var historyElement = document.getElementById("history");
-t  var newEvent = document.createElement("li");
-t  newEvent.textContent = event;
-t  newEvent.style.color = "black"; // Cambia el color del texto a blanco
-t  newEvent.style.fontSize = "12px"; // Aumenta el tamaño del texto
-t  historyElement.appendChild(newEvent);
 t }
 t </script></head>
 i pg_header.inc
@@ -70,7 +52,5 @@ t </font></table>
 t <p align=center>
 t Activar:<input type="checkbox" id="ControlChkBox" onclick="periodicUpdate()">
 t </p></form>
-t <h3>HISTORIAL</h3>
-t <ul id="history"></ul>
 i pg_footer.inc
 . End of script must be closed with period.

@@ -236,7 +236,7 @@ void thread__app_main_control (void *no_argument)
                 memcpy(flash_hora_tx, rtc_date_time[RTC_HOUR], FLASH_NUM_CHAR_HORA); //Guardamos el valor actual de la hora en el mensaje de envio hacia flash (HH:MM:SS, 8 char)
             
                 //Actualizamos Web revisar NAK unicamente actualizar cuando el valor cambie? revisar refresco de web
-                sprintf(consumo_S, "%.2f", flash_consumo_tx);
+                sprintf(consumo_S, "%.2f mA", flash_consumo_tx);
                 //revisar NAK mandar flag a web??
             
                 //Anadimos en el mensaje de la cola los valores a a�adir y el comando de a�adir Consumo en flash
@@ -360,7 +360,7 @@ void thread__app_main_control (void *no_argument)
                                 lineas_prev = lineas_actuales;
                             }
                             //Se pasa distancia por Web
-                            sprintf(distancia_S,"%02d", nRF_data_received_mando.distancia);
+                            sprintf(distancia_S,"%02d mm", nRF_data_received_mando.distancia);
                         }
 
                     }

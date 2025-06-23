@@ -80,7 +80,7 @@ void thread__direction_control(void *no_argument)
                 //setServoAngle(direction);
                 #endif
                 //Se pasa a Web
-                sprintf(direccion_S, "%.2f", direction);
+                sprintf(direccion_S, "%.2f grados", direction);
             }
         }
         #endif
