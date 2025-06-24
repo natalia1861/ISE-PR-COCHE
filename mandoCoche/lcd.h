@@ -18,7 +18,7 @@ typedef enum
 #define LCD_MAX_LINES       LCD_LINE__THREE
 #define LCD_MIN_LINES       LCD_LINE__NO_LINE
 
-//Funciones b�sicas
+//Funciones basicas
 void LCD_start(void);
 void LCD_clean(void);
 void LCD_write(uint8_t line, char a[]);

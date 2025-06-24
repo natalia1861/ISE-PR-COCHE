@@ -32,7 +32,7 @@
  * Rev.:    1.0.3
  *----------------------------------------------------------------------------*/
 
- //revisar NAK no se si este fichero se llega a usar porque esta el comun del adc creo
+ //revisar NAK Este fichero NO se usa
 
 #include "stm32f4xx_hal.h"
 

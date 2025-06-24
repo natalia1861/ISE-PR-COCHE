@@ -36,6 +36,6 @@ void Init_LedsControl(void)
 {
     if (osThreadNew(thread__ledsControl, NULL, NULL) == NULL)
     {
-        //Error revisar como mandar a RF
+        //Error revisar como mandar a RF. El coche no envia errores de inicializacion
     }
 }

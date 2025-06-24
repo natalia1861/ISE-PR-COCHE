@@ -27,7 +27,7 @@ void Init_GetConsumption(void)
         id_thread__GetConsumption = osThreadNew(thread__GetConsumption, NULL, NULL);
         if (id_thread__GetConsumption == NULL)
         {
-            //Error revisar como mandar a RF
+            //Error revisar como mandar a RF. El coche no envia errores de inicializacion
         }
     }
 }

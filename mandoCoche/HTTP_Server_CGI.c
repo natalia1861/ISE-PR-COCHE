@@ -24,7 +24,6 @@
 #pragma  clang diagnostic ignored "-Wformat-nonliteral"
 #endif
 
-//SERVIDOR REVISAR FALTA COMENTAR
 extern char hora[80];
 extern char fecha[80];
 extern char marcha_S[80];
@@ -36,7 +35,7 @@ extern char consumo_S [80];
 extern float medidas_consumo[NUM_MAX_MUESTRA_CONSUMO];
 extern char horas_consumo[NUM_MAX_MUESTRA_CONSUMO][FLASH_NUM_CHAR_HORA];
 
-//local variables for print in web
+//local variables for print in web -> seria mejor dejar estas como globales y que se copien, no que tenga acceso a las de arriba
 char consumo_flash_S[80];
 char hora_flash_S[9];
 

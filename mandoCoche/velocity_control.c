@@ -23,7 +23,7 @@ void thread__VelocityControl (void *no_argument)
     marchas_t marcha_prev;
     marchas_t marcha;
     
-    //Inicializamos el ADC de control de presi�n
+    //Inicializamos el ADC de control de presion
 	Init_ADC1_presion();
 
     #ifdef TEST_SERVOS

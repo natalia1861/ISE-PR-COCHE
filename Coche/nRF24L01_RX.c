@@ -94,7 +94,7 @@ void thread__transmissor_RF_RX(void *argument)
 	//TM_NRF24L01_SetMyAddress(MyAddress); //Se utilizaba para tener la transmision de TX por un lado y la de RX por otro
 
 	/* Set TX address, and RX Pipe 0 address, 5 bytes */
-	TM_NRF24L01_SetTxAddress(TxAddress);    // Se configura la direcci�n para recibir (RX_ADDR_P0) por la pipe0, que tambi�n se usar� para devolver ACKs con o sin payload.
+	TM_NRF24L01_SetTxAddress(TxAddress);    // Se configura la direccion para recibir (RX_ADDR_P0) por la pipe0, que tambien se usara para devolver ACKs con o sin payload.
                                             // En modo PRX (recepcion), TX_ADDR no se utiliza para enviar ACKs, por lo que puede omitirse en el coche, ya que nunca entra en modo PTX (transmision).
                                             // En modo PTX (transmision), TX_ADDR es utilizado para enviar la informacion y RX_ADDR_P0 para recibirla por ACKs. Por lo que ambas deben coincidir (en el mando).
 	
@@ -176,7 +176,7 @@ void thread__transmissor_RF_RX(void *argument)
 
                 #else //TEST
                 /* Write ACK Payload into TX FIFO */
-                dataOut[0] = dataOut[0] +1; //Se a�aden datos de payload (numero ascendente)
+                dataOut[0] = dataOut[0] +1; //Se anaden datos de payload (numero ascendente)
                 printf("TX FIFO before: 0x%02X\n", TM_NRF24L01_TxFifoEmpty());
                 TM_NRF24L01_WriteAckPayload(NRF_IRQ.F.RX_P_NO, dataOut, sizeof(dataOut));
     
@@ -203,7 +203,7 @@ void thread__transmissor_RF_RX(void *argument)
                 printf("IRQ: Data Sent: ACK with payload sent correctly\n");
             }
             
-            //Maximo numero de reintentos - fallo en RF - se detectar� porque no se enviar� ACK asi que el mando se entera y lanza error
+            //Maximo numero de reintentos - fallo en RF - se detectara porque no se enviaran ACK asi que el mando se entera y lanza error
             if (NRF_IRQ.F.MaxRT)
             {
                 printf("IRQ: Max RT\n");
@@ -238,7 +238,7 @@ void Init_RF_RX(void) {
         id_thread__RF_RX = osThreadNew (thread__transmissor_RF_RX, NULL, NULL);
         if (id_thread__RF_RX == NULL)
         {
-            //Error revisar como mandar a RF
+            //Error revisar como mandar a RF. El coche no envia errores de inicializacion
         }
     }
 }

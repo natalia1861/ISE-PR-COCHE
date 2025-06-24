@@ -79,14 +79,14 @@ void thread__SendData_RF_TX(void *argument)
 	/* NRF24L01 goes to RX mode by default */
 	TM_NRF24L01_Init(15, 32);
 	
-	/* Set 2MBps data rate and -18dBm output power */
+	/* Set 2MBps data rate and 0dBm output power */
 	TM_NRF24L01_SetRF(TM_NRF24L01_DataRate_2M, TM_NRF24L01_OutputPower_0dBm);
 	
 	/* Set my address, 5 bytes */
 	//TM_NRF24L01_SetMyAddress(MyAddress); //Se utilizaba para tener una pipe por donde transmitia el PTX y otra por donde transmitia PRX
 	
 	/* Set TX address, 5 bytes */
-	TM_NRF24L01_SetTxAddress(MyAddress);  // Se configura la direcci�n para recibir (RX_ADDR_P0) por la pipe0, que tambi�n se usar� para devolver ACKs con o sin payload.
+	TM_NRF24L01_SetTxAddress(MyAddress);  // Se configura la direccion para recibir (RX_ADDR_P0) por la pipe0, que tambien se usara para devolver ACKs con o sin payload.
                                             // En modo PRX (recepcion), TX_ADDR no se utiliza para enviar ACKs, por lo que puede omitirse en el coche, ya que nunca entra en modo PTX (transmision).
                                             // En modo PTX (transmision), TX_ADDR es utilizado para enviar la informacion y RX_ADDR_P0 para recibirla por ACKs. Por lo que ambas deben coincidir (en el mando).
 	
@@ -243,8 +243,8 @@ void thread__GetData_RF_TX (void *no_argument)
             }
             
             /* If data is ready on NRF24L01+*/
-                //Si en modo RX: se activar� si recibe correctamente datos normales (coche)
-                //Si en modo TX: se activar� si recibe correctamente ACK Payload (mando)
+                //Si en modo RX: se activara si recibe correctamente datos normales (coche)
+                //Si en modo TX: se activara si recibe correctamente ACK Payload (mando)
             if (NRF_IRQ.F.DataReady)  //Recibo ACKs de payload
             {
                 printf("IRQ: Data Ready IRQ\n");

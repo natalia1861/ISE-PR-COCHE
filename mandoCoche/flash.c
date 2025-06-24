@@ -48,7 +48,7 @@ static void thread__flash (void *argument);          //Declaracion del hilo
 
 
 //Funciones locales
-// Inicializaci�n
+// Inicializacion
 static void W25Q16_Init_SPI(void);                     // Configuracion de pines y driver SPI
 static void SPI_callback(uint32_t event);              // Callback al terminar transmision SPI
 static void W25Q16_Init (void);                        // Inicializa la memoria Flash
@@ -82,7 +82,7 @@ static void addConsumption(uint8_t position, float *consumption, char* hora);
 static void getAllConsumptions(float *consumptions, char *hours);
 
 //Funciones para Tests
-static void leer_mem_entera(uint8_t posicion);              // Lee los primeros 50 bytes para depuraci�n
+static void leer_mem_entera(uint8_t posicion);              // Lee los primeros 50 bytes para depuracion
 static void test_write_read(void);              // Prueba de escritura y lectura en bucle
 
 //Init flash
@@ -196,7 +196,7 @@ static void W25Q16_Init_SPI(void)
   __HAL_RCC_GPIOE_CLK_ENABLE();
   
   static GPIO_InitTypeDef GPIO_InitStruct_RFID;
-  /*CS*/    //SPI_CS -- SPI_B_NSS       PE11 //revisar NAK que pin es? mirar en proyecto
+  /*CS*/    //SPI_CS -- SPI_B_NSS       PE11 
   __HAL_RCC_GPIOE_CLK_ENABLE();
   GPIO_InitStruct_RFID.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct_RFID.Pull = GPIO_PULLUP;
@@ -212,7 +212,7 @@ static void W25Q16_Init_SPI(void)
 }
 
 /**
- * @brief Callback llamado al finalizar una operaci�n SPI.
+ * @brief Callback llamado al finalizar una operacion SPI.
  * @param event Evento SPI (TRANSFER_COMPLETE, DATA_LOST, MODE_FAULT)
  */
 
@@ -346,7 +346,7 @@ static void W25Q16_Read (uint32_t startPage, uint8_t offset, uint32_t size, uint
  * @param rData Puntero al buffer para almacenar datos.
  * 
  * Funciona en la maxima frecuencia posible (50 Hz)
- * A�ade 8 dummy clocks despues de los 24 bits de address (norma del protocolo)
+ * Anade 8 dummy clocks despues de los 24 bits de address (norma del protocolo)
  */
 
 static void W25Q16_FastRead (uint32_t startPage, uint8_t offset, uint32_t size, uint8_t *rData) 
@@ -456,7 +456,7 @@ static void W25Q16_Erase_Sector (uint16_t numSector)
 }
 
 /**
- * @brief Calcula cuantos bytes se pueden escribir desde un offset hasta el final de la p�gina.
+ * @brief Calcula cuantos bytes se pueden escribir desde un offset hasta el final de la pagina.
  * @param size Tamano total de los datos a escribir.
  * @param offset Desplazamiento dentro de la pagina.
  * @return Numero de bytes que se pueden escribir en esa pagina.

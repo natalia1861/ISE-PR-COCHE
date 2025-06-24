@@ -235,11 +235,11 @@ void thread__app_main_control (void *no_argument)
                 flash_consumo_tx = (float) nRF_data_received_mando.consumo / 100.0f; //Guardamos el ultimo valor recibido desde el coche del consumo (el consumo se recibe como 1234 significando 12.34 mA)
                 memcpy(flash_hora_tx, rtc_date_time[RTC_HOUR], FLASH_NUM_CHAR_HORA); //Guardamos el valor actual de la hora en el mensaje de envio hacia flash (HH:MM:SS, 8 char)
             
-                //Actualizamos Web revisar NAK unicamente actualizar cuando el valor cambie? revisar refresco de web
+                //Actualizamos Web
                 sprintf(consumo_S, "%.2f mA", flash_consumo_tx);
                 //revisar NAK mandar flag a web??
             
-                //Anadimos en el mensaje de la cola los valores a a�adir y el comando de a�adir Consumo en flash
+                //Anadimos en el mensaje de la cola los valores a anadir y el comando de anadir Consumo en flash
                 flash_msg_data.command = FLASH_CMD__ADD_CONSUMPTION;
                 flash_msg_data.consumption = &flash_consumo_tx;
                 flash_msg_data.hour = flash_hora_tx;
@@ -349,7 +349,7 @@ void thread__app_main_control (void *no_argument)
                     {
                         if (nRF_data_received_mando.distancia >= MAX_DISTANCE_DRIVER) //Esta limitado por driver para pintar en LCD, por lo que si llega mas de 500 se ponen 0 lineas y ya
                         {
-                            push_error(MODULE__ASK_DISTANCE, ERR_CODE__DATA_CORRUPT, 0);  //Revisar Se envia pero no se gestiona
+                            push_error(MODULE__ASK_DISTANCE, ERR_CODE__DATA_CORRUPT, 0); 
                         }
                         else
                         {
@@ -445,6 +445,7 @@ void Init_AllAppThreads(void)
         // strncpy(detalleError, "MSG QUEUE ERROR APP", sizeof(detalleError) - 1);
         // osThreadFlagsSet(id_thread__app_main, FLAG__ERROR);
         //SystemReset(); //revisar
+        //El coche no envia errores de inicializacion
     }
     netInitialize();            //Web
     Init_LedsControl();         //Leds
@@ -534,12 +535,12 @@ void lcd_update_state(app_state_t app_state)
 }
 
 /**
- * @brief Calcula el numero de li�neas de advertencia que deben mostrarse en el display
+ * @brief Calcula el numero de lineas de advertencia que deben mostrarse en el display
  *        en funcion de la distancia detectada por un sensor.
  *
- *        Cuanto menor sea la distancia, mas li�neas se muestran (hasta un maximo de 3).
- *        Si el objeto esta demasiado lejos, no se muestra ninguna li�nea.
- *        Si esta demasiado cerca, se muestran las 3 li�neas.
+ *        Cuanto menor sea la distancia, mas lineas se muestran (hasta un maximo de 3).
+ *        Si el objeto esta demasiado lejos, no se muestra ninguna linea.
+ *        Si esta demasiado cerca, se muestran las 3 lineas.
  *
  * @param distancia  Valor de distancia medido (0 a 500 en mm), donde 0 es muy cerca y 500 muy lejos.
  * @return lineas_distancia_t  Numero de lineas a mostrar (0 a 3).

@@ -70,7 +70,7 @@ void I2C_TX_RX_Callback(uint32_t flags);
 bool as5600_isMagnetDetected(void);
 
 //Variables globales para el control de angulo y vueltas
-uint16_t angle_offset = 0; //valor que toma como inicial y lo inicia a 180�
+uint16_t angle_offset = 0; //valor que toma como inicial y lo inicia a 180 grados
 uint16_t angle_raw = 0; //valor nuevo que coge del sensor
 
 uint16_t last_angle = 0; //Anterior valore leido respecto al offset corregido
@@ -78,7 +78,7 @@ uint16_t angle_new = 0;// Angulo respecto al offset corregido
 int8_t vuelta = 0;
 bool start = false;
 
-float angle_deg = 0;//Valor que devuelve la funci�n de que grados gira
+float angle_deg = 0;//Valor que devuelve la funcion de que grados gira
 float angle_send = 0;
 
 //Para saber donde se encuentra 0 grados y 360 grados respecto al offset

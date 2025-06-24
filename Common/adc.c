@@ -6,7 +6,7 @@
  * En el mando se encuentra el ADC de presion (asociado a la galga). Utilizamos el ADC1 canal 13 pin PC0
  * En el coche se encuentra el ADC de consumo. Utilizamos el ADC1 canal 10 pin PC3.
 
- Se podria haber decidido usar el mismo ADC, canal y pin para ambos, pero se decidio asi� para poder distinguir bien cada cosa.
+ Se podria haber decidido usar el mismo ADC, canal y pin para ambos, pero se decidio asi para poder distinguir bien cada cosa.
 */
 
 #define RESOLUTION_12B 4096U
